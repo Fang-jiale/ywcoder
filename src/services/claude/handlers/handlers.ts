@@ -846,7 +846,7 @@ export async function handleOpenClaudeInTerminal(
 
     try {
         const terminal = vscode.window.createTerminal({
-            name: "Claude Code",
+            name: "YW Coder",
             cwd
         });
 

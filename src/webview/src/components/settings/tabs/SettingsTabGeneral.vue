@@ -1,5 +1,5 @@
 <template>
-  <SettingsTab title="General">
+  <SettingsTab title="通用">
     <!-- Startup Defaults Section (Extension Config — Pipeline B) -->
     <SettingsSection title="Startup Defaults">
       <SettingsSubSection>

@@ -1,5 +1,5 @@
 <template>
-  <SettingsTab title="Hooks">
+  <SettingsTab title="钩子">
     <SettingsSection>
       <SettingsCell label="Lifecycle Hooks">
         <template #description> Manage lifecycle hooks (.claude/hooks) </template>

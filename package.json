@@ -1,7 +1,7 @@
 {
   "name": "ywcoder",
   "displayName": "YW Coder",
-  "description": "YW Coder - AI coding assistant for VSCode. Based on Claude Code.",
+  "description": "YW Coder - 自研 AI 编程助手，集成于 VSCode，提供智能代码补全、代码分析、重构建议等功能。",
   "version": "0.3.9",
   "publisher": "yw-support",
   "engines": {

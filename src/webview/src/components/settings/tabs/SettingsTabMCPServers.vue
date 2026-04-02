@@ -1,5 +1,5 @@
 <template>
-  <SettingsTab title="MCP Servers">
+  <SettingsTab title="MCP 服务器">
     <!-- Section 1: Server Status (SDK probe, read-only) -->
     <SettingsSection title="Server Status">
       <SettingsSubSection>

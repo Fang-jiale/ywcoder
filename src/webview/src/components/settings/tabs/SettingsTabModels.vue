@@ -1,13 +1,13 @@
 <template>
-  <SettingsTab title="Models">
+  <SettingsTab title="模型管理">
     <!-- Section 1: Default Model + Model List -->
-    <SettingsSection title="Model Manage">
-      <SettingsSubSection caption="Enable or disable models for the chat model selector. Custom models can be added and removed.">
+    <SettingsSection title="模型管理">
+      <SettingsSubSection caption="启用或禁用聊天模型选择器中的模型。可以添加和删除自定义模型。">
         <!-- Model selector row -->
         <SettingsItem
           setting-key="model"
-          label="Default Model"
-          description="Model alias or full model ID for Claude Code sessions"
+          label="默认模型"
+          description="YW Coder 会话的模型别名或完整模型 ID"
         >
           <template #default="{ effectiveValue, update }">
             <Dropdown
@@ -29,17 +29,17 @@
               <TextInput
                 v-model="customModelIdInput"
                 class="add-model-id"
-                placeholder="Model ID"
+                placeholder="模型 ID"
                 monospace
                 @keydown.enter.prevent="addCustomModel"
               />
               <TextInput
                 v-model="customModelNameInput"
                 class="add-model-name"
-                placeholder="Display Name (optional)"
+                placeholder="显示名称（可选）"
                 @keydown.enter.prevent="addCustomModel"
               />
-              <Tooltip content="Add custom model">
+              <Tooltip content="添加自定义模型">
                 <button
                   class="add-model-btn codicon codicon-plus"
                   :disabled="!customModelIdInput.trim()"
@@ -55,7 +55,7 @@
           <template #label>
             <TextInput
               v-model="modelSearchQuery"
-              placeholder="Search models..."
+              placeholder="搜索模型..."
               class="models-search-input"
             />
           </template>
@@ -71,7 +71,7 @@
           <template #label>
             <span>{{ cm.name || cm.id }}</span>
             <span v-if="cm.name" class="model-id">{{ cm.id }}</span>
-            <Badge variant="subtle" class="model-badge">custom</Badge>
+            <Badge variant="subtle" class="model-badge">自定义</Badge>
           </template>
           <template #trailing>
             <div class="model-actions">
@@ -83,7 +83,7 @@
                   />
                 </span>
               </Tooltip>
-              <Tooltip content="Remove custom model">
+              <Tooltip content="删除自定义模型">
                 <button
                   class="model-action-btn model-action-btn-danger codicon codicon-trash"
                   @click="removeCustomModel(cm.id)"
@@ -96,7 +96,7 @@
         <!-- Loading State -->
         <SettingsCell v-if="sdkCapabilitiesLoading" :divider="true">
           <template #label>
-            <span class="loading-text">Loading models from SDK...</span>
+            <span class="loading-text">正在从 SDK 加载模型...</span>
           </template>
         </SettingsCell>
 
@@ -331,7 +331,7 @@ const MODEL_ALIASES = [
 ]
 
 // ── Custom Models & Disabled Models (Pipeline B: ~/.ywcoder.json) ──
-// Stored in extension config, not Claude Code settings.json
+// Stored in extension config, not YW Coder settings.json
 
 interface CustomModel {
   id: string

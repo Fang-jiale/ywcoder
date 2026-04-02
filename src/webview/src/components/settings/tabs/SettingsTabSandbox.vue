@@ -1,5 +1,5 @@
 <template>
-  <SettingsTab title="Sandbox">
+  <SettingsTab title="沙箱">
     <!-- Sandbox Isolation Section -->
     <SettingsSection title="Sandbox Isolation">
       <SettingsSubSection>

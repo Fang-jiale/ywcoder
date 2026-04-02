@@ -1,5 +1,5 @@
 <template>
-  <SettingsTab title="Agent">
+  <SettingsTab title="智能体">
     <!-- Chat History Section -->
     <SettingsSection title="Chat History">
       <SettingsSubSection>

@@ -1,5 +1,5 @@
 <template>
-  <SettingsTab title="Permissions">
+  <SettingsTab title="权限">
     <!-- Section 1: Default Mode -->
     <SettingsSection title="Default Mode">
       <SettingsSubSection>

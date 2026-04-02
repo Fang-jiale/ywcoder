@@ -1,11 +1,11 @@
 <template>
-  <SettingsTab title="Plugins">
+  <SettingsTab title="插件">
     <SettingsSection>
       <SettingsSubSection>
         <div class="coming-soon-container">
           <Badge variant="subtle" size="medium">Coming Soon</Badge>
           <p class="coming-soon-text">
-            Discover and manage Claude Code plugins from marketplaces.
+            从市场发现和管理 YW Coder 插件。
           </p>
         </div>
       </SettingsSubSection>

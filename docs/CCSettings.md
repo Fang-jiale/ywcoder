@@ -1,6 +1,6 @@
-# Claude Code Settings System Reference
+# YW Coder 设置系统参考文档
 
-> YW Coder 扩展设置系统的完整参考文档。基于 [Claude Code 官方文档](https://code.claude.com/docs/en/settings) 整理。
+> YW Coder 扩展设置系统的完整参考文档。
 
 ---
 

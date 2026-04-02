@@ -1,5 +1,5 @@
 <template>
-  <SettingsTab title="Network">
+  <SettingsTab title="网络">
     <!-- Proxy Configuration Section -->
     <SettingsSection title="Proxy Configuration">
       <SettingsSubSection>
