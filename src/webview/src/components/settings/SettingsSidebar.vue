@@ -5,7 +5,7 @@
         <img :src="avatarUrl" alt="Avatar" class="cursor-settings-sidebar-avatar-img" />
       </div>
       <div class="cursor-settings-sidebar-header-content">
-        <p class="cursor-settings-sidebar-header-email">YW Coder@cometix.dev</p>
+        <p class="cursor-settings-sidebar-header-email">Kimi@cometix.dev</p>
         <p class="cursor-settings-sidebar-header-plan">Ultra Plan</p>
       </div>
     </div>
@@ -69,7 +69,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import _avatarUrl from '../../assets/ywcoder-avatar.png';
+import _avatarUrl from '../../assets/kimi-avatar.png';
 const avatarUrl = _avatarUrl;
 import ProfileSelector from './SettingsProfileSelector.vue';
 import Separator from '../Common/Separator.vue';

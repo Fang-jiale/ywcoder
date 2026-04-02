@@ -190,7 +190,7 @@ export class WebViewService implements IWebViewService {
 		this.logService.info(`[WebViewService] 创建主编辑器 WebView 面板: page=${page}, id=${key}`);
 
 		const panel = vscode.window.createWebviewPanel(
-			'ywcoder.pageView',
+			'kimi.pageView',
 			title,
 			vscode.ViewColumn.Active,
 			{
@@ -292,7 +292,7 @@ export class WebViewService implements IWebViewService {
 
 		const bootstrapScript = `
     <script nonce="${nonce}">
-      window.YWCODE_BOOTSTRAP = ${JSON.stringify(bootstrap)};
+      window.KIMI_BOOTSTRAP = ${JSON.stringify(bootstrap)};
     </script>`;
 
 		return `<!DOCTYPE html>
@@ -346,7 +346,7 @@ export class WebViewService implements IWebViewService {
 
 		const bootstrapScript = `
     <script nonce="${nonce}">
-      window.YWCODE_BOOTSTRAP = ${JSON.stringify(bootstrap)};
+      window.KIMI_BOOTSTRAP = ${JSON.stringify(bootstrap)};
     </script>`;
 
 		return `<!DOCTYPE html>

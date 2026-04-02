@@ -5,7 +5,7 @@
         <div class="coming-soon-container">
           <Badge variant="subtle" size="medium">Coming Soon</Badge>
           <p class="coming-soon-text">
-            查看和管理 YW Coder 的自定义技能。
+            查看和管理 Kimi 的自定义技能。
           </p>
         </div>
       </SettingsSubSection>

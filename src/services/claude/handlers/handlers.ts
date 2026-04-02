@@ -458,7 +458,7 @@ export async function handleNewConversationTab(
     const { logService } = context;
 
     try {
-        await vscode.commands.executeCommand("ywcoder.chatView.focus");
+        await vscode.commands.executeCommand("kimi.chatView.focus");
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         logService.warn(`Failed to focus chat view: ${message}`);
@@ -818,7 +818,7 @@ export async function handleOpenConfigFile(
     try {
         // VS Code 设置
         if (configType === "vscode") {
-            await vscode.commands.executeCommand('workbench.action.openSettings', 'ywcoder');
+            await vscode.commands.executeCommand('workbench.action.openSettings', 'kimi');
         }
         // 用户配置文件
         else {
@@ -846,7 +846,7 @@ export async function handleOpenClaudeInTerminal(
 
     try {
         const terminal = vscode.window.createTerminal({
-            name: "YW Coder",
+            name: "Kimi",
             cwd
         });
 

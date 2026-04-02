@@ -1,7 +1,7 @@
 <template>
   <SettingsTab title="Environments">
     <SettingsSection title="Environment Variables">
-      <SettingsSubSection caption="启动时传递给 YW Coder 的自定义环境变量。 Variables managed by other tabs (Models, Network, Sandbox, etc.) are excluded here.">
+      <SettingsSubSection caption="启动时传递给 Kimi 的自定义环境变量。 Variables managed by other tabs (Models, Network, Sandbox, etc.) are excluded here.">
         <!-- Table Header -->
         <SettingsCell>
           <template #label>

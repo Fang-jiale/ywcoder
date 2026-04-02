@@ -39,7 +39,7 @@ export class SessionStore {
     this.effectCleanups.push(
       effect(() => {
         const session = this.activeSession();
-        const defaultTitle = 'YW Coder';
+        const defaultTitle = 'Kimi';
 
         if (!session) {
           this.context.renameTab?.(defaultTitle);

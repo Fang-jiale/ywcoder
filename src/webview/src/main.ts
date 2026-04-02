@@ -12,7 +12,7 @@ declare global {
       getState(): any;
       setState(data: any): void;
     };
-    YWCODE_BOOTSTRAP?: {
+    KIMI_BOOTSTRAP?: {
       host?: 'sidebar' | 'editor';
       page?: string;
     };
