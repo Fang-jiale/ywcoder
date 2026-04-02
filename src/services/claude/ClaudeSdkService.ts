@@ -1,0 +1,528 @@
+/**
+ * ClaudeSdkService - Claude Agent SDK 薄封装
+ *
+ * 职责：
+ * 1. 封装 @anthropic-ai/claude-agent-sdk 的 query() 调用
+ * 2. 构建 SDK Options 对象
+ * 3. 处理参数转换和环境配置
+ * 4. 提供 interrupt() 方法中断查询
+ *
+ * 依赖：
+ * - ILogService: 日志服务
+ * - IConfigurationService: 配置服务
+ */
+
+import * as vscode from 'vscode';
+import * as path from 'path';
+import * as os from 'os';
+import { createDecorator } from '../../di/instantiation';
+import { ILogService } from '../logService';
+import { IConfigurationService } from '../configurationService';
+import { IFileSystemService } from '../fileSystemService';
+import { AsyncStream } from './transport';
+
+// SDK 类型导入
+import type {
+    Options,
+    Query,
+    CanUseTool,
+    PermissionMode,
+    SDKUserMessage,
+    HookCallbackMatcher,
+} from '@anthropic-ai/claude-agent-sdk';
+
+export const IClaudeSdkService = createDecorator<IClaudeSdkService>('claudeSdkService');
+
+/**
+ * SDK 查询参数
+ */
+/**
+ * stderr 中解析出的致命错误
+ */
+export interface LLMRequestError {
+    statusCode: string;    // HTTP 状态码 (e.g. "401", "503")
+    message: string;       // 人类可读的错误描述
+    type: string;          // 上游错误类型 (e.g. "authentication_error", "new_api_error")
+    raw: string;           // 原始 stderr 行
+}
+
+export interface SdkQueryParams {
+    inputStream: AsyncStream<SDKUserMessage>;
+    resume: string | null;
+    canUseTool: CanUseTool;
+    model: string | null;  // ← 接受 null，内部转换
+    cwd: string;
+    permissionMode: PermissionMode | string;  // ← 接受字符串
+    maxThinkingTokens?: number;  // ← Thinking tokens 上限
+    /** 当 stderr 检测到致命错误（流式请求回退失败）时的回调 */
+    onStderrError?: (error: LLMRequestError) => void;
+}
+
+export interface SdkProbeParams {
+    capabilities: string[];
+    cwd: string;
+    timeoutMs?: number;
+}
+
+export interface SdkProbeResult {
+    data: Record<string, any>;
+    errors?: Record<string, string>;
+}
+
+/**
+ * SDK 服务接口
+ */
+export interface IClaudeSdkService {
+    readonly _serviceBrand: undefined;
+
+    /**
+     * 调用 Claude SDK 进行查询
+     */
+    query(params: SdkQueryParams): Promise<Query>;
+
+    /**
+     * 一次性探测 SDK 能力并立即释放
+     */
+    probe(params: SdkProbeParams): Promise<SdkProbeResult>;
+
+    /**
+     * 中断正在进行的查询
+     */
+    interrupt(query: Query): Promise<void>;
+}
+
+const VS_CODE_APPEND_PROMPT = `
+  # VSCode Extension Context
+
+  You are running inside a VSCode native extension environment.
+
+  ## Code References in Text
+  IMPORTANT: When referencing files or code locations, use markdown link syntax to make them clickable:
+  - For files: [filename.ts](src/filename.ts)
+  - For specific lines: [filename.ts:42](src/filename.ts#L42)
+  - For a range of lines: [filename.ts:42-51](src/filename.ts#L42-L51)
+  - For folders: [src/utils/](src/utils/)
+  Unless explicitly asked for by the user, DO NOT USE backtickets \` or HTML tags like code for file references - always use markdown [text](link) format.
+  The URL links should be relative paths from the root of  the user's workspace.
+
+  ## User Selection Context
+  The user's IDE selection (if any) is included in the conversation context and marked with ide_selection tags. This represents code or text the user has highlighted in their editor and may or may not be relevant to their request.`;
+
+const SDK_PROBE_CAPABILITIES: Record<string, (query: Query) => Promise<any>> = {
+    supportedCommands: (query) => query.supportedCommands?.(),
+    supportedModels: (query) => query.supportedModels?.(),
+    mcpServerStatus: (query) => query.mcpServerStatus?.(),
+    accountInfo: (query) => query.accountInfo?.()
+};
+
+/**
+ * ClaudeSdkService 实现
+ */
+export class ClaudeSdkService implements IClaudeSdkService {
+    readonly _serviceBrand: undefined;
+
+    constructor(
+        private readonly context: vscode.ExtensionContext,
+        @ILogService private readonly logService: ILogService,
+        @IConfigurationService private readonly configService: IConfigurationService,
+        @IFileSystemService private readonly fileSystemService: IFileSystemService
+    ) {
+        this.logService.info('[ClaudeSdkService] 已初始化');
+    }
+
+    /**
+     * 调用 Claude SDK 进行查询
+     */
+    async query(params: SdkQueryParams): Promise<Query> {
+        const { inputStream, resume, canUseTool, model, cwd, permissionMode, maxThinkingTokens, onStderrError } = params;
+
+        this.logService.info('========================================');
+        this.logService.info('ClaudeSdkService.query() 开始调用');
+        this.logService.info('========================================');
+        this.logService.info(`📋 输入参数:`);
+        this.logService.info(`  - model: ${model}`);
+        this.logService.info(`  - cwd: ${cwd}`);
+        this.logService.info(`  - permissionMode: ${permissionMode}`);
+        this.logService.info(`  - resume: ${resume}`);
+        this.logService.info(`  - maxThinkingTokens: ${maxThinkingTokens ?? 'undefined'}`);
+
+        // 参数转换
+        const modelParam = model === null ? "default" : model;
+        const permissionModeParam = permissionMode as PermissionMode;
+        const cwdParam = cwd;
+
+        this.logService.info(`🔄 参数转换:`);
+        this.logService.info(`  - modelParam: ${modelParam}`);
+        this.logService.info(`  - permissionModeParam: ${permissionModeParam}`);
+        this.logService.info(`  - cwdParam: ${cwdParam}`);
+
+        // 获取 CLI 路径（避免 TypeScript 类型推断问题）
+        const cliPath = await this.getClaudeExecutablePath();
+
+        // 获取环境变量
+        const env = await this.getMergedEnvironmentVariables();
+
+        // 记录环境变量
+        this.logService.info(`🌍 环境变量 (env):`);
+        if (env && Object.keys(env).length > 0) {
+            for (const [key, value] of Object.entries(env)) {
+                this.logService.info(`  - ${key}: ${value}`);
+            }
+        } else {
+            this.logService.info(`  (empty)`);
+        }
+
+        // 记录 CLI 路径
+        const ywcoderPath = path.join(os.homedir(), '.claude', 'ywcoder.json');
+        this.logService.info(`📂 CLI 可执行文件与配置:`);
+        this.logService.info(`  - CLI Path: ${cliPath}`);
+        this.logService.info(`  - Settings Path: ${ywcoderPath}`);
+
+        // 检查 CLI 是否存在
+        if (!(await this.fileSystemService.pathExists(cliPath))) {
+          this.logService.error(`❌ Claude CLI not found at: ${cliPath}`);
+          throw new Error(`Claude CLI not found at: ${cliPath}`);
+        }
+        this.logService.info(`  ✓ CLI 文件存在`);
+
+        // 检查文件权限
+        try {
+          const stats = await this.fileSystemService.stat(vscode.Uri.file(cliPath));
+          const isExec = await this.fileSystemService.isExecutable(cliPath);
+          this.logService.info(`  - File size: ${stats.size} bytes`);
+          this.logService.info(`  - Is executable: ${isExec}`);
+        } catch (e) {
+          this.logService.warn(`  ⚠ Could not check file stats: ${e}`);
+        }
+
+        // 构建 SDK Options
+        const options: Options = {
+            // 基本参数
+            cwd: cwdParam,
+            resume: resume || undefined,
+            model: modelParam,
+            permissionMode: permissionModeParam,
+            maxThinkingTokens: maxThinkingTokens,
+
+            // CanUseTool 回调
+            canUseTool,
+
+            // 日志回调 - 捕获 SDK 进程的所有标准错误输出
+            stderr: (data: string) => {
+                const timestamp = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+                const lines = data.trim().split('\n');
+
+                for (const line of lines) {
+                    if (!line.trim()) continue;
+
+                    // 检测错误级别
+                    const lowerLine = line.toLowerCase();
+                    let level = 'INFO';
+
+                    if (lowerLine.includes('error') || lowerLine.includes('failed') || lowerLine.includes('exception')) {
+                        level = 'ERROR';
+                    } else if (lowerLine.includes('warn') || lowerLine.includes('warning')) {
+                        level = 'WARN';
+                    } else if (lowerLine.includes('exit') || lowerLine.includes('terminated')) {
+                        level = 'EXIT';
+                    }
+
+                    this.logService.info(`[${timestamp}] [SDK ${level}] ${line}`);
+
+                    // 检测流式请求回退错误：
+                    // "Error streaming, falling back to non-streaming mode: {statusCode} {json}"
+                    if (onStderrError) {
+                        const streamingErrorMatch = line.match(
+                            /Error streaming, falling back to non-streaming mode:\s*(\d+)\s*(.*)/
+                        );
+                        if (streamingErrorMatch) {
+                            const statusCode = streamingErrorMatch[1];
+                            const rest = streamingErrorMatch[2];
+
+                            let message = `HTTP ${statusCode}`;
+                            let errorType = 'unknown';
+                            try {
+                                const jsonMatch = rest.match(/(\{[\s\S]*\})/);
+                                if (jsonMatch) {
+                                    const parsed = JSON.parse(jsonMatch[1]);
+                                    const err = parsed.error || parsed;
+                                    message = err.message || err.msg || message;
+                                    errorType = err.type || err.code || errorType;
+                                }
+                            } catch { /* non-JSON tail, use statusCode as message */ }
+
+                            onStderrError({ statusCode, message, type: errorType, raw: line });
+                        }
+                    }
+                }
+            },
+
+            // 环境变量
+            env,
+
+            // 系统提示追加
+            systemPrompt: {
+                type: 'preset',
+                preset: 'claude_code',
+                append: VS_CODE_APPEND_PROMPT
+            },
+
+            // Hooks
+            hooks: {
+                // PreToolUse: 工具执行前
+                PreToolUse: [{
+                    matcher: "Edit|Write|MultiEdit",
+                    hooks: [async (input, toolUseID, options) => {
+                        if ('tool_name' in input) {
+                            this.logService.info(`[Hook] PreToolUse: ${input.tool_name}`);
+                        }
+                        return { continue: true };
+                    }]
+                }] as HookCallbackMatcher[],
+                // PostToolUse: 工具执行后
+                PostToolUse: [{
+                    matcher: "Edit|Write|MultiEdit",
+                    hooks: [async (input, toolUseID, options) => {
+                        if ('tool_name' in input) {
+                            this.logService.info(`[Hook] PostToolUse: ${input.tool_name}`);
+                        }
+                        return { continue: true };
+                    }]
+                }] as HookCallbackMatcher[]
+            },
+
+            // CLI 可执行文件路径
+            pathToClaudeCodeExecutable: cliPath,
+
+            // 额外参数
+            // --settings 指向 ywcoder.json，Profile 切换通过 ConfigurationService 同步内容到此文件
+            // CLI 会监听此文件变化，实现热更新
+            extraArgs: {
+              'debug': null,
+              'debug-to-stderr': null,
+              // 'enable-auth-status': null,
+              'settings': path.join(os.homedir(), '.claude', 'ywcoder.json'),
+            } as Record<string, string | null>,
+
+            // 设置源 (控制 CLAUDE.md 和 settings.json 的加载)
+            // 'user': ~/.claude/settings.json, ~/.claude/CLAUDE.md
+            // 'project': .claude/settings.json, .claude/CLAUDE.md
+            // 'local': .claude/settings.local.json, CLAUDE.local.md
+            // 注意: ywcoder.json 通过 extraArgs.settings 传入，作为 flagSettings 优先级最高
+            settingSources: ['user', 'project', 'local'],
+
+            includePartialMessages: true
+        };
+
+        // 调用 SDK
+        this.logService.info('');
+        this.logService.info('🚀 准备调用 Claude Agent SDK');
+        this.logService.info('----------------------------------------');
+
+        // 设置入口点环境变量
+        process.env.CLAUDE_CODE_ENTRYPOINT = 'claude-vscode';
+        this.logService.info(`🔧 环境变量:`);
+        this.logService.info(`  - CLAUDE_CODE_ENTRYPOINT: ${process.env.CLAUDE_CODE_ENTRYPOINT}`);
+        const customEnvVars = await this.configService.getEnvironmentVariables();
+        for (const [key, value] of Object.entries(customEnvVars)) {
+            this.logService.info(`  - ${key}: ${value}`);
+        }
+
+        this.logService.info('');
+        this.logService.info('📦 导入 SDK...');
+
+        try {
+            // 调用 SDK query() 函数
+            const { query } = await import('@anthropic-ai/claude-agent-sdk');
+
+            this.logService.info(`  - Options: [已配置参数 ${Object.keys(options).join(', ')}]`);
+
+            const result = query({ prompt: inputStream, options });
+            return result;
+        } catch (error) {
+            this.logService.error('');
+            this.logService.error('❌❌❌ SDK 调用失败 ❌❌❌');
+            this.logService.error(`Error: ${error}`);
+            if (error instanceof Error) {
+                this.logService.error(`Message: ${error.message}`);
+                this.logService.error(`Stack: ${error.stack}`);
+            }
+            this.logService.error('========================================');
+            throw error;
+        }
+    }
+
+    /**
+     * 一次性探测 SDK 能力并立即释放（轻量级版本）
+     */
+    async probe(params: SdkProbeParams): Promise<SdkProbeResult> {
+        const capabilities = Array.from(new Set(params.capabilities ?? [])).filter(Boolean);
+        if (capabilities.length === 0) {
+            return { data: {} };
+        }
+
+        const timeoutMs = Math.max(1000, params.timeoutMs ?? 10000);
+        const data: Record<string, any> = {};
+        const errors: Record<string, string> = {};
+
+        let query: Query | undefined;
+        let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+        try {
+            await Promise.race([
+                (async () => {
+                    // 使用轻量级查询
+                    query = await this.queryLite(params.cwd);
+
+                    for (const capability of capabilities) {
+                        const handler = SDK_PROBE_CAPABILITIES[capability];
+                        if (!handler) {
+                            errors[capability] = 'Unsupported capability';
+                            continue;
+                        }
+
+                        try {
+                            data[capability] = await handler(query);
+                        } catch (error) {
+                            errors[capability] = error instanceof Error ? error.message : String(error);
+                        }
+                    }
+                })(),
+                new Promise<void>((_, reject) => {
+                    timeoutId = setTimeout(() => {
+                        reject(new Error('SDK probe timed out'));
+                    }, timeoutMs);
+                })
+            ]);
+        } catch (error) {
+            if (query) {
+                try {
+                    await this.interrupt(query);
+                } catch {
+                    // 静默忽略中断错误
+                }
+            }
+            throw error;
+        } finally {
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+            }
+            if (query?.return) {
+                try {
+                    await query.return();
+                } catch {
+                    // 静默忽略关闭错误
+                }
+            }
+        }
+
+        // 打印探测结果
+        // this.logService.info(`[Probe] 结果: ${JSON.stringify(data, null, 2)}`);
+
+        return {
+            data,
+            errors: Object.keys(errors).length ? errors : undefined
+        };
+    }
+
+    /**
+     * 轻量级 SDK 查询（仅用于 probe）
+     * 不输出日志，不加载 hooks，最小化配置
+     */
+    private async queryLite(cwd: string): Promise<Query> {
+        const inputStream = new AsyncStream<SDKUserMessage>();
+
+        // 立即关闭输入流（probe 不需要发送消息）
+        inputStream.done();
+
+        const cliPath = await this.getClaudeExecutablePath();
+
+        const options: Options = {
+            // 最小化配置
+            cwd,
+            model: 'default',
+            permissionMode: 'default' as PermissionMode,
+            maxThinkingTokens: 0,
+
+            // 权限回调（直接拒绝）
+            canUseTool: async () => ({
+                behavior: 'deny' as const,
+                message: 'SDK probe only'
+            }),
+
+            // 不加载任何设置源
+            settingSources: [],
+
+            // 不输出 stderr
+            stderr: () => {},
+
+            // CLI 路径
+            pathToClaudeCodeExecutable: cliPath,
+
+            // 最小化额外参数（移除 debug 标志）
+            extraArgs: {},
+
+            // 不包含 partial messages
+            includePartialMessages: false,
+
+            // 不加载 hooks
+            hooks: {}
+        };
+
+        const { query } = await import('@anthropic-ai/claude-agent-sdk');
+        return query({ prompt: inputStream, options });
+    }
+
+    /**
+     * 中断正在进行的查询
+     */
+    async interrupt(query: Query): Promise<void> {
+        try {
+            this.logService.info('🛑 中断 Claude SDK 查询');
+            await query.interrupt();
+            this.logService.info('✓ 查询已中断');
+        } catch (error) {
+            this.logService.error(`❌ 中断查询失败: ${error}`);
+            throw error;
+        }
+    }
+
+    /**
+     * 获取合并后的环境变量 (process.env + custom)
+     */
+    private async getMergedEnvironmentVariables(): Promise<Record<string, string>> {
+        const customVars = await this.configService.getEnvironmentVariables();
+
+        // 安全合并 process.env (过滤 undefined)
+        const env: Record<string, string> = {
+          // CLAUDE_CODE_ENABLE_ASK_USER_QUESTION_TOOL: '1'
+          // ANTHROPIC_BASE_URL: 'https://anyrouter.top',
+          // ANTHROPIC_AUTH_TOKEN: 'sk-PNPwKAii2iEHlPxERYW8zt4xMH60O9iHVFJRbg7z9rnur8HG',
+        };
+        Object.entries(process.env).forEach(([key, value]) => {
+            if (value !== undefined) {
+                env[key] = value;
+            }
+        });
+
+      return { ...env, ...customVars };
+    }
+
+    /**
+     * 获取 Claude CLI 可执行文件路径
+     */
+    private async getClaudeExecutablePath(): Promise<string> {
+        const binaryName = process.platform === 'win32' ? 'claude.exe' : 'claude';
+        const arch = process.arch;
+
+        const nativePath = this.context.asAbsolutePath(
+            `resources/native-binaries/${process.platform}-${arch}/${binaryName}`
+        );
+
+        if (await this.fileSystemService.pathExists(nativePath)) {
+            return nativePath;
+        }
+
+        return this.context.asAbsolutePath('resources/claude-code/cli.js');
+    }
+}
