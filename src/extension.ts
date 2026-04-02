@@ -39,7 +39,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 		// Register WebView View Provider
 		const webviewProvider = vscode.window.registerWebviewViewProvider(
-			'kimi.chatView',
+			'ywcoder.chatView',
 			webViewService,
 			{
 				webviewOptions: {
@@ -65,13 +65,13 @@ export function activate(context: vscode.ExtensionContext) {
 		// Register disposables
 		context.subscriptions.push(webviewProvider);
 		context.subscriptions.push(
-			vscode.commands.registerCommand('kimi.openSettings', async () => {
+			vscode.commands.registerCommand('ywcoder.openSettings', async () => {
 				await instantiationService.invokeFunction(accessorInner => {
 					const webViewServiceInner = accessorInner.get(IWebViewService);
 					const logServiceInner = accessorInner.get(ILogService);
 					try {
 						// Settings 页为单实例，不传 instanceId，使用 page 作为 key
-						webViewServiceInner.openEditorPage('settings', 'Kimi Settings');
+						webViewServiceInner.openEditorPage('settings', 'YW Coder Settings');
 					} catch (error) {
 						logServiceInner.error('[Command] 打开 Settings 页面失败', error);
 					}
@@ -85,8 +85,8 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	// 6. Register commands
-	const showChatCommand = vscode.commands.registerCommand('kimi.showChat', () => {
-		vscode.commands.executeCommand('kimi.chatView.focus');
+	const showChatCommand = vscode.commands.registerCommand('ywcoder.showChat', () => {
+		vscode.commands.executeCommand('ywcoder.chatView.focus');
 	});
 
 	context.subscriptions.push(showChatCommand);

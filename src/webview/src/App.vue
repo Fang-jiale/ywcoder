@@ -45,7 +45,7 @@ import { RuntimeKey } from './composables/runtimeContext';
 
 type PageName = 'sessions' | 'chat' | 'settings';
 
-const bootstrap = window.KIMI_BOOTSTRAP;
+const bootstrap = window.YWCODE_BOOTSTRAP;
 const initialPage = (bootstrap?.page as PageName | undefined) ?? 'chat';
 const currentPage = ref<PageName>(initialPage);
 const pageAnimation = ref({ opacity: 1, x: 0 });

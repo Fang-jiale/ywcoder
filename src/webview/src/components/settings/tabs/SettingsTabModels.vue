@@ -7,7 +7,7 @@
         <SettingsItem
           setting-key="model"
           label="默认模型"
-          description="Kimi 会话的模型别名或完整模型 ID"
+          description="YW Coder 会话的模型别名或完整模型 ID"
         >
           <template #default="{ effectiveValue, update }">
             <Dropdown
@@ -330,8 +330,8 @@ const MODEL_ALIASES = [
   { label: 'Haiku', value: 'haiku', description: 'Current Haiku model' },
 ]
 
-// ── Custom Models & Disabled Models (Pipeline B: ~/.kimi.json) ──
-// Stored in extension config, not Kimi settings.json
+// ── Custom Models & Disabled Models (Pipeline B: ~/.ywcoder.json) ──
+// Stored in extension config, not YW Coder settings.json
 
 interface CustomModel {
   id: string

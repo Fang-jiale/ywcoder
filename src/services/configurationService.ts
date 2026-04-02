@@ -37,7 +37,7 @@ export interface ConfigurationInspectResult<T> {
 }
 
 /**
- * Extension-specific configuration stored in ~/.kimi.json
+ * Extension-specific configuration stored in ~/.ywcoder.json
  * Independent of CLI configuration, not affected by Profile switching
  */
 export interface ExtensionConfig {
@@ -77,7 +77,7 @@ export interface IConfigurationService {
   inspect<T>(key: string): Promise<ConfigurationInspectResult<T>>;
 
   // Update specific layer
-  // Triggers dual-write to kimi.json for critical keys
+  // Triggers dual-write to ywcoder.json for critical keys
   updateSetting(key: string, value: any, target: 'local' | 'shared' | 'global'): Promise<void>;
 
   // Reset specific layer
@@ -105,7 +105,7 @@ export interface IConfigurationService {
   getManagedSettings(): Promise<any>;
   getCliArgs(): Promise<any>;
 
-  // Extension-specific configuration (~/.kimi.json)
+  // Extension-specific configuration (~/.ywcoder.json)
   getExtensionConfig(): Promise<ExtensionConfig>;
   updateExtensionConfig<K extends keyof ExtensionConfig>(key: K, value: ExtensionConfig[K]): Promise<void>;
 }
@@ -146,7 +146,7 @@ export class ConfigurationService implements IConfigurationService {
     "skipWebFetchPreflight": true
   };
 
-  // Default template for extension config (~/.kimi.json)
+  // Default template for extension config (~/.ywcoder.json)
   private readonly _extensionConfigDefaults: ExtensionConfig = {
     activeProfile: null,
     defaultPermissionMode: 'default',
@@ -170,13 +170,13 @@ export class ConfigurationService implements IConfigurationService {
     // Load CC schema defaults from bundled schema file
     this.loadSchemaDefaults();
 
-    // Ensure extension config (~/.kimi.json) exists
+    // Ensure extension config (~/.ywcoder.json) exists
     await this.ensureExtensionConfigExists();
 
-    // Ensure CLI config (~/.claude/kimi.json) exists with default template
-    await this.ensureKimiExists();
+    // Ensure CLI config (~/.claude/ywcoder.json) exists with default template
+    await this.ensureYWCoderExists();
 
-    // Load active profile from extension config (~/.kimi.json)
+    // Load active profile from extension config (~/.ywcoder.json)
     const extensionConfig = await this.readJsonFile(this.getExtensionConfigPath());
     this._activeProfile = extensionConfig.activeProfile ?? null;
 
@@ -250,19 +250,19 @@ export class ConfigurationService implements IConfigurationService {
   // --- Path Helpers ---
 
   /**
-   * Extension-specific config path: ~/.kimi.json
+   * Extension-specific config path: ~/.ywcoder.json
    * Independent of CLI configuration
    */
   private getExtensionConfigPath(): string {
-    return path.join(os.homedir(), '.kimi.json');
+    return path.join(os.homedir(), '.ywcoder.json');
   }
 
   /**
-   * CLI config path: ~/.claude/kimi.json
+   * CLI config path: ~/.claude/ywcoder.json
    * Synced with active Profile
    */
-  private getKimiConfigPath(): string {
-    return path.join(os.homedir(), '.claude', 'kimi.json');
+  private getYWCoderConfigPath(): string {
+    return path.join(os.homedir(), '.claude', 'ywcoder.json');
   }
 
   // Mock implementation for Managed Settings path
@@ -369,7 +369,7 @@ export class ConfigurationService implements IConfigurationService {
   }
 
   /**
-   * Ensure extension config (~/.kimi.json) exists with default values
+   * Ensure extension config (~/.ywcoder.json) exists with default values
    */
   private async ensureExtensionConfigExists(): Promise<void> {
     const configPath = this.getExtensionConfigPath();
@@ -379,33 +379,33 @@ export class ConfigurationService implements IConfigurationService {
   }
 
   /**
-   * Ensure kimi.json exists with default template
+   * Ensure ywcoder.json exists with default template
    */
-  private async ensureKimiExists(): Promise<void> {
-    const kimiPath = this.getKimiConfigPath();
-    if (!(await this.fileSystemService.pathExists(kimiPath))) {
+  private async ensureYWCoderExists(): Promise<void> {
+    const ywcoderPath = this.getYWCoderConfigPath();
+    if (!(await this.fileSystemService.pathExists(ywcoderPath))) {
       // Empty object — SDK reads ~/.claude/settings.json via userSettings layer,
-      // kimi.json only serves as flagSettings overlay for profile-specific overrides
-      await this.writeJsonFile(kimiPath, {});
+      // ywcoder.json only serves as flagSettings overlay for profile-specific overrides
+      await this.writeJsonFile(ywcoderPath, {});
     }
   }
 
   /**
-   * Sync current Profile content to kimi.json
+   * Sync current Profile content to ywcoder.json
    *
-   * kimi.json is passed to SDK via --settings flag as the flagSettings layer.
+   * ywcoder.json is passed to SDK via --settings flag as the flagSettings layer.
    * SDK already reads ~/.claude/settings.json as userSettings (lower priority).
-   * So kimi.json only needs profile-specific overrides, NOT a full copy.
+   * So ywcoder.json only needs profile-specific overrides, NOT a full copy.
    *
    * - No profile (Default): write empty object — SDK uses settings.json directly
    * - With profile: write profile file content — SDK merges over settings.json
    */
-  async syncProfileToKimi(): Promise<void> {
-    const kimiPath = this.getKimiConfigPath();
+  async syncProfileToYWCoder(): Promise<void> {
+    const ywcoderPath = this.getYWCoderConfigPath();
 
     if (!this._activeProfile) {
       // Default Profile: no overrides needed, SDK reads settings.json via userSettings
-      await this.writeJsonFile(kimiPath, {});
+      await this.writeJsonFile(ywcoderPath, {});
       return;
     }
 
@@ -418,7 +418,7 @@ export class ConfigurationService implements IConfigurationService {
       profileContent = {};
     }
 
-    await this.writeJsonFile(kimiPath, profileContent);
+    await this.writeJsonFile(ywcoderPath, profileContent);
   }
 
   // --- Loaders ---
@@ -429,7 +429,7 @@ export class ConfigurationService implements IConfigurationService {
 
   private async loadCliSettings() {
     // CLI settings layer is reserved for future use (e.g., extraArgs from SDK)
-    // Currently returns empty object as kimi.json follows standard settings.json schema
+    // Currently returns empty object as ywcoder.json follows standard settings.json schema
     return {};
   }
 
@@ -523,14 +523,14 @@ export class ConfigurationService implements IConfigurationService {
   async switchProfile(profileName: string | null): Promise<void> {
     this._activeProfile = profileName;
 
-    // Save active profile to extension config (~/.kimi.json)
+    // Save active profile to extension config (~/.ywcoder.json)
     await this.updateExtensionConfig('activeProfile', profileName);
 
     // Reload global settings from new profile
     this._globalSettings = await this.loadGlobalSettings();
 
-    // Sync profile content to kimi.json (triggers CLI hot-reload)
-    await this.syncProfileToKimi();
+    // Sync profile content to ywcoder.json (triggers CLI hot-reload)
+    await this.syncProfileToYWCoder();
   }
 
   async inspect<T>(key: string): Promise<ConfigurationInspectResult<T>> {
@@ -679,9 +679,9 @@ export class ConfigurationService implements IConfigurationService {
     // Reload in-memory caches to reflect the change
     await this.reloadAll();
 
-    // When updating global settings, sync to kimi.json for CLI hot-reload
+    // When updating global settings, sync to ywcoder.json for CLI hot-reload
     if (target === 'global') {
-      await this.syncProfileToKimi();
+      await this.syncProfileToYWCoder();
     }
   }
 
@@ -698,14 +698,14 @@ export class ConfigurationService implements IConfigurationService {
       // Reload in-memory caches
       await this.reloadAll();
 
-      // When resetting global settings, sync to kimi.json for CLI hot-reload
+      // When resetting global settings, sync to ywcoder.json for CLI hot-reload
       if (target === 'global') {
-        await this.syncProfileToKimi();
+        await this.syncProfileToYWCoder();
       }
     }
   }
 
-  // --- Extension Config API (~/.kimi.json) ---
+  // --- Extension Config API (~/.ywcoder.json) ---
 
   /**
    * Get extension-specific configuration

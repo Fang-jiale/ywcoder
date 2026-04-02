@@ -1,7 +1,7 @@
 {
-  "name": "kimi",
-  "displayName": "Kimi",
-  "description": "Kimi - AI 编程助手，集成于 VSCode，提供智能代码补全、代码分析、重构建议等功能。",
+  "name": "ywcoder",
+  "displayName": "YW Coder",
+  "description": "YW Coder - AI 编程助手，集成于 VSCode，提供智能代码补全、代码分析、重构建议等功能。",
   "version": "0.3.9",
   "publisher": "yw-support",
   "engines": {
@@ -19,14 +19,14 @@
   "main": "./dist/extension.cjs",
   "contributes": {
     "configuration": {
-      "title": "Kimi",
+      "title": "YW Coder",
       "properties": {
-        "kimi.selectedModel": {
+        "ywcoder.selectedModel": {
           "type": "string",
           "default": "default",
-          "description": "The AI model for Kimi"
+          "description": "The AI model for YW Coder"
         },
-        "kimi.environmentVariables": {
+        "ywcoder.environmentVariables": {
           "type": "array",
           "items": {
             "type": "object",
@@ -53,38 +53,38 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "kimi-chat-sidebar",
-          "title": "Kimi",
+          "id": "ywcoder-chat-sidebar",
+          "title": "YW Coder",
           "icon": "resources/claude-logo.svg"
         }
       ]
     },
     "views": {
-      "kimi-chat-sidebar": [
+      "ywcoder-chat-sidebar": [
         {
           "icon": "resources/claude-logo.svg",
           "type": "webview",
-          "id": "kimi.chatView",
-          "name": "Kimi"
+          "id": "ywcoder.chatView",
+          "name": "YW Coder"
         }
       ]
     },
     "commands": [
       {
-        "command": "kimi.showChat",
-        "title": "Show Kimi"
+        "command": "ywcoder.showChat",
+        "title": "Show YW Coder"
       },
       {
-        "command": "kimi.openSettings",
-        "title": "Kimi: Open Settings",
+        "command": "ywcoder.openSettings",
+        "title": "YW Coder: Open Settings",
         "icon": "$(gear)"
       }
     ],
     "menus": {
       "view/title": [
         {
-          "command": "kimi.openSettings",
-          "when": "view == kimi.chatView",
+          "command": "ywcoder.openSettings",
+          "when": "view == ywcoder.chatView",
           "group": "navigation"
         }
       ]

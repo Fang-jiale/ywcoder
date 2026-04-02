@@ -760,7 +760,7 @@ export class ClaudeAgentService implements IClaudeAgentService {
             case "delete_profile":
                 return handleDeleteProfile(request, this.handlerContext);
 
-            // 扩展配置 (~/.kimi.json)
+            // 扩展配置 (~/.ywcoder.json)
             case "get_extension_config":
                 return handleGetExtensionConfig(request, this.handlerContext);
 

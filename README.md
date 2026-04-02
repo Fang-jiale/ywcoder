@@ -1,13 +1,13 @@
-# Kimi - 智能编程助手
+# YW Coder - 智能编程助手
 
-Kimi 是一款专为开发者打造的智能编程助手，深度集成于 VSCode，提供全方位的代码编写支持。
+YW Coder 是一款专为开发者打造的智能编程助手，深度集成于 VSCode，提供全方位的代码编写支持。
 
 ![VS Code Extension](https://img.shields.io/badge/VS%20Code-Extension-blue?logo=visual-studio-code)
 ![Built with TypeScript](https://img.shields.io/badge/Built%20with-TypeScript-blue?logo=typescript)
 
 ## 产品概述
 
-Kimi 将先进的 AI 能力融入 VSCode 编辑器，为开发者提供智能化的编程体验。无论是代码补全、错误排查、重构建议，还是复杂逻辑分析，Kimi 都能提供专业、高效的支持。
+YW Coder 将先进的 AI 能力融入 VSCode 编辑器，为开发者提供智能化的编程体验。无论是代码补全、错误排查、重构建议，还是复杂逻辑分析，YW Coder 都能提供专业、高效的支持。
 
 ## 核心功能
 
@@ -24,7 +24,7 @@ Kimi 将先进的 AI 能力融入 VSCode 编辑器，为开发者提供智能化
 
 ### 方式一：从 VSIX 安装
 
-1. 下载最新版本的 `kimi-*.vsix` 文件
+1. 下载最新版本的 `ywcoder-*.vsix` 文件
 2. 在 VSCode 中打开扩展面板（`Ctrl+Shift+X`）
 3. 点击右上角的 `...`，选择 **"从 VSIX 安装..."**
 4. 选择下载的 `.vsix` 文件
@@ -34,7 +34,7 @@ Kimi 将先进的 AI 能力融入 VSCode 编辑器，为开发者提供智能化
 ```bash
 # 克隆仓库
 git clone https://github.com/Fang-jiale/kimi.git
-cd kimi
+cd ywcoder
 
 # 安装依赖
 npm install
@@ -86,10 +86,10 @@ npm run typecheck:all
 
 ## 使用说明
 
-1. 安装后，在 VSCode 左侧活动栏点击 **Kimi** 图标
+1. 安装后，在 VSCode 左侧活动栏点击 **YW Coder** 图标
 2. 点击 **"新建会话"** 开始对话
-3. 在输入框中输入问题或需求，Kimi 将实时响应
-4. 对于涉及文件修改的操作，Kimi 会请求确认后执行
+3. 在输入框中输入问题或需求，YW Coder 将实时响应
+4. 对于涉及文件修改的操作，YW Coder 会请求确认后执行
 
 ## 系统要求
 
@@ -98,15 +98,15 @@ npm run typecheck:all
 
 ## 配置说明
 
-Kimi 的配置文件位于：
-- 扩展配置：`~/.kimi.json`
+YW Coder 的配置文件位于：
+- 扩展配置：`~/.ywcoder.json`
 - AI 引擎配置：`~/.claude/settings.json`
 
 可在 VSCode 设置中搜索 `kimi` 进行可视化配置。
 
 ## 技术架构
 
-Kimi 采用模块化架构设计：
+YW Coder 采用模块化架构设计：
 - **前端界面** - Vue 3 + Vite，流畅的交互体验
 - **扩展核心** - TypeScript + VSCode API，深度集成编辑器
 - **AI 引擎** - 自研智能分析引擎，支持多模型接入
@@ -117,4 +117,4 @@ AGPL-3.0
 
 ---
 
-**Kimi** - 让编程更智能，让开发更高效
+**YW Coder** - 让编程更智能，让开发更高效

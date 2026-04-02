@@ -325,7 +325,7 @@ const updateCleanupPeriod = (value: number) => {
   updateSetting('cleanupPeriodDays', value, 'global');
 };
 
-// ── Extension Config (Pipeline B — ~/.kimi.json) ──
+// ── Extension Config (Pipeline B — ~/.ywcoder.json) ──
 const defaultPermissionMode = ref('default');
 const defaultThinkingLevel = ref('default_on');
 
