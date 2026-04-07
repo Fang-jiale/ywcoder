@@ -61,7 +61,7 @@ export interface SessionContext {
 }
 
 export class Session {
-  private readonly claudeChannelId = signal<string | undefined>(undefined);
+  private readonly ywcoderChannelId = signal<string | undefined>(undefined);
   private currentConnectionPromise?: Promise<BaseTransport>;
   private lastSentSelection?: SelectionRange;
   private effectCleanup?: () => void;
@@ -90,9 +90,9 @@ export class Session {
     contextWindow: 200000
   });
 
-  readonly claudeConfig = computed(() => {
+  readonly ywcoderConfig = computed(() => {
     const conn = this.connection();
-    return conn?.claudeConfig?.();
+    return conn?.ywcoderConfig?.();
   });
 
   readonly config = computed(() => {
@@ -102,7 +102,7 @@ export class Session {
 
   readonly permissionRequests = computed<PermissionRequest[]>(() => {
     const conn = this.connection();
-    const channelId = this.claudeChannelId();
+    const channelId = this.ywcoderChannelId();
     if (!conn || !channelId) {
       return [];
     }
@@ -166,7 +166,7 @@ export class Session {
 
   async preloadConnection(): Promise<void> {
     await this.getConnection();
-    await this.launchClaude();
+    await this.launchYwCoder();
   }
 
   async loadFromServer(): Promise<void> {
@@ -187,7 +187,7 @@ export class Session {
       // 移除 ReadCoalesced 合并逻辑
       // this.messages(mergeConsecutiveReadMessages(accumulator));
       this.messages(accumulator);
-      await this.launchClaude();
+      await this.launchYwCoder();
     } finally {
       this.isLoading(false);
     }
@@ -205,7 +205,7 @@ export class Session {
     const isSlash = this.isSlashCommand(input);
 
     // 启动 channel（确保已带上当前 thinkingLevel）
-    await this.launchClaude();
+    await this.launchYwCoder();
 
     const shouldIncludeSelection = includeSelection && !isSlash;
     let selectionPayload: SelectionRange | undefined;
@@ -230,7 +230,7 @@ export class Session {
     this.busy(true);
 
     try {
-      const channelId = this.claudeChannelId();
+      const channelId = this.ywcoderChannelId();
       if (!channelId) throw new Error('No active channel');
       connection.sendInput(channelId, userMessage, false);
     } catch (error) {
@@ -239,15 +239,15 @@ export class Session {
     }
   }
 
-  async launchClaude(): Promise<string> {
-    const existingChannel = this.claudeChannelId();
+  async launchYwCoder(): Promise<string> {
+    const existingChannel = this.ywcoderChannelId();
     if (existingChannel) {
       return existingChannel;
     }
 
     this.error(undefined);
     const channelId = Math.random().toString(36).slice(2);
-    this.claudeChannelId(channelId);
+    this.ywcoderChannelId(channelId);
 
     const connection = await this.getConnection();
 
@@ -263,7 +263,7 @@ export class Session {
       this.thinkingLevel(connection.config()?.thinkingLevel || 'default_on');
     }
 
-    const stream = connection.launchClaude(
+    const stream = connection.launchYwCoder(
       channelId,
       this.sessionId() ?? undefined,
       this.cwd() ?? undefined,
@@ -277,19 +277,19 @@ export class Session {
   }
 
   async interrupt(): Promise<void> {
-    const channelId = this.claudeChannelId();
+    const channelId = this.ywcoderChannelId();
     if (!channelId) {
       return;
     }
     const connection = await this.getConnection();
-    connection.interruptClaude(channelId);
+    connection.interruptYwCoder(channelId);
   }
 
-  async restartClaude(): Promise<void> {
+  async restartYwCoder(): Promise<void> {
     await this.interrupt();
-    this.claudeChannelId(undefined);
+    this.ywcoderChannelId(undefined);
     this.busy(false);
-    await this.launchClaude();
+    await this.launchYwCoder();
   }
 
   async listFiles(pattern?: string, signal?: AbortSignal): Promise<any> {
@@ -301,7 +301,7 @@ export class Session {
     const previous = this.permissionMode();
     this.permissionMode(mode);
 
-    const channelId = this.claudeChannelId();
+    const channelId = this.ywcoderChannelId();
     if (!channelId || !applyToConnection) {
       return true;
     }
@@ -317,7 +317,7 @@ export class Session {
     const previous = this.modelSelection();
     this.modelSelection(model.value);
 
-    const channelId = this.claudeChannelId();
+    const channelId = this.ywcoderChannelId();
     if (!channelId) {
       return true;
     }
@@ -336,7 +336,7 @@ export class Session {
   async setThinkingLevel(level: string): Promise<void> {
     this.thinkingLevel(level);
 
-    const channelId = this.claudeChannelId();
+    const channelId = this.ywcoderChannelId();
     if (!channelId) {
       return;
     }
@@ -347,7 +347,7 @@ export class Session {
 
   async getMcpServers(): Promise<any> {
     const connection = await this.getConnection();
-    const channelId = await this.launchClaude();
+    const channelId = await this.launchYwCoder();
     return connection.getMcpServers(channelId);
   }
 
@@ -364,7 +364,7 @@ export class Session {
 
     return connection.permissionRequested.add((request) => {
       // 动态获取当前 channelId，避免闭包捕获旧值
-      if (request.channelId === this.claudeChannelId()) {
+      if (request.channelId === this.ywcoderChannelId()) {
         callback(request);
       }
     });
@@ -385,7 +385,7 @@ export class Session {
       this.error(error instanceof Error ? error.message : String(error));
       this.busy(false);
     } finally {
-      this.claudeChannelId(undefined);
+      this.ywcoderChannelId(undefined);
     }
   }
 

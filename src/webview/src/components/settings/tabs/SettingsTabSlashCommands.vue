@@ -1,10 +1,10 @@
 <template>
-  <SettingsTab title="Slash Commands">
+  <SettingsTab title="斜杠命令">
     <SettingsSection>
-      <SettingsCell label="Custom Commands">
-        <template #description> Manage custom slash commands (.claude/commands) </template>
+      <SettingsCell label="自定义命令">
+        <template #description> 管理自定义斜杠命令 (.ywcoder/commands) </template>
         <template #trailing>
-          <div class="text-xs text-(--cursor-text-secondary)">Coming Soon</div>
+          <div class="text-xs text-(--cursor-text-secondary)">即将推出</div>
         </template>
       </SettingsCell>
     </SettingsSection>

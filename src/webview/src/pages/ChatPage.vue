@@ -25,12 +25,12 @@
           <template v-if="messages.length === 0">
             <div v-if="isBusy" class="emptyState">
               <div class="emptyWordmark">
-                <ClaudeWordmark class="emptyWordmarkSvg" />
+                <YwCoderWordmark class="emptyWordmarkSvg" />
               </div>
             </div>
             <div v-else class="emptyState">
               <div class="emptyWordmark">
-                <ClaudeWordmark class="emptyWordmarkSvg" />
+                <YwCoderWordmark class="emptyWordmarkSvg" />
               </div>
               <RandomTip :platform="platform" />
             </div>
@@ -94,7 +94,7 @@
   import ChatInputBox from '../components/ChatInputBox.vue';
   import PermissionRequestModal from '../components/PermissionRequestModal.vue';
   import Spinner from '../components/Messages/WaitingIndicator.vue';
-  import ClaudeWordmark from '../components/ClaudeWordmark.vue';
+  import YwCoderWordmark from '../components/YwCoderWordmark.vue';
   import RandomTip from '../components/RandomTip.vue';
   import MessageRenderer from '../components/Messages/MessageRenderer.vue';
   import { useKeybinding } from '../utils/useKeybinding';
@@ -306,10 +306,10 @@
   const unregisterToggle = runtime.appContext.commandRegistry.registerAction(
     {
       id: 'permissionMode.toggle',
-      label: 'Toggle Permission Mode',
-      description: 'Cycle permission mode in fixed order'
+      label: '切换权限模式',
+      description: '按固定顺序循环切换权限模式'
     },
-    'App Shortcuts',
+    '应用快捷键',
     () => {
       togglePermissionMode();
     }

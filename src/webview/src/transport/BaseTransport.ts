@@ -6,7 +6,7 @@ import type { PermissionResult, PermissionMode } from "@anthropic-ai/claude-agen
 import type {
   ExtensionRequestResponse,
   ExtensionToWebViewMessage,
-  GetClaudeStateResponse,
+  GetYwCoderStateResponse,
   InitResponse,
   RequestMessage,
   SdkProbeResponse,
@@ -32,7 +32,7 @@ export abstract class BaseTransport {
   readonly isVisible = signal(true);
   readonly permissionRequests = signal<PermissionRequest[]>([]);
   readonly config = signal<InitResponse["state"] | undefined>(undefined);
-  readonly claudeConfig = signal<GetClaudeStateResponse["config"] | undefined>(undefined);
+  readonly ywcoderConfig = signal<GetYwCoderStateResponse["config"] | undefined>(undefined);
   private initPromise?: Promise<void>;
   private initialized = false;
 
@@ -91,14 +91,14 @@ export abstract class BaseTransport {
       thinkingLevel: initResponse.state.thinkingLevel,
     } as InitResponse["state"]);
 
-    const claudeState = await this.sendRequest<GetClaudeStateResponse>({
-      type: "get_claude_state",
+    const ywcoderState = await this.sendRequest<GetYwCoderStateResponse>({
+      type: "get_ywcoder_state",
     });
-    this.claudeConfig(claudeState.config);
+    this.ywcoderConfig(ywcoderState.config);
     this.state("connected");
   }
 
-  launchClaude(
+  launchYwCoder(
     channelId: string,
     resume?: string,
     cwd?: string,
@@ -109,7 +109,7 @@ export abstract class BaseTransport {
     const queue = new AsyncQueue<any>();
     this.streams.set(channelId, queue);
     this.send({
-      type: "launch_claude",
+      type: "launch_ywcoder",
       channelId,
       resume,
       cwd,
@@ -124,8 +124,8 @@ export abstract class BaseTransport {
     this.send({ type: "io_message", channelId, message, done });
   }
 
-  interruptClaude(channelId: string): void {
-    this.send({ type: "interrupt_claude", channelId });
+  interruptYwCoder(channelId: string): void {
+    this.send({ type: "interrupt_ywcoder", channelId });
   }
 
   openFile(filePath: string, location?: any): Promise<any> {
@@ -213,8 +213,8 @@ export abstract class BaseTransport {
   renameTab(title: string): Promise<any> {
     return this.sendRequest({ type: "rename_tab", title } as any);
   }
-  openClaudeInTerminal(): Promise<any> {
-    return this.sendRequest({ type: "open_claude_in_terminal" });
+  openYwCoderInTerminal(): Promise<any> {
+    return this.sendRequest({ type: "open_ywcoder_in_terminal" });
   }
   openURL(url: string): void {
     void this.sendRequest({ type: "open_url", url });
@@ -414,7 +414,7 @@ export abstract class BaseTransport {
           platform: req.state.platform,
           thinkingLevel: req.state.thinkingLevel,
         } as InitResponse["state"]);
-        this.claudeConfig(req.config);
+        this.ywcoderConfig(req.config);
         break;
       }
       case "extension_config_changed": {

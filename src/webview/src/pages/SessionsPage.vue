@@ -57,7 +57,7 @@
           <Icon icon="comment-discussion" :size="48" />
         </div>
         <h3>暂无历史会话</h3>
-        <p class="empty-hint">开始与 Claude 对话后，会话历史将出现在这里</p>
+        <p class="empty-hint">开始与 YwCoder 对话后，会话历史将出现在这里</p>
         <button class="btn-primary" @click="startNewChat">开始新对话</button>
       </div>
 
@@ -70,7 +70,7 @@
           @click="openSession(session)"
         >
             <div class="session-card-header">
-              <h3 class="session-title">{{ session.summary.value || 'New Conversation' }}</h3>
+              <h3 class="session-title">{{ session.summary.value || '新会话' }}</h3>
               <div class="session-date">{{ formatRelativeTime(session.lastModifiedTime.value) }}</div>
             </div>
 

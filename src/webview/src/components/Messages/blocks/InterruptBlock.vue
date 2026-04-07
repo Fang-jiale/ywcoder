@@ -16,7 +16,7 @@ defineProps<Props>();
 </script>
 
 <style scoped>
-/* 对齐 Claudex SystemMessage 样式 */
+/* 对齐 YwCoderx SystemMessage 样式 */
 .interrupt-block {
   display: flex;
   align-items: center;

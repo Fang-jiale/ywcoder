@@ -1,16 +1,16 @@
 /**
- * ClaudeAgentService - Claude Agent 核心编排服务
+ * AIAgentService - AI Agent 核心编排服务
  *
  * 职责：
- * 1. 管理多个 Claude 会话（channels）
+ * 1. 管理多个 AI 会话（channels）
  * 2. 接收和分发来自 Transport 的消息
- * 3. 启动和控制 Claude 会话（launchClaude, interruptClaude）
+ * 3. 启动和控制 AI 会话（launchAI, interruptAI）
  * 4. 路由请求到对应的 handlers
  * 5. RPC 请求-响应管理
  *
  * 依赖：
- * - IClaudeSdkService: SDK 调用
- * - IClaudeSessionService: 会话历史
+ * - IAISdkService: SDK 调用
+ * - ISessionService: 会话历史
  * - ILogService: 日志
  * - 其他基础服务
  */
@@ -23,8 +23,8 @@ import { IFileSystemService } from '../fileSystemService';
 import { INotificationService } from '../notificationService';
 import { ITerminalService } from '../terminalService';
 import { ITabsAndEditorsService } from '../tabsAndEditorsService';
-import { IClaudeSdkService, type SdkQueryParams } from './ClaudeSdkService';
-import { IClaudeSessionService } from './ClaudeSessionService';
+import { IAISdkService, type SdkQueryParams } from './AISdkService';
+import { ISessionService } from './SessionService';
 import { AsyncStream, ITransport } from './transport';
 import { HandlerContext } from './handlers/types';
 import { IWebViewService } from '../webViewService';
@@ -54,7 +54,7 @@ import type {
 // Handlers 导入
 import {
     handleInit,
-    handleGetClaudeState,
+    handleGetAIState,
     handleGetMcpServers,
     handleGetAssetUris,
     handleOpenFile,
@@ -86,14 +86,14 @@ import {
     handleSdkProbe,
 } from './handlers/handlers';
 
-export const IClaudeAgentService = createDecorator<IClaudeAgentService>('claudeAgentService');
+export const IAIAgentService = createDecorator<IAIAgentService>('aiAgentService');
 
 // ============================================================================
 // 类型定义
 // ============================================================================
 
 /**
- * Channel 对象：管理单个 Claude 会话
+ * Channel 对象：管理单个 AI 会话
  */
 export interface Channel {
     in: AsyncStream<SDKUserMessage>;  // 输入流：向 SDK 发送用户消息
@@ -109,9 +109,9 @@ interface RequestHandler {
 }
 
 /**
- * Claude Agent 服务接口
+ * AI Agent 服务接口
  */
-export interface IClaudeAgentService {
+export interface IAIAgentService {
     readonly _serviceBrand: undefined;
 
     /**
@@ -130,9 +130,9 @@ export interface IClaudeAgentService {
     fromClient(message: WebViewToExtensionMessage): Promise<void>;
 
     /**
-     * 启动 Claude 会话
+     * 启动 AI 会话
      */
-    launchClaude(
+    launchAI(
         channelId: string,
         resume: string | null,
         cwd: string,
@@ -142,9 +142,9 @@ export interface IClaudeAgentService {
     ): Promise<void>;
 
     /**
-     * 中断 Claude 会话
+     * 中断 AI 会话
      */
-    interruptClaude(channelId: string): Promise<void>;
+    interruptAI(channelId: string): Promise<void>;
 
     /**
      * 关闭会话
@@ -188,13 +188,13 @@ export interface IClaudeAgentService {
 }
 
 // ============================================================================
-// ClaudeAgentService 实现
+// AIAgentService 实现
 // ============================================================================
 
 /**
- * Claude Agent 服务实现
+ * AI Agent 服务实现
  */
-export class ClaudeAgentService implements IClaudeAgentService {
+export class AIAgentService implements IAIAgentService {
     readonly _serviceBrand: undefined;
 
     // Transport 适配器
@@ -226,8 +226,8 @@ export class ClaudeAgentService implements IClaudeAgentService {
         @INotificationService private readonly notificationService: INotificationService,
         @ITerminalService private readonly terminalService: ITerminalService,
         @ITabsAndEditorsService private readonly tabsAndEditorsService: ITabsAndEditorsService,
-        @IClaudeSdkService private readonly sdkService: IClaudeSdkService,
-        @IClaudeSessionService private readonly sessionService: IClaudeSessionService,
+        @IAISdkService private readonly sdkService: IAISdkService,
+        @ISessionService private readonly sessionService: ISessionService,
         @IWebViewService private readonly webViewService: IWebViewService
     ) {
         // 构建 Handler 上下文
@@ -257,7 +257,7 @@ export class ClaudeAgentService implements IClaudeAgentService {
             await this.fromClient(message);
         });
 
-        this.logService.info('[ClaudeAgentService] Transport 已连接');
+        this.logService.info('[AIAgentService] Transport 已连接');
     }
 
     /**
@@ -267,7 +267,7 @@ export class ClaudeAgentService implements IClaudeAgentService {
         // 启动消息循环
         this.readFromClient();
 
-        this.logService.info('[ClaudeAgentService] 消息循环已启动');
+        this.logService.info('[AIAgentService] 消息循环已启动');
     }
 
     /**
@@ -284,8 +284,8 @@ export class ClaudeAgentService implements IClaudeAgentService {
         try {
             for await (const message of this.fromClientStream) {
                 switch (message.type) {
-                    case "launch_claude":
-                        await this.launchClaude(
+                    case "launch_ywcoder":
+                        await this.launchAI(
                             message.channelId,
                             message.resume || null,
                             message.cwd || this.getCwd(),
@@ -299,8 +299,8 @@ export class ClaudeAgentService implements IClaudeAgentService {
                         this.closeChannel(message.channelId, false);
                         break;
 
-                    case "interrupt_claude":
-                        await this.interruptClaude(message.channelId);
+                    case "interrupt_ywcoder":
+                        await this.interruptAI(message.channelId);
                         break;
 
                     case "io_message":
@@ -328,14 +328,14 @@ export class ClaudeAgentService implements IClaudeAgentService {
                 }
             }
         } catch (error) {
-            this.logService.error(`[ClaudeAgentService] Error in readFromClient: ${error}`);
+            this.logService.error(`[AIAgentService] Error in readFromClient: ${error}`);
         }
     }
 
     /**
-     * 启动 Claude 会话
+     * 启动 AI引擎 会话
      */
-    async launchClaude(
+    async launchAI(
         channelId: string,
         resume: string | null,
         cwd: string,
@@ -353,7 +353,7 @@ export class ClaudeAgentService implements IClaudeAgentService {
 
         this.logService.info('');
         this.logService.info('╔════════════════════════════════════════╗');
-        this.logService.info('║  启动 Claude 会话                       ║');
+        this.logService.info('║  启动 AI引擎 会话                       ║');
         this.logService.info('╚════════════════════════════════════════╝');
         this.logService.info(`  Channel ID: ${channelId}`);
         this.logService.info(`  Resume: ${resume || 'null'}`);
@@ -376,7 +376,7 @@ export class ClaudeAgentService implements IClaudeAgentService {
             const inputStream = new AsyncStream<SDKUserMessage>();
             this.logService.info('  ✓ 输入流创建完成');
 
-            // 2. 调用 spawnClaude
+            // 2. 调用 spawnAIEngine
             this.logService.info('');
             this.logService.info('📝 步骤 2: 调用 spawnClaude()');
 
@@ -384,7 +384,7 @@ export class ClaudeAgentService implements IClaudeAgentService {
             let lastStderrErrorTime = 0;
             const STDERR_ERROR_DEBOUNCE_MS = 3000;
 
-            const query = await this.spawnClaude(
+            const query = await this.spawnAIEngine(
                 inputStream,
                 resume,
                 async (toolName, input, options) => {
@@ -407,7 +407,7 @@ export class ClaudeAgentService implements IClaudeAgentService {
                     if (now - lastStderrErrorTime < STDERR_ERROR_DEBOUNCE_MS) return;
                     lastStderrErrorTime = now;
 
-                    this.logService.warn(`[ClaudeAgentService] 转发 LLM 请求错误到前端: ${error.type} - ${error.message}`);
+                    this.logService.warn(`[AIAgentService] 转发 LLM 请求错误到前端: ${error.type} - ${error.message}`);
                     this.transport?.send({
                         type: "sdk_error",
                         channelId,
@@ -462,12 +462,12 @@ export class ClaudeAgentService implements IClaudeAgentService {
             })();
 
             this.logService.info('');
-            this.logService.info('✓ Claude 会话启动成功');
+            this.logService.info('✓ AI 会话启动成功');
             this.logService.info('════════════════════════════════════════');
             this.logService.info('');
         } catch (error) {
             this.logService.error('');
-            this.logService.error('❌❌❌ Claude 会话启动失败 ❌❌❌');
+            this.logService.error('❌❌❌ AI 会话启动失败 ❌❌❌');
             this.logService.error(`Channel: ${channelId}`);
             this.logService.error(`Error: ${error}`);
             if (error instanceof Error) {
@@ -482,20 +482,20 @@ export class ClaudeAgentService implements IClaudeAgentService {
     }
 
     /**
-     * 中断 Claude 会话
+     * 中断 AI引擎 会话
      */
-    async interruptClaude(channelId: string): Promise<void> {
+    async interruptAI(channelId: string): Promise<void> {
         const channel = this.channels.get(channelId);
         if (!channel) {
-            this.logService.warn(`[ClaudeAgentService] Channel 不存在: ${channelId}`);
+            this.logService.warn(`[AIAgentService] Channel 不存在: ${channelId}`);
             return;
         }
 
         try {
             await this.sdkService.interrupt(channel.query);
-            this.logService.info(`[ClaudeAgentService] 已中断 Channel: ${channelId}`);
+            this.logService.info(`[AIAgentService] 已中断 Channel: ${channelId}`);
         } catch (error) {
-            this.logService.error(`[ClaudeAgentService] 中断失败:`, error);
+            this.logService.error(`[AIAgentService] 中断失败:`, error);
         }
     }
 
@@ -503,7 +503,7 @@ export class ClaudeAgentService implements IClaudeAgentService {
      * 关闭会话
      */
     closeChannel(channelId: string, sendNotification: boolean, error?: string): void {
-        this.logService.info(`[ClaudeAgentService] 关闭 Channel: ${channelId}`);
+        this.logService.info(`[AIAgentService] 关闭 Channel: ${channelId}`);
 
         // 1. 发送关闭通知
         if (sendNotification && this.transport) {
@@ -530,7 +530,7 @@ export class ClaudeAgentService implements IClaudeAgentService {
     }
 
     /**
-     * 启动 Claude SDK
+     * 启动 AI引擎 SDK
      *
      * @param inputStream 输入流，用于发送用户消息
      * @param resume 恢复会话 ID
@@ -541,7 +541,7 @@ export class ClaudeAgentService implements IClaudeAgentService {
      * @param maxThinkingTokens 最大思考 tokens
      * @returns SDK Query 对象
      */
-    protected async spawnClaude(
+    protected async spawnAIEngine(
         inputStream: AsyncStream<SDKUserMessage>,
         resume: string | null,
         canUseTool: CanUseTool,
@@ -651,7 +651,7 @@ export class ClaudeAgentService implements IClaudeAgentService {
             throw new Error('Invalid request format');
         }
 
-        this.logService.info(`[ClaudeAgentService] 处理请求: ${request.type}`);
+        this.logService.info(`[AIAgentService] 处理请求: ${request.type}`);
 
         // 路由表：将请求类型映射到 handler
         switch (request.type) {
@@ -659,8 +659,8 @@ export class ClaudeAgentService implements IClaudeAgentService {
             case "init":
                 return handleInit(request, this.handlerContext);
 
-            case "get_claude_state":
-                return handleGetClaudeState(request, this.handlerContext);
+            case "get_ywcoder_state":
+                return handleGetAIState(request, this.handlerContext);
 
             case "sdk_probe":
                 return handleSdkProbe(request as any, this.handlerContext);
@@ -817,7 +817,7 @@ export class ClaudeAgentService implements IClaudeAgentService {
             }
             this.outstandingRequests.delete(message.requestId);
         } else {
-            this.logService.warn(`[ClaudeAgentService] 没有找到请求处理器: ${message.requestId}`);
+            this.logService.warn(`[AIAgentService] 没有找到请求处理器: ${message.requestId}`);
         }
     }
 

@@ -1,5 +1,5 @@
 /**
- * Claude Agent Handlers - 统一处理器文件
+ * AI Agent Handlers - 统一处理器文件
  *
  * 职责：处理所有来自 WebView 的请求
  * 依赖：通过 HandlerContext 注入所有服务
@@ -12,8 +12,8 @@ import * as os from 'os';
 import type {
     InitRequest,
     InitResponse,
-    GetClaudeStateRequest,
-    GetClaudeStateResponse,
+    GetYwCoderStateRequest,
+    GetYwCoderStateResponse,
     GetMcpServersRequest,
     GetMcpServersResponse,
     GetAssetUrisRequest,
@@ -51,8 +51,8 @@ import type {
     // SubmitOAuthCodeResponse,
     OpenConfigFileRequest,
     OpenConfigFileResponse,
-    OpenClaudeInTerminalRequest,
-    OpenClaudeInTerminalResponse,
+    OpenYwCoderInTerminalRequest,
+    OpenYwCoderInTerminalResponse,
     GetSettingsRequest,
     GetSettingsResponse,
     UpdateSettingRequest,
@@ -115,20 +115,20 @@ export async function handleInit(
 }
 
 /**
- * 获取 Claude 状态
+ * 获取 AI 状态
  */
-export async function handleGetClaudeState(
-    _request: GetClaudeStateRequest,
+export async function handleGetAIState(
+    _request: GetYwCoderStateRequest,
     context: HandlerContext
-): Promise<GetClaudeStateResponse> {
+): Promise<GetYwCoderStateResponse> {
     const { logService } = context;
 
-    logService.info('[handleGetClaudeState] 获取 Claude 状态');
+    logService.info('[handleGetAIState] 获取 AI 状态');
 
     const config = await loadConfig(context);
 
     return {
-        type: "get_claude_state_response",
+        type: "get_ywcoder_state_response",
         config
     };
 }
@@ -513,7 +513,7 @@ export async function handleOpenDiff(
     const leftUri = vscode.Uri.file(leftPath);
     const rightUri = vscode.Uri.file(rightPath);
 
-    const diffTitle = `${path.basename(request.originalFilePath || request.newFilePath || rightPath)} (Claude)`;
+    const diffTitle = `${path.basename(request.originalFilePath || request.newFilePath || rightPath)} (YwCoder)`;
 
     await vscode.commands.executeCommand(
         "vscode.diff",
@@ -835,12 +835,12 @@ export async function handleOpenConfigFile(
 }
 
 /**
- * 在终端打开 Claude
+ * 在终端打开 YwCoder
  */
-export async function handleOpenClaudeInTerminal(
-    _request: OpenClaudeInTerminalRequest,
+export async function handleOpenYwCoderInTerminal(
+    _request: OpenYwCoderInTerminalRequest,
     context: HandlerContext
-): Promise<OpenClaudeInTerminalResponse> {
+): Promise<OpenYwCoderInTerminalResponse> {
     const { workspaceService } = context;
     const cwd = workspaceService.getDefaultWorkspaceFolder()?.uri.fsPath || process.cwd();
 
@@ -851,9 +851,9 @@ export async function handleOpenClaudeInTerminal(
         });
 
         terminal.show();
-        terminal.sendText("claude --help");
+        terminal.sendText("ywcoder --help");
 
-        return { type: "open_claude_in_terminal_response" };
+        return { type: "open_ywcoder_in_terminal_response" };
     } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
         throw new Error(`Failed to open terminal: ${errorMsg}`);
@@ -870,7 +870,7 @@ export async function handleOpenClaudeInTerminal(
 async function loadConfig(context: HandlerContext): Promise<any> {
     const { logService, sdkService, workspaceService } = context;
 
-    logService.info("Loading config cache by launching Claude...");
+    logService.info("通过启动 AI 引擎加载配置缓存...");
 
     const inputStream = new AsyncStream<SDKUserMessage>();
     const cwd = workspaceService.getDefaultWorkspaceFolder()?.uri.fsPath || process.cwd();

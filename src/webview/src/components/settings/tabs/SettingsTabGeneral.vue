@@ -1,11 +1,11 @@
 <template>
   <SettingsTab title="通用">
-    <!-- Startup Defaults Section (Extension Config — Pipeline B) -->
-    <SettingsSection title="Startup Defaults">
+    <!-- 启动默认设置 (Extension Config — Pipeline B) -->
+    <SettingsSection title="启动默认设置">
       <SettingsSubSection>
         <SettingsCell
-          label="Default Permission Mode"
-          description="Permission mode for new sessions"
+          label="默认权限模式"
+          description="新会话的权限模式"
         >
           <template #trailing>
             <Dropdown
@@ -15,14 +15,14 @@
               menu-align="right"
             >
               <template #trigger="{ selected }">
-                {{ selected?.label || 'Default' }}
+                {{ selected?.label || '默认' }}
               </template>
             </Dropdown>
           </template>
         </SettingsCell>
         <SettingsCell
-          label="Extended Thinking"
-          description="Enable extended thinking for new sessions"
+          label="深度思考"
+          description="为新会话启用深度思考"
           :divider="true"
         >
           <template #trailing>
@@ -30,7 +30,7 @@
               <Switch
                 :model-value="defaultThinkingLevel === 'default_on'"
                 @update:model-value="updateExtensionSetting('defaultThinkingLevel', $event ? 'default_on' : 'off')"
-                title="Extended Thinking"
+                title="深度思考"
               />
             </div>
           </template>
@@ -38,34 +38,34 @@
       </SettingsSubSection>
     </SettingsSection>
 
-    <!-- Language & Output Section (Pipeline A — CC Settings) -->
-    <SettingsSection title="Language & Output">
+    <!-- 语言与输出 (Pipeline A — CC Settings) -->
+    <SettingsSection title="语言与输出">
       <SettingsSubSection>
         <SettingsItem
           setting-key="language"
-          label="Language"
-          description="Preferred language for Claude responses"
+          label="语言"
+          description="YwCoder 响应的偏好语言"
         >
           <template #default="{ displayValue, update }">
             <TextInput
               :model-value="displayValue ?? ''"
               @change="update"
-              placeholder="e.g. japanese, chinese"
+              placeholder="例如：中文、英文、日文"
               class="general-input"
             />
           </template>
         </SettingsItem>
         <SettingsItem
           setting-key="outputStyle"
-          label="Output Style"
-          description="Adjust Claude's response style"
+          label="输出风格"
+          description="调整 YwCoder 的响应风格"
           :divider="true"
         >
           <template #default="{ displayValue, update }">
             <TextInput
               :model-value="displayValue ?? ''"
               @change="update"
-              placeholder="e.g. Explanatory, Concise"
+              placeholder="例如：详细解释、简洁明了"
               class="general-input"
             />
           </template>
@@ -73,28 +73,28 @@
       </SettingsSubSection>
     </SettingsSection>
 
-    <!-- Agent Behavior Section -->
-    <SettingsSection title="Agent Behavior">
+    <!-- 代理行为 -->
+    <SettingsSection title="代理行为">
       <SettingsSubSection>
         <SettingsItem
           setting-key="respectGitignore"
-          label="Respect .gitignore"
-          description="Exclude files matching .gitignore patterns from context"
+          label="遵循 .gitignore"
+          description="在上下文中排除符合 .gitignore 模式的文件"
         >
           <template #default="{ effectiveValue, update }">
             <div class="cursor-settings-cell-switch-container">
               <Switch
                 :model-value="effectiveValue ?? true"
                 @update:model-value="update"
-                title="Respect .gitignore"
+                title="遵循 .gitignore"
               />
             </div>
           </template>
         </SettingsItem>
         <SettingsItem
           setting-key="teammateMode"
-          label="Teammate Mode"
-          description="How parallel agent teammates are displayed"
+          label="队友模式"
+          description="并行代理队友的显示方式"
           :divider="true"
         >
           <template #default="{ effectiveValue, update }">
@@ -112,15 +112,15 @@
         </SettingsItem>
         <SettingsItem
           setting-key="plansDirectory"
-          label="Plans Directory"
-          description="Relative path for storing plan files"
+          label="规划目录"
+          description="存储规划文件的相对路径"
           :divider="true"
         >
           <template #default="{ displayValue, update }">
             <TextInput
               :model-value="displayValue ?? ''"
               @change="update"
-              placeholder="~/.claude/plans"
+              placeholder="~/.ywcoder/plans"
               monospace
               class="general-input"
             />
@@ -129,22 +129,22 @@
       </SettingsSubSection>
     </SettingsSection>
 
-    <!-- UI & Experience Section -->
+    <!-- 界面与体验 Section -->
     <!-- TUI-only settings (not applicable to extension, kept for reference):
          spinnerTipsEnabled, terminalProgressBarEnabled, prefersReducedMotion -->
-    <SettingsSection title="UI & Experience">
+    <SettingsSection title="界面与体验">
       <SettingsSubSection>
         <SettingsItem
           setting-key="showTurnDuration"
-          label="Show Turn Duration"
-          description="Display response time after each turn"
+          label="显示回合时长"
+          description="每次对话后显示响应时间"
         >
           <template #default="{ effectiveValue, update }">
             <div class="cursor-settings-cell-switch-container">
               <Switch
                 :model-value="effectiveValue ?? false"
                 @update:model-value="update"
-                title="Show Turn Duration"
+                title="显示回合时长"
               />
             </div>
           </template>
@@ -152,67 +152,67 @@
       </SettingsSubSection>
     </SettingsSection>
 
-    <!-- Notifications Section -->
-    <SettingsSection title="Notifications">
+    <!-- 通知 -->
+    <SettingsSection title="通知">
       <SettingsSubSection>
         <SettingsItem
           setting-key="systemNotifications"
-          label="System Notifications"
-          description="Show system notifications when Agent completes or needs attention"
+          label="系统通知"
+          description="代理完成或需要关注时显示系统通知"
         >
           <template #default="{ effectiveValue, update }">
             <div class="cursor-settings-cell-switch-container">
               <Switch
                 :model-value="effectiveValue ?? false"
                 @update:model-value="update"
-                title="System Notifications"
+                title="系统通知"
               />
             </div>
           </template>
         </SettingsItem>
         <SettingsItem
           setting-key="completionSound"
-          label="Completion Sound"
-          description="Play a sound when Agent finishes responding"
+          label="完成提示音"
+          description="代理完成响应时播放提示音"
           :divider="true"
         >
           <template #default="{ effectiveValue, update }">
             <div class="cursor-settings-cell-switch-container">
-              <Switch :model-value="effectiveValue ?? false" @update:model-value="update" title="Completion Sound" />
+              <Switch :model-value="effectiveValue ?? false" @update:model-value="update" title="完成提示音" />
             </div>
           </template>
         </SettingsItem>
       </SettingsSubSection>
     </SettingsSection>
 
-    <!-- Git Attribution Section -->
-    <SettingsSection title="Git Attribution">
+    <!-- Git 归属 -->
+    <SettingsSection title="Git 归属">
       <SettingsSubSection>
         <SettingsItem
           setting-key="attribution"
-          label="Commit Message"
-          description="Text appended to git commit messages made by Claude"
+          label="提交信息"
+          description="YwCoder 提交的 Git 提交信息后追加的文本"
         >
           <template #default="{ displayValue, effectiveValue, update }">
             <TextInput
               :model-value="(displayValue as any)?.commit ?? ''"
               @change="(val: string) => update({ ...(displayValue || effectiveValue || {}), commit: val || undefined })"
-              placeholder="Generated with Claude"
+              placeholder="由 YwCoder 生成"
               class="general-input"
             />
           </template>
         </SettingsItem>
         <SettingsItem
           setting-key="attribution"
-          label="PR Description"
-          description="Text appended to pull request descriptions made by Claude"
+          label="PR 描述"
+          description="YwCoder 创建的拉取请求描述后追加的文本"
           :divider="true"
         >
           <template #default="{ displayValue, effectiveValue, update }">
             <TextInput
               :model-value="(displayValue as any)?.pr ?? ''"
               @change="(val: string) => update({ ...(displayValue || effectiveValue || {}), pr: val || undefined })"
-              placeholder="Generated with Claude"
+              placeholder="由 YwCoder 生成"
               class="general-input"
             />
           </template>
@@ -220,12 +220,12 @@
       </SettingsSubSection>
     </SettingsSection>
 
-    <!-- Chat History Section -->
-    <SettingsSection title="Chat History">
+    <!-- 聊天记录 -->
+    <SettingsSection title="聊天记录">
       <SettingsSubSection>
         <SettingsCell
-          label="Cleanup Period"
-          description="How long to locally retain chat transcripts based on last activity date"
+          label="清理周期"
+          description="根据最后活动日期在本地保留聊天记录的时长"
         >
           <template #trailing>
             <div class="flex items-center gap-2">
@@ -235,20 +235,20 @@
                 :min="1"
                 width="68px"
               />
-              <span class="text-xs text-(--cursor-text-secondary)">days</span>
+              <span class="text-xs text-(--cursor-text-secondary)">天</span>
             </div>
           </template>
         </SettingsCell>
       </SettingsSubSection>
     </SettingsSection>
 
-    <!-- Advanced Section -->
-    <SettingsSection title="Advanced">
+    <!-- 高级 -->
+    <SettingsSection title="高级">
       <SettingsSubSection>
         <SettingsItem
           setting-key="autoUpdatesChannel"
-          label="Updates Channel"
-          description="Choose between stable releases or latest builds"
+          label="更新通道"
+          description="选择稳定版本或最新构建版本"
         >
           <template #default="{ effectiveValue, update }">
             <Dropdown
@@ -258,15 +258,15 @@
               menu-align="right"
             >
               <template #trigger="{ selected }">
-                {{ selected?.label || effectiveValue || 'Stable' }}
+                {{ selected?.label || effectiveValue || '稳定版' }}
               </template>
             </Dropdown>
           </template>
         </SettingsItem>
         <SettingsItem
           setting-key="forceLoginMethod"
-          label="Login Method"
-          description="Restrict authentication to a specific method"
+          label="登录方式"
+          description="限制使用特定的认证方式"
           :divider="true"
         >
           <template #default="{ effectiveValue, update }">
@@ -277,15 +277,15 @@
               menu-align="right"
             >
               <template #trigger="{ selected }">
-                {{ selected?.label || 'Not restricted' }}
+                {{ selected?.label || '不限制' }}
               </template>
             </Dropdown>
           </template>
         </SettingsItem>
         <SettingsItem
           setting-key="apiKeyHelper"
-          label="API Key Helper"
-          description="Custom script to generate authentication tokens"
+          label="API 密钥助手"
+          description="自定义生成认证令牌的脚本"
           :divider="true"
         >
           <template #default="{ displayValue, update }">
@@ -360,27 +360,27 @@ async function updateExtensionSetting(key: string, value: any) {
 // ── Dropdown Options ──
 
 const permissionModeOptions = [
-  { label: 'Default', value: 'default', description: 'Standard behavior, prompt for dangerous operations' },
-  { label: 'Accept Edits', value: 'acceptEdits', description: 'Automatically accept file edits' },
-  { label: 'Plan Mode', value: 'plan', description: 'Planning only, no actual execution' },
-  { label: "Don't Ask", value: 'dontAsk', description: "Don't prompt, deny if not pre-approved" },
+  { label: '默认', value: 'default', description: '标准行为，危险操作前提示' },
+  { label: '接受编辑', value: 'acceptEdits', description: '自动接受文件编辑' },
+  { label: '规划模式', value: 'plan', description: '仅规划，不实际执行' },
+  { label: '不再询问', value: 'dontAsk', description: '不提示，未预先批准则拒绝' },
 ];
 
 const teammateModeOptions = [
-  { label: 'Auto', value: 'auto', description: 'Automatically choose display mode' },
-  { label: 'In-Process', value: 'in-process', description: 'Run teammates in-process' },
-  { label: 'Tmux', value: 'tmux', description: 'Run teammates in tmux panes' },
+  { label: '自动', value: 'auto', description: '自动选择显示模式' },
+  { label: '进程中', value: 'in-process', description: '在进程中运行队友' },
+  { label: 'Tmux', value: 'tmux', description: '在 tmux 窗格中运行队友' },
 ];
 
 const updatesChannelOptions = [
-  { label: 'Stable', value: 'stable', description: 'Stable releases only' },
-  { label: 'Latest', value: 'latest', description: 'Include pre-release builds' },
+  { label: '稳定版', value: 'stable', description: '仅稳定版本' },
+  { label: '最新版', value: 'latest', description: '包含预发布版本' },
 ];
 
 const loginMethodOptions = [
-  { label: 'Not restricted', value: 'none', description: 'Allow any login method' },
-  { label: 'Claude.ai', value: 'claudeai', description: 'Restrict to Claude.ai accounts' },
-  { label: 'Console', value: 'console', description: 'Restrict to Anthropic Console API' },
+  { label: '不限制', value: 'none', description: '允许任何登录方式' },
+  { label: 'YwCoder.ai', value: 'ywcoderai', description: '限制为 YwCoder.ai 账户' },
+  { label: '控制台', value: 'console', description: '限制为控制台 API' },
 ];
 </script>
 

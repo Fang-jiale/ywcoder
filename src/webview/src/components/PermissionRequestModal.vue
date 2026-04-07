@@ -59,7 +59,7 @@
       <input
         ref="inputRef"
         class="reject-message-input"
-        placeholder="Tell Claude what to do instead"
+        placeholder="Tell YwCoder what to do instead"
         v-model="rejectMessage"
         @keydown="handleKeyDown"
       />

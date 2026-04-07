@@ -1,18 +1,18 @@
 <template>
-  <SettingsTab title="Profiles">
+  <SettingsTab title="配置方案">
     <SettingsSection>
       <SettingsSubSection>
-        <!-- Create Profile -->
+        <!-- 创建配置方案 -->
         <SettingsCell>
           <template #label>
             <div class="add-profile-row">
               <TextInput
                 v-model="newProfileName"
-                placeholder="Add profile name..."
+                placeholder="输入配置方案名称..."
                 class="add-profile-input"
                 @keydown.enter="handleCreate"
               />
-              <Tooltip content="Create profile">
+              <Tooltip content="创建配置方案">
                 <button
                   class="add-profile-btn codicon codicon-plus"
                   :disabled="!isValidName"
@@ -27,7 +27,7 @@
           {{ error }}
         </div>
 
-        <!-- Profile List -->
+        <!-- 配置方案列表 -->
         <SettingsCell
           v-for="profile in profileList"
           :key="profile.name"
@@ -39,7 +39,7 @@
               <span>{{ profile.name }}</span>
               <Badge v-if="profile.isActive" variant="success" class="profile-active-badge">
                 <span class="codicon codicon-pass-filled" />
-                active
+                当前激活
               </Badge>
             </div>
           </template>
@@ -48,13 +48,13 @@
           </template>
           <template v-if="profile.name !== 'Default'" #trailing>
             <div class="profile-actions">
-              <Tooltip content="Edit profile name">
+              <Tooltip content="编辑配置方案名称">
                 <button
                   class="profile-action-btn codicon codicon-edit"
                   @click="handleEdit(profile.name)"
                 />
               </Tooltip>
-              <Tooltip :content="profile.isActive ? 'Cannot delete active profile' : 'Delete profile'">
+              <Tooltip :content="profile.isActive ? '无法删除当前激活的配置' : '删除配置方案'">
                 <button
                   :class="['profile-action-btn', 'profile-action-btn-danger', 'codicon', 'codicon-trash', { 'profile-action-btn-disabled': profile.isActive }]"
                   :disabled="profile.isActive"
@@ -96,7 +96,7 @@ const profileList = computed(() => {
   const list = [
     {
       name: 'Default',
-      path: '~/.claude/settings.json',
+      path: '~/.ywcoder/settings.json',
       isActive: !activeProfile.value
     }
   ];
@@ -105,7 +105,7 @@ const profileList = computed(() => {
     profiles.value.forEach((p) => {
       list.push({
         name: p,
-        path: `~/.claude/settings.${p}.json`,
+        path: `~/.ywcoder/settings.${p}.json`,
         isActive: activeProfile.value === p
       });
     });
@@ -120,13 +120,13 @@ const handleCreate = async () => {
     await createProfile(newProfileName.value);
     newProfileName.value = '';
   } catch (e: any) {
-    error.value = e.message || 'Failed to create profile';
+    error.value = e.message || '创建配置方案失败';
   }
 };
 
 const handleEdit = (name: string) => {
-  // TODO: implement profile rename
-  console.log('Edit profile:', name);
+  // TODO: 实现配置方案重命名
+  console.log('编辑配置方案:', name);
 };
 
 const handleDelete = async (name: string) => {
@@ -134,7 +134,7 @@ const handleDelete = async (name: string) => {
   try {
     await deleteProfile(name);
   } catch (e: any) {
-    error.value = e.message || 'Failed to delete profile';
+    error.value = e.message || '删除配置方案失败';
   }
 };
 </script>

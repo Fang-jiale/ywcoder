@@ -4,8 +4,8 @@
 
 import * as vscode from 'vscode';
 import { InstantiationServiceBuilder } from './di/instantiationServiceBuilder';
-import { registerServices, ILogService, IClaudeAgentService, IWebViewService } from './services/serviceRegistry';
-import { VSCodeTransport } from './services/claude/transport/VSCodeTransport';
+import { registerServices, ILogService, IAIAgentService, IWebViewService } from './services/serviceRegistry';
+import { VSCodeTransport } from './services/ai-engine/transport/VSCodeTransport';
 
 /**
  * Extension Activation
@@ -25,7 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
 		const logService = accessor.get(ILogService);
 		logService.info('');
 		logService.info('╔════════════════════════════════════════╗');
-		logService.info('║         Claude Chat 扩展已激活           ║');
+		logService.info('║         YwCoder 扩展已激活              ║');
 		logService.info('╚════════════════════════════════════════╝');
 		logService.info('');
 	});
@@ -34,7 +34,7 @@ export function activate(context: vscode.ExtensionContext) {
 	instantiationService.invokeFunction(accessor => {
 		const logService = accessor.get(ILogService);
 		const webViewService = accessor.get(IWebViewService);
-		const claudeAgentService = accessor.get(IClaudeAgentService);
+		const aiAgentService = accessor.get(IAIAgentService);
 		const subscriptions = context.subscriptions;
 
 		// Register WebView View Provider
@@ -48,19 +48,19 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		);
 
-		// Connect WebView messages to Claude Agent Service
+		// Connect WebView messages to AI Agent Service
 		webViewService.setMessageHandler((message) => {
-			claudeAgentService.fromClient(message);
+			aiAgentService.fromClient(message);
 		});
 
 		// Create VSCode Transport
 		const transport = instantiationService.createInstance(VSCodeTransport);
 
-		// Set transport on Claude Agent Service
-		claudeAgentService.setTransport(transport);
+		// Set transport on AI Agent Service
+		aiAgentService.setTransport(transport);
 
 		// Start message loop
-		claudeAgentService.start();
+		aiAgentService.start();
 
 		// Register disposables
 		context.subscriptions.push(webviewProvider);
@@ -79,7 +79,7 @@ export function activate(context: vscode.ExtensionContext) {
 			})
 		);
 
-		logService.info('✓ Claude Agent Service 已连接 Transport');
+		logService.info('✓ AI Agent Service 已连接 Transport');
 		logService.info('✓ WebView Service 已注册为 View Provider');
 		logService.info('✓ Settings 命令已注册');
 	});
@@ -94,7 +94,7 @@ export function activate(context: vscode.ExtensionContext) {
 	// 7. Log completion
 	instantiationService.invokeFunction(accessor => {
 		const logService = accessor.get(ILogService);
-		logService.info('✓ Claude Chat 视图已注册');
+		logService.info('✓ YwCoder 视图已注册');
 		logService.info('');
 	});
 

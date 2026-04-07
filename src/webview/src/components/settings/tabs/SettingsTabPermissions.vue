@@ -5,7 +5,7 @@
       <SettingsSubSection>
         <SettingsCell
           label="Permission Mode"
-          description="Default behavior when Claude requests permission for an operation"
+          description="Default behavior when YwCoder requests permission for an operation"
           :class="{ 'perm-inherited-cell': isModeInherited }"
         >
           <template #label>
@@ -179,7 +179,7 @@
 
     <!-- Section 3: Additional Directories -->
     <SettingsSection title="Additional Directories">
-      <SettingsSubSection caption="Extra directories to include in the permission scope, allowing Claude to access files outside the project root.">
+      <SettingsSubSection caption="Extra directories to include in the permission scope, allowing YwCoder to access files outside the project root.">
         <SettingsCell label="Directories" description="Paths to additional allowed directories">
           <template #label>
             <div class="flex items-center gap-2">

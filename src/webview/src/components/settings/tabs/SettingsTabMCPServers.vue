@@ -51,7 +51,7 @@
                   <span>Refresh</span>
                 </button>
               </Tooltip>
-              <Tooltip content="Open ~/.claude.json (global MCP config)">
+              <Tooltip content="Open ~/.ywcoder.json (global MCP config)">
                 <button class="mcp-action-btn" @click="openGlobalConfig">
                   <span class="codicon codicon-globe" />
                   <span>Global Config</span>

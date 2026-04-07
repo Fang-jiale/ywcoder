@@ -1,19 +1,19 @@
 <template>
-  <SettingsTab title="Environments">
-    <SettingsSection title="Environment Variables">
-      <SettingsSubSection caption="启动时传递给 YW Coder 的自定义环境变量。 Variables managed by other tabs (Models, Network, Sandbox, etc.) are excluded here.">
-        <!-- Table Header -->
+  <SettingsTab title="环境变量">
+    <SettingsSection title="环境变量">
+      <SettingsSubSection caption="启动时传递给 YW Coder 的自定义环境变量。其他标签页管理的环境变量（模型、网络、沙盒等）在此不显示。">
+        <!-- 表头 -->
         <SettingsCell>
           <template #label>
             <div class="env-table-header">
-              <span class="env-col-key">Variable</span>
-              <span class="env-col-value">Value</span>
+              <span class="env-col-key">变量名</span>
+              <span class="env-col-value">值</span>
               <span class="env-col-actions"></span>
             </div>
           </template>
         </SettingsCell>
 
-        <!-- Scope-level entries (editable) -->
+        <!-- 作用域级别的条目（可编辑） -->
         <SettingsCell
           v-for="entry in scopeEntries"
           :key="'scope-' + entry.key"
@@ -21,15 +21,15 @@
         >
           <template #label>
             <div class="env-row">
-              <!-- Key display -->
+              <!-- 键显示 -->
               <div class="env-col-key">
                 <span class="env-key-text">{{ entry.key }}</span>
-                <Tooltip v-if="isOverriddenByHigherScope(entry.key)" :content="`Overridden by ${overriddenByLabel(entry.key)} scope`">
-                  <Badge variant="warning">overridden</Badge>
+                <Tooltip v-if="isOverriddenByHigherScope(entry.key)" :content="`被 ${overriddenByLabel(entry.key)} 作用域覆盖`">
+                  <Badge variant="warning">已覆盖</Badge>
                 </Tooltip>
               </div>
 
-              <!-- Value display / edit -->
+              <!-- 值显示/编辑 -->
               <div class="env-col-value">
                 <template v-if="editingKey === entry.key">
                   <TextInput
@@ -39,7 +39,7 @@
                     monospace
                     size="small"
                     class="env-value-input"
-                    placeholder="value"
+                    placeholder="值"
                     @keydown.enter.prevent="commitEdit(entry.key)"
                     @keydown.escape.prevent="cancelEdit"
                   />
@@ -55,27 +55,27 @@
                 </template>
               </div>
 
-              <!-- Actions -->
+              <!-- 操作 -->
               <div class="env-col-actions">
                 <template v-if="editingKey === entry.key">
-                  <Tooltip content="Save">
+                  <Tooltip content="保存">
                     <button class="env-action-btn" @click="commitEdit(entry.key)">
                       <span class="codicon codicon-check" />
                     </button>
                   </Tooltip>
-                  <Tooltip content="Cancel">
+                  <Tooltip content="取消">
                     <button class="env-action-btn" @click="cancelEdit">
                       <span class="codicon codicon-close" />
                     </button>
                   </Tooltip>
                 </template>
                 <template v-else>
-                  <Tooltip content="Edit value">
+                  <Tooltip content="编辑值">
                     <button class="env-action-btn" @click="startEdit(entry.key, entry.value)">
                       <span class="codicon codicon-edit" />
                     </button>
                   </Tooltip>
-                  <Tooltip content="Remove from this scope">
+                  <Tooltip content="从此作用域移除">
                     <button class="env-action-btn env-action-btn-danger" @click="removeEnvVar(entry.key)">
                       <span class="codicon codicon-trash" />
                     </button>
@@ -86,7 +86,7 @@
           </template>
         </SettingsCell>
 
-        <!-- Inherited entries (read-only, can override) -->
+        <!-- 继承的条目（只读，可覆盖） -->
         <SettingsCell
           v-for="entry in inheritedEntries"
           :key="'inherited-' + entry.key"
@@ -97,8 +97,8 @@
             <div class="env-row env-row-inherited">
               <div class="env-col-key">
                 <span class="env-key-text">{{ entry.key }}</span>
-                <Tooltip content="Inherited from a lower-priority scope">
-                  <Badge variant="subtle">inherited</Badge>
+                <Tooltip content="继承自低优先级作用域">
+                  <Badge variant="subtle">已继承</Badge>
                 </Tooltip>
               </div>
               <div class="env-col-value">
@@ -107,7 +107,7 @@
                 </span>
               </div>
               <div class="env-col-actions">
-                <Tooltip content="Override in this scope">
+                <Tooltip content="在此作用域覆盖">
                   <button class="env-action-btn" @click="overrideEnvVar(entry.key, entry.value)">
                     <span class="codicon codicon-arrow-up" />
                   </button>
@@ -117,21 +117,21 @@
           </template>
         </SettingsCell>
 
-        <!-- Empty state -->
+        <!-- 空状态 -->
         <SettingsCell
           v-if="scopeEntries.length === 0 && inheritedEntries.length === 0"
           :divider="true"
         >
           <template #label>
-            <span class="env-empty-text">No environment variables set.</span>
+            <span class="env-empty-text">未设置环境变量。</span>
           </template>
         </SettingsCell>
 
-        <!-- Add new variable row -->
+        <!-- 添加新变量行 -->
         <SettingsCell :divider="true">
           <template #label>
             <div class="env-row">
-              <!-- Key: Combobox autocomplete -->
+              <!-- 键：组合框自动完成 -->
               <div class="env-col-key">
                 <ComboboxRoot
                   v-model="newKeySelected"
@@ -144,7 +144,7 @@
                     <ComboboxInput
                       v-model="newKeySearch"
                       class="env-combobox-input"
-                      placeholder="VARIABLE_NAME"
+                      placeholder="变量名"
                       @keydown.enter.prevent="handleKeyEnter"
                       @keydown.tab.prevent="focusNewValue"
                     />
@@ -174,8 +174,8 @@
                           </div>
                         </ComboboxItem>
                         <ComboboxEmpty class="env-combobox-empty">
-                          <span v-if="newKeySearch.trim()">Press Enter to use "{{ newKeySearch.trim() }}"</span>
-                          <span v-else>Type to search known variables...</span>
+                          <span v-if="newKeySearch.trim()">按回车使用 "{{ newKeySearch.trim() }}"</span>
+                          <span v-else>输入以搜索已知变量...</span>
                         </ComboboxEmpty>
                       </ComboboxViewport>
                     </ComboboxContent>
@@ -183,7 +183,7 @@
                 </ComboboxRoot>
               </div>
 
-              <!-- Value -->
+              <!-- 值 -->
               <div class="env-col-value">
                 <TextInput
                   ref="newValueInputRef"
@@ -191,14 +191,14 @@
                   monospace
                   size="small"
                   class="env-value-input"
-                  placeholder="value"
+                  placeholder="值"
                   @keydown.enter.prevent="addEnvVar"
                 />
               </div>
 
-              <!-- Actions -->
+              <!-- 操作 -->
               <div class="env-col-actions">
-                <Tooltip content="Add variable">
+                <Tooltip content="添加变量">
                   <button
                     class="env-action-btn env-action-btn-add"
                     :disabled="!newKeySearch.trim()"
@@ -214,11 +214,11 @@
       </SettingsSubSection>
     </SettingsSection>
 
-    <!-- Reset all button -->
+    <!-- 重置所有按钮 -->
     <div v-if="hasScopeEntries" class="env-reset-section">
       <Button variant="tertiary" size="small" @click="resetAllEnvVars">
         <span class="codicon codicon-discard" />
-        Reset all env vars at this scope
+        重置此作用域的所有环境变量
       </Button>
     </div>
   </SettingsTab>
@@ -251,29 +251,29 @@ import { useSettingsScope } from '../../../composables/useSettingsScope'
 const { settings, activeProfile, inspect, updateSetting, resetSetting } = useSettingsStore()
 const scope = useSettingsScope()
 
-// ── Claimed env keys (managed by other tabs) ──
+// ── 已被占用的环境变量键（由其他标签页管理） ──
 
 const CLAIMED_ENV_KEYS = new Set([
-  // Models Tab
+  // 模型标签页
   'ANTHROPIC_MODEL', 'ANTHROPIC_DEFAULT_SONNET_MODEL', 'ANTHROPIC_DEFAULT_OPUS_MODEL',
   'ANTHROPIC_DEFAULT_HAIKU_MODEL', 'CLAUDE_CODE_SUBAGENT_MODEL', 'CLAUDE_CODE_EFFORT_LEVEL',
   'MAX_THINKING_TOKENS', 'CLAUDE_CODE_MAX_OUTPUT_TOKENS', 'CLAUDE_CODE_FILE_READ_MAX_OUTPUT_TOKENS',
-  // Network Tab
+  // 网络标签页
   'HTTP_PROXY', 'HTTPS_PROXY', 'NO_PROXY', 'CLAUDE_CODE_CLIENT_CERT',
   'CLAUDE_CODE_CLIENT_KEY', 'CLAUDE_CODE_CLIENT_KEY_PASSPHRASE', 'CLAUDE_CODE_PROXY_RESOLVES_HOSTS',
   'CLAUDE_CODE_USE_BEDROCK', 'CLAUDE_CODE_SKIP_BEDROCK_AUTH', 'AWS_BEARER_TOKEN_BEDROCK',
   'CLAUDE_CODE_USE_VERTEX', 'CLAUDE_CODE_SKIP_VERTEX_AUTH',
   'CLAUDE_CODE_USE_FOUNDRY', 'CLAUDE_CODE_SKIP_FOUNDRY_AUTH',
   'ANTHROPIC_FOUNDRY_API_KEY', 'ANTHROPIC_FOUNDRY_BASE_URL', 'ANTHROPIC_FOUNDRY_RESOURCE',
-  // Sandbox Tab
+  // 沙盒标签页
   'CLAUDE_CODE_SHELL', 'CLAUDE_CODE_SHELL_PREFIX', 'CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR',
   'BASH_DEFAULT_TIMEOUT_MS', 'BASH_MAX_TIMEOUT_MS', 'BASH_MAX_OUTPUT_LENGTH',
-  // MCP Tab (reserved)
+  // MCP 标签页（保留）
   'MCP_TIMEOUT', 'MCP_TOOL_TIMEOUT', 'MCP_CLIENT_SECRET',
   'MCP_OAUTH_CALLBACK_PORT', 'MAX_MCP_OUTPUT_TOKENS', 'ENABLE_TOOL_SEARCH',
 ])
 
-// ── Known env var suggestions (unclaimed, available for this tab) ──
+// ── 已知的环境变量建议（此标签页可用的未占用变量） ──
 
 interface EnvSuggestion {
   key: string
@@ -281,63 +281,63 @@ interface EnvSuggestion {
 }
 
 const KNOWN_ENV_VARS: EnvSuggestion[] = [
-  // Authentication
-  { key: 'ANTHROPIC_API_KEY', description: 'API key for Anthropic services' },
-  { key: 'ANTHROPIC_AUTH_TOKEN', description: 'Auth token for Anthropic' },
-  { key: 'ANTHROPIC_CUSTOM_HEADERS', description: 'Custom HTTP headers for API requests' },
-  // Telemetry & Reporting
-  { key: 'CLAUDE_CODE_ENABLE_TELEMETRY', description: 'Enable OpenTelemetry' },
-  { key: 'DISABLE_TELEMETRY', description: 'Disable Statsig telemetry' },
-  { key: 'DISABLE_ERROR_REPORTING', description: 'Disable Sentry error reporting' },
-  { key: 'CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY', description: 'Disable session quality survey' },
-  { key: 'DISABLE_COST_WARNINGS', description: 'Disable cost warnings' },
-  { key: 'OTEL_METRICS_EXPORTER', description: 'OTel metrics exporter' },
-  // Features
-  { key: 'CLAUDE_CODE_ENABLE_PROMPT_SUGGESTION', description: 'Enable prompt suggestions' },
-  { key: 'CLAUDE_CODE_ENABLE_TASKS', description: 'Enable task list feature' },
-  { key: 'CLAUDE_CODE_DISABLE_AUTO_MEMORY', description: 'Disable auto memory' },
-  { key: 'CLAUDE_CODE_DISABLE_BACKGROUND_TASKS', description: 'Disable background tasks' },
-  { key: 'CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC', description: 'Disable all non-essential traffic' },
-  { key: 'DISABLE_AUTOUPDATER', description: 'Disable auto-updater' },
-  { key: 'DISABLE_PROMPT_CACHING', description: 'Disable all prompt caching' },
-  { key: 'DISABLE_PROMPT_CACHING_HAIKU', description: 'Disable Haiku prompt caching' },
-  { key: 'DISABLE_PROMPT_CACHING_SONNET', description: 'Disable Sonnet prompt caching' },
-  { key: 'DISABLE_PROMPT_CACHING_OPUS', description: 'Disable Opus prompt caching' },
-  { key: 'DISABLE_NON_ESSENTIAL_MODEL_CALLS', description: 'Disable non-essential model calls' },
-  // UI / Display
-  { key: 'CLAUDE_CODE_HIDE_ACCOUNT_INFO', description: 'Hide account info display' },
-  { key: 'CLAUDE_CODE_DISABLE_TERMINAL_TITLE', description: 'Disable terminal title updates' },
-  // Execution
-  { key: 'CLAUDE_CODE_EXIT_AFTER_STOP_DELAY', description: 'Delay before exit after stop (ms)' },
-  { key: 'CLAUDE_CODE_TASK_LIST_ID', description: 'Custom task list ID' },
-  { key: 'CLAUDE_CODE_TEAM_NAME', description: 'Team name for attribution' },
-  { key: 'CLAUDE_CODE_API_KEY_HELPER_TTL_MS', description: 'TTL for API key helper cache (ms)' },
-  { key: 'CLAUDE_CODE_AUTOCOMPACT_PCT_OVERRIDE', description: 'Override auto-compact threshold (%)' },
-  // File & Storage
-  { key: 'CLAUDE_CONFIG_DIR', description: 'Custom config/data directory' },
-  { key: 'CLAUDE_CODE_TMPDIR', description: 'Override temp directory' },
-  // Tools
-  { key: 'USE_BUILTIN_RIPGREP', description: 'Use bundled ripgrep binary' },
-  // Vertex region overrides
-  { key: 'VERTEX_REGION', description: 'Default Vertex AI region' },
-  { key: 'VERTEX_REGION_CLAUDE_3_5_SONNET', description: 'Vertex region for Sonnet 3.5' },
-  { key: 'VERTEX_REGION_CLAUDE_3_5_HAIKU', description: 'Vertex region for Haiku 3.5' }
+  // 认证
+  { key: 'ANTHROPIC_API_KEY', description: 'API 密钥，用于认证服务' },
+  { key: 'ANTHROPIC_AUTH_TOKEN', description: '认证令牌' },
+  { key: 'ANTHROPIC_CUSTOM_HEADERS', description: 'API 请求的自定义 HTTP 头' },
+  // 遥测与报告
+  { key: 'CLAUDE_CODE_ENABLE_TELEMETRY', description: '启用 OpenTelemetry' },
+  { key: 'DISABLE_TELEMETRY', description: '禁用 Statsig 遥测' },
+  { key: 'DISABLE_ERROR_REPORTING', description: '禁用 Sentry 错误报告' },
+  { key: 'CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY', description: '禁用会话质量调查' },
+  { key: 'DISABLE_COST_WARNINGS', description: '禁用成本警告' },
+  { key: 'OTEL_METRICS_EXPORTER', description: 'OTel 指标导出器' },
+  // 功能
+  { key: 'CLAUDE_CODE_ENABLE_PROMPT_SUGGESTION', description: '启用提示建议' },
+  { key: 'CLAUDE_CODE_ENABLE_TASKS', description: '启用任务列表功能' },
+  { key: 'CLAUDE_CODE_DISABLE_AUTO_MEMORY', description: '禁用自动记忆' },
+  { key: 'CLAUDE_CODE_DISABLE_BACKGROUND_TASKS', description: '禁用后台任务' },
+  { key: 'CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC', description: '禁用所有非必要流量' },
+  { key: 'DISABLE_AUTOUPDATER', description: '禁用自动更新' },
+  { key: 'DISABLE_PROMPT_CACHING', description: '禁用所有提示缓存' },
+  { key: 'DISABLE_PROMPT_CACHING_HAIKU', description: '禁用 Haiku 提示缓存' },
+  { key: 'DISABLE_PROMPT_CACHING_SONNET', description: '禁用 Sonnet 提示缓存' },
+  { key: 'DISABLE_PROMPT_CACHING_OPUS', description: '禁用 Opus 提示缓存' },
+  { key: 'DISABLE_NON_ESSENTIAL_MODEL_CALLS', description: '禁用非必要模型调用' },
+  // UI / 显示
+  { key: 'CLAUDE_CODE_HIDE_ACCOUNT_INFO', description: '隐藏账户信息显示' },
+  { key: 'CLAUDE_CODE_DISABLE_TERMINAL_TITLE', description: '禁用终端标题更新' },
+  // 执行
+  { key: 'CLAUDE_CODE_EXIT_AFTER_STOP_DELAY', description: '停止后退出前的延迟（毫秒）' },
+  { key: 'CLAUDE_CODE_TASK_LIST_ID', description: '自定义任务列表 ID' },
+  { key: 'CLAUDE_CODE_TEAM_NAME', description: '归属团队名称' },
+  { key: 'CLAUDE_CODE_API_KEY_HELPER_TTL_MS', description: 'API 密钥助手缓存的 TTL（毫秒）' },
+  { key: 'CLAUDE_CODE_AUTOCOMPACT_PCT_OVERRIDE', description: '覆盖自动压缩阈值（%）' },
+  // 文件与存储
+  { key: 'CLAUDE_CONFIG_DIR', description: '自定义配置/数据目录' },
+  { key: 'CLAUDE_CODE_TMPDIR', description: '覆盖临时目录' },
+  // 工具
+  { key: 'USE_BUILTIN_RIPGREP', description: '使用捆绑的 ripgrep 二进制文件' },
+  // Vertex 区域覆盖
+  { key: 'VERTEX_REGION', description: '默认 Vertex AI 区域' },
+  { key: 'VERTEX_REGION_CLAUDE_3_5_SONNET', description: 'Sonnet 3.5 的 Vertex 区域' },
+  { key: 'VERTEX_REGION_CLAUDE_3_5_HAIKU', description: 'Haiku 3.5 的 Vertex 区域' }
 ]
 
-// ── Scope-aware reactive data ──
+// ── 作用域感知响应式数据 ──
 
-// Effective env across all scopes (merged result)
+// 跨所有作用域的有效环境变量（合并结果）
 const effectiveEnv = computed<Record<string, string>>(() => {
   const val = settings.value.env
   return (val && typeof val === 'object' ? val : {}) as Record<string, string>
 })
 
-// Env at the current editing scope level only.
-// When a profile is active and viewing User scope, we edit the profile layer (values.profile)
-// rather than global (values.global = settings.json, the base layer).
+// 仅当前编辑作用域级别的环境变量。
+// 当配置文件激活并查看用户作用域时，我们编辑配置文件层（values.profile）
+// 而不是全局层（values.global = settings.json，基础层）。
 const scopeEnv = computed<Record<string, string>>(() => {
-  // Touch settings.value to establish Vue reactivity tracking
-  // (inspect() reads alien-signals directly, which Vue cannot track)
+  // 访问 settings.value 以建立 Vue 响应式追踪
+  // （inspect() 直接读取 alien-signals，Vue 无法追踪）
   void settings.value
   const meta = inspect('env')
   const values = meta?.values || {}
@@ -347,14 +347,14 @@ const scopeEnv = computed<Record<string, string>>(() => {
   return (values[scope.value] as Record<string, string>) || {}
 })
 
-// ── Computed entry lists ──
+// ── 计算条目列表 ──
 
 interface EnvEntry {
   key: string
   value: string
 }
 
-// Entries defined at the current scope (editable)
+// 在当前作用域定义的条目（可编辑）
 const scopeEntries = computed<EnvEntry[]>(() => {
   const env = scopeEnv.value
   return Object.keys(env)
@@ -363,7 +363,7 @@ const scopeEntries = computed<EnvEntry[]>(() => {
     .map(k => ({ key: k, value: env[k] }))
 })
 
-// Entries inherited from other scopes (read-only, can override)
+// 从其他作用域继承的条目（只读，可覆盖）
 const inheritedEntries = computed<EnvEntry[]>(() => {
   const effective = effectiveEnv.value
   const local = scopeEnv.value
@@ -375,14 +375,14 @@ const inheritedEntries = computed<EnvEntry[]>(() => {
 
 const hasScopeEntries = computed(() => scopeEntries.value.length > 0)
 
-// Keys already set across all scopes (to exclude from suggestions)
+// 已在所有作用域设置的键（从建议中排除）
 const allSetKeys = computed(() => {
   const keys = new Set<string>()
   for (const k of Object.keys(effectiveEnv.value)) keys.add(k)
   return keys
 })
 
-// ── Combobox autocomplete ──
+// ── 组合框自动完成 ──
 
 const newKeySearch = ref('')
 const newKeySelected = ref<string>('')
@@ -391,9 +391,9 @@ const comboboxOpen = ref(false)
 const filteredSuggestions = computed<EnvSuggestion[]>(() => {
   const query = newKeySearch.value.trim().toUpperCase()
   return KNOWN_ENV_VARS.filter(s => {
-    // Exclude already-set keys
+    // 排除已设置的键
     if (allSetKeys.value.has(s.key)) return false
-    // Match by query
+    // 按查询匹配
     if (!query) return true
     return s.key.includes(query) || s.description.toUpperCase().includes(query)
   })
@@ -408,19 +408,19 @@ function onComboboxSelect(value: string) {
 }
 
 function handleKeyEnter() {
-  // If dropdown has highlighted item, let Combobox handle it.
-  // Otherwise, treat as direct input and move to value field.
+  // 如果下拉菜单有高亮项，让组合框处理它。
+  // 否则，视为直接输入并移动到值字段。
   if (!comboboxOpen.value || filteredSuggestions.value.length === 0) {
     focusNewValue()
   }
 }
 
-// ── Override detection ──
+// ── 覆盖检测 ──
 
 const SCOPE_MAP: Record<string, string> = {
-  global: 'User',
-  shared: 'Workspace',
-  local: 'Local',
+  global: '用户',
+  shared: '工作区',
+  local: '本地',
 }
 
 function isOverriddenByHigherScope(key: string): boolean {
@@ -457,7 +457,7 @@ function overriddenByLabel(key: string): string {
   return ''
 }
 
-// ── CRUD operations (Read-Modify-Write) ──
+// ── CRUD 操作（读-改-写） ──
 
 const newValue = ref('')
 const newValueInputRef = ref<InstanceType<typeof TextInput> | null>(null)
@@ -500,7 +500,7 @@ function resetAllEnvVars() {
   resetSetting('env', scope.value)
 }
 
-// ── Inline editing ──
+// ── 行内编辑 ──
 
 const editingKey = ref<string | null>(null)
 const editValue = ref('')
@@ -532,7 +532,7 @@ function cancelEdit() {
 </script>
 
 <style scoped>
-/* ── Table layout (Name 2:1 Value) ── */
+/* ── 表格布局（名称 2:1 值） ── */
 
 .env-table-header {
   display: flex;
@@ -582,7 +582,7 @@ function cancelEdit() {
   gap: 2px;
 }
 
-/* ── Key/Value text ── */
+/* ── 键/值文本 ── */
 
 .env-key-text {
   font-family: var(--vscode-editor-font-family), monospace;
@@ -619,7 +619,7 @@ function cancelEdit() {
   width: 100%;
 }
 
-/* ── Inherited row styling ── */
+/* ── 继承行样式 ── */
 
 .env-inherited-cell {
   opacity: 0.7;
@@ -629,7 +629,7 @@ function cancelEdit() {
   color: var(--cursor-text-secondary);
 }
 
-/* ── Action buttons ── */
+/* ── 操作按钮 ── */
 
 .env-action-btn {
   all: unset;
@@ -672,7 +672,7 @@ function cancelEdit() {
   color: var(--cursor-icon-primary);
 }
 
-/* ── Combobox (use :deep for reka-ui rendered elements) ── */
+/* ── 组合框（使用 :deep 针对 reka-ui 渲染的元素） ── */
 
 .env-col-key :deep(.env-combobox-root) {
   flex: 1 1 0;
@@ -734,7 +734,7 @@ function cancelEdit() {
 </style>
 
 <style>
-/* Combobox dropdown must NOT be scoped — rendered via Portal outside component DOM */
+/* 组合框下拉菜单不能加作用域 — 通过 Portal 渲染在组件 DOM 外部 */
 
 .env-combobox-content {
   background-color: var(--vscode-settings-dropdownBackground);

@@ -301,7 +301,7 @@ export class WebViewService implements IWebViewService {
     <meta charset="UTF-8" />
     <meta http-equiv="Content-Security-Policy" content="${csp}" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Claudex Chat</title>
+    <title>YwCoder Chat</title>
     <link href="${styleUri}" rel="stylesheet" />
     ${bootstrapScript}
 </head>
@@ -356,7 +356,7 @@ export class WebViewService implements IWebViewService {
     <meta http-equiv="Content-Security-Policy" content="${csp}" />
     <base href="${origin}/" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Claudex Chat (Dev)</title>
+    <title>YW Coder (开发模式)</title>
     ${bootstrapScript}
 </head>
 <body>

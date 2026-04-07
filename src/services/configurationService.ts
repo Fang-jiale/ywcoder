@@ -15,10 +15,10 @@ export const IConfigurationService = createDecorator<IConfigurationService>('con
 export type SettingScope =
   | 'managed' // managed-settings.json (Enterprise Policies)
   | 'cli' // CLI args via extraArgs
-  | 'local' // .claude/settings.local.json (Workspace Local)
-  | 'shared' // .claude/settings.json (Workspace Shared)
-  | 'profile' // ~/.claude/settings.<name>.json (Profile overlay, only when profile active)
-  | 'global' // ~/.claude/settings.json (User Global, always the default file)
+  | 'local' // .ywcoder/settings.local.json (Workspace Local)
+  | 'shared' // .ywcoder/settings.json (Workspace Shared)
+  | 'profile' // ~/.ywcoder/settings.<name>.json (Profile overlay, only when profile active)
+  | 'global' // ~/.ywcoder/settings.json (User Global, always the default file)
   | 'default'; // Internal defaults
 
 export interface ConfigurationInspectResult<T> {
@@ -30,8 +30,8 @@ export interface ConfigurationInspectResult<T> {
     cli?: T;
     local?: T;
     shared?: T;
-    profile?: T;  // ~/.claude/settings.<name>.json (only when profile is active)
-    global?: T;   // ~/.claude/settings.json (always the default file)
+    profile?: T;  // ~/.ywcoder/settings.<name>.json (only when profile is active)
+    global?: T;   // ~/.ywcoder/settings.json (always the default file)
     default?: T;
   };
 }
@@ -126,7 +126,7 @@ export class ConfigurationService implements IConfigurationService {
   // Used as in-memory fallback for inspect(), and as the baseline for delta-only write logic.
   private _defaults: Record<string, any> = {};
 
-  // Default keys injected into ~/.claude/settings.json on first use.
+  // Default keys injected into ~/.ywcoder/settings.json on first use.
   // Only missing keys are inserted; existing user values are never overwritten.
   // These become part of userSettings (lowest user-controlled priority).
   private readonly _defaultTemplate: any = {
@@ -173,7 +173,7 @@ export class ConfigurationService implements IConfigurationService {
     // Ensure extension config (~/.ywcoder.json) exists
     await this.ensureExtensionConfigExists();
 
-    // Ensure CLI config (~/.claude/ywcoder.json) exists with default template
+    // Ensure CLI config (~/.ywcoder/ywcoder.json) exists with default template
     await this.ensureYWCoderExists();
 
     // Load active profile from extension config (~/.ywcoder.json)
@@ -222,7 +222,7 @@ export class ConfigurationService implements IConfigurationService {
     }
 
     const filename = `settings.${name}.json`;
-    const filepath = path.join(os.homedir(), '.claude', filename);
+    const filepath = path.join(os.homedir(), '.ywcoder', filename);
 
     if (await this.fileSystemService.pathExists(filepath)) {
       throw new Error(`Profile '${name}' already exists.`);
@@ -236,7 +236,7 @@ export class ConfigurationService implements IConfigurationService {
     if (!name) {return;}
 
     const filename = `settings.${name}.json`;
-    const filepath = path.join(os.homedir(), '.claude', filename);
+    const filepath = path.join(os.homedir(), '.ywcoder', filename);
 
     if (await this.fileSystemService.pathExists(filepath)) {
       // Check if active, switch to default if so
@@ -258,21 +258,21 @@ export class ConfigurationService implements IConfigurationService {
   }
 
   /**
-   * CLI config path: ~/.claude/ywcoder.json
+   * CLI config path: ~/.ywcoder/ywcoder.json
    * Synced with active Profile
    */
   private getYWCoderConfigPath(): string {
-    return path.join(os.homedir(), '.claude', 'ywcoder.json');
+    return path.join(os.homedir(), '.ywcoder', 'ywcoder.json');
   }
 
   // Mock implementation for Managed Settings path
   private getManagedSettingsPath(): string {
-    return path.join(os.homedir(), '.claude', 'managed-settings.json');
+    return path.join(os.homedir(), '.ywcoder', 'managed-settings.json');
   }
 
   private getGlobalSettingsPath(profile: string | null): string {
     const filename = profile ? `settings.${profile}.json` : 'settings.json';
-    return path.join(os.homedir(), '.claude', filename);
+    return path.join(os.homedir(), '.ywcoder', filename);
   }
 
   get hasWorkspace(): boolean {
@@ -289,12 +289,12 @@ export class ConfigurationService implements IConfigurationService {
 
   private getSharedSettingsPath(): string | undefined {
     const root = this.getWorkspaceRoot();
-    return root ? path.join(root, '.claude', 'settings.json') : undefined;
+    return root ? path.join(root, '.ywcoder', 'settings.json') : undefined;
   }
 
   private getLocalSettingsPath(): string | undefined {
     const root = this.getWorkspaceRoot();
-    return root ? path.join(root, '.claude', 'settings.local.json') : undefined;
+    return root ? path.join(root, '.ywcoder', 'settings.local.json') : undefined;
   }
 
   // --- File Operations ---
@@ -338,7 +338,7 @@ export class ConfigurationService implements IConfigurationService {
   }
 
   /**
-   * Ensure ~/.claude/settings.json exists and contains required defaults.
+   * Ensure ~/.ywcoder/settings.json exists and contains required defaults.
    *
    * This is the correct place to inject extension defaults (permissions, env, mcpServers, etc.)
    * because settings.json is the userSettings layer — the lowest user-controlled priority.
@@ -384,7 +384,7 @@ export class ConfigurationService implements IConfigurationService {
   private async ensureYWCoderExists(): Promise<void> {
     const ywcoderPath = this.getYWCoderConfigPath();
     if (!(await this.fileSystemService.pathExists(ywcoderPath))) {
-      // Empty object — SDK reads ~/.claude/settings.json via userSettings layer,
+      // Empty object — SDK reads ~/.ywcoder/settings.json via userSettings layer,
       // ywcoder.json only serves as flagSettings overlay for profile-specific overrides
       await this.writeJsonFile(ywcoderPath, {});
     }
@@ -394,7 +394,7 @@ export class ConfigurationService implements IConfigurationService {
    * Sync current Profile content to ywcoder.json
    *
    * ywcoder.json is passed to SDK via --settings flag as the flagSettings layer.
-   * SDK already reads ~/.claude/settings.json as userSettings (lower priority).
+   * SDK already reads ~/.ywcoder/settings.json as userSettings (lower priority).
    * So ywcoder.json only needs profile-specific overrides, NOT a full copy.
    *
    * - No profile (Default): write empty object — SDK uses settings.json directly
@@ -480,7 +480,7 @@ export class ConfigurationService implements IConfigurationService {
   }
 
   async getProfiles(): Promise<string[]> {
-    const claudeDir = path.join(os.homedir(), '.claude');
+    const claudeDir = path.join(os.homedir(), '.ywcoder');
     if (!(await this.fileSystemService.pathExists(claudeDir))) {return [];}
 
     try {

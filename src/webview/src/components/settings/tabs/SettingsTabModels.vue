@@ -75,7 +75,7 @@
           </template>
           <template #trailing>
             <div class="model-actions">
-              <Tooltip :content="isModelEnabled(cm.id) ? 'Enabled in chat selector' : 'Disabled in chat selector'">
+              <Tooltip :content="isModelEnabled(cm.id) ? '已在聊天选择器中启用' : '已在聊天选择器中禁用'">
                 <span class="switch-tooltip-wrapper">
                   <Switch
                     :model-value="isModelEnabled(cm.id)"
@@ -100,7 +100,7 @@
           </template>
         </SettingsCell>
 
-        <!-- Built-in Models (aliases merged with SDK info) -->
+        <!-- 内置模型（别名与 SDK 信息合并） -->
         <SettingsCell
           v-for="model in filteredBuiltinModels"
           :key="'builtin-' + model.id"
@@ -115,7 +115,7 @@
             {{ model.description }}
           </template>
           <template #trailing>
-            <Tooltip :content="isModelEnabled(model.id) ? 'Enabled in chat selector' : 'Disabled in chat selector'">
+            <Tooltip :content="isModelEnabled(model.id) ? '已在聊天选择器中启用' : '已在聊天选择器中禁用'">
               <span class="switch-tooltip-wrapper">
                 <Switch
                   :model-value="isModelEnabled(model.id)"
@@ -133,7 +133,7 @@
         >
           <template #label>
             <span class="empty-text">
-              {{ modelSearchQuery ? 'No models match your search' : 'No models available' }}
+              {{ modelSearchQuery ? '没有匹配搜索的模型' : '没有可用的模型' }}
             </span>
           </template>
         </SettingsCell>
@@ -141,26 +141,26 @@
     </SettingsSection>
 
     <!-- Section 2: Thinking & Effort -->
-    <SettingsSection title="Thinking & Effort">
+    <SettingsSection title="思考与努力程度">
       <SettingsSubSection>
         <SettingsItem
           setting-key="alwaysThinkingEnabled"
-          label="Always Thinking"
-          description="Enable extended thinking for all requests"
+          label="始终思考"
+          description="为所有请求启用深度思考"
         >
           <template #default="{ effectiveValue, update }">
             <div class="cursor-settings-cell-switch-container">
               <Switch
                 :model-value="effectiveValue ?? false"
                 @update:model-value="update"
-                title="Always Thinking"
+                title="始终思考"
               />
             </div>
           </template>
         </SettingsItem>
         <SettingsItem
           setting-key="effortLevel"
-          label="Effort Level"
+          label="努力程度"
           :description="effortLevelDescription"
           :divider="true"
         >
@@ -182,11 +182,11 @@
     </SettingsSection>
 
     <!-- Section 3: Model Routing (Advanced Env Vars) -->
-    <SettingsSection title="Model Routing">
-      <SettingsSubSection caption="Override model selection via environment variables. Select from available models or leave unset. Values are written to the 'env' object in settings.json.">
+    <SettingsSection title="模型路由">
+      <SettingsSubSection caption="通过环境变量覆盖模型选择。从可用模型中选择或保持未设置。值将写入 settings.json 中的 'env' 对象。">
         <SettingsCell
           label="ANTHROPIC_DEFAULT_SONNET_MODEL"
-          description="Model ID used when 'sonnet' alias is selected"
+          description="选择 'sonnet' 别名时使用的模型 ID"
         >
           <template #trailing>
             <Dropdown
@@ -197,7 +197,7 @@
             >
               <template #trigger="{ selected }">
                 <span :class="{ 'env-not-set': !getEnvVar('ANTHROPIC_DEFAULT_SONNET_MODEL') }">
-                  {{ selected?.label || getEnvVar('ANTHROPIC_DEFAULT_SONNET_MODEL') || 'Not set' }}
+                  {{ selected?.label || getEnvVar('ANTHROPIC_DEFAULT_SONNET_MODEL') || '未设置' }}
                 </span>
               </template>
             </Dropdown>
@@ -206,7 +206,7 @@
 
         <SettingsCell
           label="ANTHROPIC_DEFAULT_OPUS_MODEL"
-          description="Model ID used when 'opus' alias is selected"
+          description="选择 'opus' 别名时使用的模型 ID"
           :divider="true"
         >
           <template #trailing>
@@ -218,7 +218,7 @@
             >
               <template #trigger="{ selected }">
                 <span :class="{ 'env-not-set': !getEnvVar('ANTHROPIC_DEFAULT_OPUS_MODEL') }">
-                  {{ selected?.label || getEnvVar('ANTHROPIC_DEFAULT_OPUS_MODEL') || 'Not set' }}
+                  {{ selected?.label || getEnvVar('ANTHROPIC_DEFAULT_OPUS_MODEL') || '未设置' }}
                 </span>
               </template>
             </Dropdown>
@@ -227,7 +227,7 @@
 
         <SettingsCell
           label="ANTHROPIC_DEFAULT_HAIKU_MODEL"
-          description="Model ID used when 'haiku' alias is selected"
+          description="选择 'haiku' 别名时使用的模型 ID"
           :divider="true"
         >
           <template #trailing>
@@ -239,7 +239,7 @@
             >
               <template #trigger="{ selected }">
                 <span :class="{ 'env-not-set': !getEnvVar('ANTHROPIC_DEFAULT_HAIKU_MODEL') }">
-                  {{ selected?.label || getEnvVar('ANTHROPIC_DEFAULT_HAIKU_MODEL') || 'Not set' }}
+                  {{ selected?.label || getEnvVar('ANTHROPIC_DEFAULT_HAIKU_MODEL') || '未设置' }}
                 </span>
               </template>
             </Dropdown>
@@ -248,7 +248,7 @@
 
         <SettingsCell
           label="CLAUDE_CODE_SUBAGENT_MODEL"
-          description="Model ID used for subagent (Task tool) calls"
+          description="子代理（任务工具）调用时使用的模型 ID"
           :divider="true"
         >
           <template #trailing>
@@ -260,7 +260,7 @@
             >
               <template #trigger="{ selected }">
                 <span :class="{ 'env-not-set': !getEnvVar('CLAUDE_CODE_SUBAGENT_MODEL') }">
-                  {{ selected?.label || getEnvVar('CLAUDE_CODE_SUBAGENT_MODEL') || 'Not set' }}
+                  {{ selected?.label || getEnvVar('CLAUDE_CODE_SUBAGENT_MODEL') || '未设置' }}
                 </span>
               </template>
             </Dropdown>
@@ -269,7 +269,7 @@
 
         <SettingsCell
           label="MAX_THINKING_TOKENS"
-          description="Maximum thinking tokens for extended thinking"
+          description="深度思考的最大思考令牌数"
           :divider="true"
         >
           <template #trailing>
@@ -284,7 +284,7 @@
 
         <SettingsCell
           label="CLAUDE_CODE_MAX_OUTPUT_TOKENS"
-          description="Maximum output tokens per response"
+          description="每次响应的最大输出令牌数"
           :divider="true"
         >
           <template #trailing>
@@ -321,13 +321,13 @@ import { transport } from '../../../core/runtimeTransport'
 const { settings, activeProfile, sdkCapabilities, sdkCapabilitiesLoading, inspect, updateSetting, resetSetting } = useSettingsStore()
 const scope = useSettingsScope()
 
-// ── Model Aliases (static) ──
+// ── 模型别名（静态） ──
 
 const MODEL_ALIASES = [
-  { label: 'Default', value: 'default', description: 'Account default model' },
-  { label: 'Sonnet', value: 'sonnet', description: 'Current Sonnet model' },
-  { label: 'Opus', value: 'opus', description: 'Current Opus model' },
-  { label: 'Haiku', value: 'haiku', description: 'Current Haiku model' },
+  { label: '默认', value: 'default', description: '账户默认模型' },
+  { label: 'Sonnet', value: 'sonnet', description: '当前 Sonnet 模型' },
+  { label: 'Opus', value: 'opus', description: '当前 Opus 模型' },
+  { label: 'Haiku', value: 'haiku', description: '当前 Haiku 模型' },
 ]
 
 // ── Custom Models & Disabled Models (Pipeline B: ~/.ywcoder.json) ──
@@ -522,9 +522,9 @@ const filteredBuiltinModels = computed(() => {
 // ── Thinking & Effort ──
 
 const effortLevelOptions = [
-  { label: 'Low', value: 'low', description: 'Minimal thinking effort' },
-  { label: 'Medium', value: 'medium', description: 'Balanced thinking effort' },
-  { label: 'High', value: 'high', description: 'Maximum thinking effort' },
+  { label: '低', value: 'low', description: '最小思考努力' },
+  { label: '中', value: 'medium', description: '平衡的思考努力' },
+  { label: '高', value: 'high', description: '最大思考努力' },
 ]
 
 const effortEnabled = computed(() => {
@@ -534,16 +534,16 @@ const effortEnabled = computed(() => {
 
 const effortLevelDescription = computed(() => {
   if (!effortEnabled.value) {
-    return 'Controls reasoning effort level. Only available for Opus 4.6 — current model does not support effort level.'
+    return '控制推理努力程度。仅 Opus 4.6 可用 — 当前模型不支持努力程度设置。'
   }
-  return 'Controls reasoning effort level (low, medium, high)'
+  return '控制推理努力程度（低、中、高）'
 })
 
 // ── Env Var Model Options (shared from model list) ──
 
 function envModelOptions(envKey: string) {
   const currentVal = getEnvVar(envKey)
-  const NOT_SET = { label: 'Not set', value: '__not_set__', description: 'Use default' }
+  const NOT_SET = { label: '未设置', value: '__not_set__', description: '使用默认值' }
 
   const modelOpts = builtinModels.value.map((m) => ({
     label: m.name,
@@ -556,14 +556,14 @@ function envModelOptions(envKey: string) {
     .map((cm) => ({
       label: cm.name || cm.id,
       value: cm.id,
-      description: cm.name ? cm.id : 'Custom model',
+      description: cm.name ? cm.id : '自定义模型',
     }))
 
   const allOpts = [NOT_SET, ...modelOpts, ...customOpts]
 
   // If the current value is set but not in the list, prepend it so Dropdown can display it
   if (currentVal && !allOpts.some((o) => o.value === currentVal)) {
-    allOpts.splice(1, 0, { label: currentVal, value: currentVal, description: 'Current value' })
+    allOpts.splice(1, 0, { label: currentVal, value: currentVal, description: '当前值' })
   }
 
   return allOpts

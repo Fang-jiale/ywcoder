@@ -50,20 +50,20 @@ export function useRuntime(): RuntimeInstance {
 
   // SessionStore 内部的 effect 会自动监听 connection 建立并拉取会话列表
 
-  // 监听 claudeConfig 变化并注册 Slash Commands
+  // 监听 ywcoderConfig 变化并注册 Slash Commands
   let slashCommandDisposers: Array<() => void> = [];
 
   const cleanupSlashCommands = effect(() => {
     const connection = connectionManager.connection();
-    const claudeConfig = connection?.claudeConfig();
+    const ywcoderConfig = connection?.ywcoderConfig();
 
     // 清理旧的 Slash Commands
     slashCommandDisposers.forEach(dispose => dispose());
     slashCommandDisposers = [];
 
     // 注册新的 Slash Commands
-    if (claudeConfig?.slashCommands && Array.isArray(claudeConfig.slashCommands)) {
-      slashCommandDisposers = claudeConfig.slashCommands
+    if (ywcoderConfig?.slashCommands && Array.isArray(ywcoderConfig.slashCommands)) {
+      slashCommandDisposers = ywcoderConfig.slashCommands
         .filter((cmd: any) => typeof cmd?.name === 'string' && cmd.name)
         .map((cmd: any) => {
           return appContext.commandRegistry.registerAction(

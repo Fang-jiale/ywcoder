@@ -1,8 +1,8 @@
 /**
- * ClaudeSessionService - 历史会话加载和管理
+ * SessionService - 历史会话加载和管理
  *
  * 职责：
- * 1. 从 ~/.claude/projects/ 目录加载会话历史
+ * 1. 从 ~/.ywconfig/projects/ 目录加载会话历史
  * 2. 解析 .jsonl 文件（每行一个 JSON 对象）
  * 3. 组织会话消息和生成摘要
  * 4. 支持会话列表查询和消息检索
@@ -17,7 +17,7 @@ import * as os from 'os';
 import { createDecorator } from '../../di/instantiation';
 import { ILogService } from '../logService';
 
-export const IClaudeSessionService = createDecorator<IClaudeSessionService>('claudeSessionService');
+export const ISessionService = createDecorator<ISessionService>('sessionService');
 
 // ============================================================================
 // 类型定义
@@ -59,7 +59,7 @@ export interface SessionInfo {
 /**
  * 会话服务接口
  */
-export interface IClaudeSessionService {
+export interface ISessionService {
     readonly _serviceBrand: undefined;
 
     /**
@@ -78,10 +78,10 @@ export interface IClaudeSessionService {
 // ============================================================================
 
 /**
- * 获取 Claude 配置目录
+ * 获取 YwCoder 配置目录
  */
 function getConfigDir(): string {
-    return process.env.CLAUDE_CONFIG_DIR ?? path.join(os.homedir(), ".claude");
+    return process.env.YWCONFIG_DIR ?? path.join(os.homedir(), ".ywconfig");
 }
 
 /**
@@ -197,7 +197,7 @@ function generateSummary(messages: SessionMessage[]): string {
     } else if (Array.isArray(content)) {
         // 从后向前查找最后一个 text 类型的项
         const textItems = content.filter((item: any) => item.type === "text");
-        text = textItems.length > 0 ? textItems[textItems.length - 1]?.text || "No prompt" : "No prompt";
+        text = textItems.length > 0 ? textItems[textItems.length - 1]?.text || "无提示" : "无提示";
     } else {
         text = "No prompt";
     }
@@ -213,7 +213,7 @@ function generateSummary(messages: SessionMessage[]): string {
 
 
 // ============================================================================
-// ClaudeSessionService 实现
+// SessionService 实现
 // ============================================================================
 
 /**
@@ -348,19 +348,19 @@ function getTranscript(message: SessionMessage, data: SessionData): SessionMessa
 
 
 // ============================================================================
-// ClaudeSessionService 实现
+// SessionService 实现
 // ============================================================================
 
 /**
- * Claude 会话服务实现
+ * 会话服务实现
  */
-export class ClaudeSessionService implements IClaudeSessionService {
+export class SessionService implements ISessionService {
     readonly _serviceBrand: undefined;
 
     constructor(
         @ILogService private readonly logService: ILogService
     ) {
-        this.logService.info('[ClaudeSessionService] 已初始化');
+        this.logService.info('[SessionService] 已初始化');
     }
 
     /**
@@ -368,7 +368,7 @@ export class ClaudeSessionService implements IClaudeSessionService {
      */
     async listSessions(cwd: string): Promise<SessionInfo[]> {
         try {
-            this.logService.info(`[ClaudeSessionService] 加载会话列表: ${cwd}`);
+            this.logService.info(`[SessionService] 加载会话列表: ${cwd}`);
 
             const data = await loadProjectData(cwd);
 
@@ -389,10 +389,10 @@ export class ClaudeSessionService implements IClaudeSessionService {
                 };
             });
 
-            this.logService.info(`[ClaudeSessionService] 找到 ${sessions.length} 个会话`);
+            this.logService.info(`[SessionService] 找到 ${sessions.length} 个会话`);
             return sessions;
         } catch (error) {
-            this.logService.error(`[ClaudeSessionService] 加载会话列表失败:`, error);
+            this.logService.error(`[SessionService] 加载会话列表失败:`, error);
             return [];
         }
     }
@@ -402,7 +402,7 @@ export class ClaudeSessionService implements IClaudeSessionService {
      */
     async getSession(sessionIdOrPath: string, cwd: string): Promise<any[]> {
         try {
-            this.logService.info(`[ClaudeSessionService] 获取会话消息: ${sessionIdOrPath}`);
+            this.logService.info(`[SessionService] 获取会话消息: ${sessionIdOrPath}`);
 
             if (sessionIdOrPath.endsWith(".jsonl")) {
                 const messages: any[] = [];
@@ -434,10 +434,10 @@ export class ClaudeSessionService implements IClaudeSessionService {
                 .map(convertMessage)
                 .filter(msg => !!msg);
 
-            this.logService.info(`[ClaudeSessionService] 获取到 ${result.length} 条消息`);
+            this.logService.info(`[SessionService] 获取到 ${result.length} 条消息`);
             return result;
         } catch (error) {
-            this.logService.error(`[ClaudeSessionService] 获取会话消息失败:`, error);
+            this.logService.error(`[SessionService] 获取会话消息失败:`, error);
             return [];
         }
     }

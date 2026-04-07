@@ -57,7 +57,7 @@ export interface UseSessionReturn {
   }>;
 
   // 计算属性
-  claudeConfig: ComputedRef<any>;
+  ywcoderConfig: ComputedRef<any>;
   config: ComputedRef<any>;
   permissionRequests: ComputedRef<PermissionRequest[]>;
 
@@ -73,9 +73,9 @@ export interface UseSessionReturn {
     attachments?: Array<{ fileName: string; mediaType: string; data: string }>,
     includeSelection?: boolean
   ) => Promise<void>;
-  launchClaude: () => Promise<string>;
+  launchYwCoder: () => Promise<string>;
   interrupt: () => Promise<void>;
-  restartClaude: () => Promise<void>;
+  restartYwCoder: () => Promise<void>;
   listFiles: (pattern?: string) => Promise<any>;
   setPermissionMode: (mode: PermissionMode, applyToConnection?: boolean) => Promise<boolean>;
   setModel: (model: ModelOption) => Promise<boolean>;
@@ -117,7 +117,7 @@ export function useSession(session: Session): UseSessionReturn {
   const usageData = useSignal(session.usageData);
 
   //  使用 useSignal 包装 alien computed（读-only 使用，不调用 setter）
-  const claudeConfig = useSignal(session.claudeConfig as any);
+  const ywcoderConfig = useSignal(session.ywcoderConfig as any);
   const config = useSignal(session.config as any);
   const permissionRequests = useSignal(session.permissionRequests) as unknown as ComputedRef<PermissionRequest[]>;
 
@@ -129,9 +129,9 @@ export function useSession(session: Session): UseSessionReturn {
   const preloadConnection = session.preloadConnection.bind(session);
   const loadFromServer = session.loadFromServer.bind(session);
   const send = session.send.bind(session);
-  const launchClaude = session.launchClaude.bind(session);
+  const launchYwCoder = session.launchYwCoder.bind(session);
   const interrupt = session.interrupt.bind(session);
-  const restartClaude = session.restartClaude.bind(session);
+  const restartYwCoder = session.restartYwCoder.bind(session);
   const listFiles = session.listFiles.bind(session);
   const setPermissionMode = session.setPermissionMode.bind(session);
   const setModel = session.setModel.bind(session);
@@ -163,7 +163,7 @@ export function useSession(session: Session): UseSessionReturn {
     usageData,
 
     // 计算属性
-    claudeConfig,
+    ywcoderConfig,
     config,
     permissionRequests,
     isOffline,
@@ -173,9 +173,9 @@ export function useSession(session: Session): UseSessionReturn {
     preloadConnection,
     loadFromServer,
     send,
-    launchClaude,
+    launchYwCoder,
     interrupt,
-    restartClaude,
+    restartYwCoder,
     listFiles,
     setPermissionMode,
     setModel,

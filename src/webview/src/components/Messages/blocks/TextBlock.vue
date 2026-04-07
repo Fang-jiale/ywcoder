@@ -60,7 +60,7 @@ const renderedMarkdown = computed(() => {
   font-weight: 600;
 }
 
-/* Markdown 基础样式 - Claudex 风格 */
+/* Markdown 基础样式 - YwCoderx 风格 */
 .markdown-content :deep(p) {
   margin: 8px 0;
   line-height: 1.6;

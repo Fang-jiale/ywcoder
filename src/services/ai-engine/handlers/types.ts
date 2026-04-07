@@ -11,9 +11,9 @@ import { IFileSystemService } from '../../fileSystemService';
 import { INotificationService } from '../../notificationService';
 import { ITerminalService } from '../../terminalService';
 import { ITabsAndEditorsService } from '../../tabsAndEditorsService';
-import { IClaudeSessionService } from '../ClaudeSessionService';
-import { IClaudeSdkService } from '../ClaudeSdkService';
-import { IClaudeAgentService } from '../ClaudeAgentService';
+import { ISessionService } from '../SessionService';
+import { IAISdkService } from '../AISdkService';
+import { IAIAgentService } from '../AIAgentService';
 import { IWebViewService } from '../../webViewService';
 
 /**
@@ -28,9 +28,9 @@ export interface HandlerContext {
     notificationService: INotificationService;
     terminalService: ITerminalService;
     tabsAndEditorsService: ITabsAndEditorsService;
-    sessionService: IClaudeSessionService;
-    sdkService: IClaudeSdkService;
-    agentService: IClaudeAgentService;
+    sessionService: ISessionService;
+    sdkService: IAISdkService;
+    agentService: IAIAgentService;
     webViewService: IWebViewService;
 }
 

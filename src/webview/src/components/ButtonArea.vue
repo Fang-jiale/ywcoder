@@ -47,7 +47,7 @@
         </Tooltip>
 
         <!-- Attach File Button -->
-        <Tooltip content="Attach File">
+        <Tooltip content="添加附件">
           <button
             class="action-button"
             @click="handleAttachClick"
@@ -64,7 +64,7 @@
         </Tooltip>
 
         <!-- Submit Button -->
-        <Tooltip :content="submitVariant === 'stop' ? 'Stop' : 'Send'">
+        <Tooltip :content="submitVariant === 'stop' ? '停止' : '发送'">
           <button
             class="submit-button"
             @click="handleSubmit"

@@ -15,7 +15,7 @@
           <button
             class="remove-button"
             @click.stop="handleRemoveAttachment(attachment.id)"
-            :aria-label="`Remove ${attachment.fileName}`"
+            :aria-label="`移除 ${attachment.fileName}`"
           >
             <span class="codicon codicon-close" />
           </button>
@@ -87,7 +87,7 @@
               />
             </template>
           </template>
-          <div v-else class="px-2 py-1 text-xs opacity-60">No matches</div>
+          <div v-else class="px-2 py-1 text-xs opacity-60">无匹配项</div>
         </div>
       </template>
     </Dropdown>

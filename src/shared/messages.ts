@@ -31,10 +31,10 @@ export interface BaseMessage {
 // ============================================================================
 
 /**
- * 启动 Claude 会话
+ * 启动 YwCoder 会话
  */
-export interface LaunchClaudeMessage extends BaseMessage {
-    type: "launch_claude";
+export interface LaunchYwCoderMessage extends BaseMessage {
+    type: "launch_ywcoder";
     channelId: string;
     resume?: string | null;        // 恢复会话 ID
     cwd?: string;                  // 工作目录
@@ -54,10 +54,10 @@ export interface IOMessage extends BaseMessage {
 }
 
 /**
- * 中断 Claude
+ * 中断 YwCoder
  */
-export interface InterruptClaudeMessage extends BaseMessage {
-    type: "interrupt_claude";
+export interface InterruptYwCoderMessage extends BaseMessage {
+    type: "interrupt_ywcoder";
     channelId: string;
 }
 
@@ -241,14 +241,14 @@ export interface SetThinkingLevelResponse {
 }
 
 /**
- * 获取 Claude 状态
+ * 获取 YwCoder 状态
  */
-export interface GetClaudeStateRequest {
-    type: "get_claude_state";
+export interface GetYwCoderStateRequest {
+    type: "get_ywcoder_state";
 }
 
-export interface GetClaudeStateResponse {
-    type: "get_claude_state_response";
+export interface GetYwCoderStateResponse {
+    type: "get_ywcoder_state_response";
     config: any;
 }
 
@@ -490,7 +490,7 @@ export interface RenameTabResponse {
  */
 // export interface LoginRequest {
 //     type: "login";
-//     method: "claude.ai" | "console.anthropic.com";
+//     method: "ywcoder.ai" | "console.anthropic.com";
 // }
 
 // export interface LoginResponse {
@@ -526,14 +526,14 @@ export interface OpenConfigFileResponse {
 }
 
 /**
- * 在终端打开 Claude
+ * 在终端打开 YwCoder
  */
-export interface OpenClaudeInTerminalRequest {
-    type: "open_claude_in_terminal";
+export interface OpenYwCoderInTerminalRequest {
+    type: "open_ywcoder_in_terminal";
 }
 
-export interface OpenClaudeInTerminalResponse {
-    type: "open_claude_in_terminal_response";
+export interface OpenYwCoderInTerminalResponse {
+    type: "open_ywcoder_in_terminal_response";
 }
 
 /**
@@ -735,8 +735,8 @@ export interface UpdateStateRequest {
     type: "update_state";
     // 与 init_response.state 对齐，保证双方一致
     state: InitResponse['state'];
-    // 后端下发的 Claude 配置对象
-    config: GetClaudeStateResponse['config'];
+    // 后端下发的 YwCoder 配置对象
+    config: GetYwCoderStateResponse['config'];
 }
 
 // ============================================================================
@@ -747,9 +747,9 @@ export interface UpdateStateRequest {
  * 所有 WebView → Extension 的消息
  */
 export type WebViewToExtensionMessage =
-    | LaunchClaudeMessage
+    | LaunchYwCoderMessage
     | IOMessage
-    | InterruptClaudeMessage
+    | InterruptYwCoderMessage
     | CloseChannelMessage
     | RequestMessage
     | ResponseMessage
@@ -792,7 +792,7 @@ export type WebViewRequest =
     | ShowNotificationRequest
     | NewConversationTabRequest
     | RenameTabRequest
-    | GetClaudeStateRequest
+    | GetYwCoderStateRequest
     | SdkProbeRequest
     | GetMcpServersRequest
     | GetAssetUrisRequest
@@ -807,7 +807,7 @@ export type WebViewRequest =
     // | SubmitOAuthCodeRequest
     | OpenConfigFileRequest
     | OpenConfigFileRequest
-    | OpenClaudeInTerminalRequest
+    | OpenYwCoderInTerminalRequest
     | GetSettingsRequest
     | UpdateSettingRequest
     | ResetSettingRequest
@@ -832,7 +832,7 @@ export type WebViewRequestResponse =
     | ShowNotificationResponse
     | NewConversationTabResponse
     | RenameTabResponse
-    | GetClaudeStateResponse
+    | GetYwCoderStateResponse
     | SdkProbeResponse
     | GetMcpServersResponse
     | GetAssetUrisResponse
@@ -847,7 +847,7 @@ export type WebViewRequestResponse =
     // | SubmitOAuthCodeResponse
     | OpenConfigFileResponse
     | OpenConfigFileResponse
-    | OpenClaudeInTerminalResponse
+    | OpenYwCoderInTerminalResponse
     | GetSettingsResponse
     | UpdateSettingResponse
     | ResetSettingResponse

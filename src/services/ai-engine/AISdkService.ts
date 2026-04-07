@@ -1,8 +1,8 @@
 /**
- * ClaudeSdkService - Claude Agent SDK 薄封装
+ * AISdkService - AI引擎 SDK 封装
  *
  * 职责：
- * 1. 封装 @anthropic-ai/claude-agent-sdk 的 query() 调用
+ * 1. 封装 AI 引擎的 query() 调用
  * 2. 构建 SDK Options 对象
  * 3. 处理参数转换和环境配置
  * 4. 提供 interrupt() 方法中断查询
@@ -31,7 +31,7 @@ import type {
     HookCallbackMatcher,
 } from '@anthropic-ai/claude-agent-sdk';
 
-export const IClaudeSdkService = createDecorator<IClaudeSdkService>('claudeSdkService');
+export const IAISdkService = createDecorator<IAISdkService>('aiSdkService');
 
 /**
  * SDK 查询参数
@@ -72,11 +72,11 @@ export interface SdkProbeResult {
 /**
  * SDK 服务接口
  */
-export interface IClaudeSdkService {
+export interface IAISdkService {
     readonly _serviceBrand: undefined;
 
     /**
-     * 调用 Claude SDK 进行查询
+     * 调用 AI SDK 进行查询
      */
     query(params: SdkQueryParams): Promise<Query>;
 
@@ -116,9 +116,9 @@ const SDK_PROBE_CAPABILITIES: Record<string, (query: Query) => Promise<any>> = {
 };
 
 /**
- * ClaudeSdkService 实现
+ * AISdkService 实现
  */
-export class ClaudeSdkService implements IClaudeSdkService {
+export class AISdkService implements IAISdkService {
     readonly _serviceBrand: undefined;
 
     constructor(
@@ -127,17 +127,17 @@ export class ClaudeSdkService implements IClaudeSdkService {
         @IConfigurationService private readonly configService: IConfigurationService,
         @IFileSystemService private readonly fileSystemService: IFileSystemService
     ) {
-        this.logService.info('[ClaudeSdkService] 已初始化');
+        this.logService.info('[AISdkService] AI引擎已初始化');
     }
 
     /**
-     * 调用 Claude SDK 进行查询
+     * 调用 AI SDK 进行查询
      */
     async query(params: SdkQueryParams): Promise<Query> {
         const { inputStream, resume, canUseTool, model, cwd, permissionMode, maxThinkingTokens, onStderrError } = params;
 
         this.logService.info('========================================');
-        this.logService.info('ClaudeSdkService.query() 开始调用');
+        this.logService.info('AISdkService.query() 开始调用');
         this.logService.info('========================================');
         this.logService.info(`📋 输入参数:`);
         this.logService.info(`  - model: ${model}`);
@@ -157,7 +157,7 @@ export class ClaudeSdkService implements IClaudeSdkService {
         this.logService.info(`  - cwdParam: ${cwdParam}`);
 
         // 获取 CLI 路径（避免 TypeScript 类型推断问题）
-        const cliPath = await this.getClaudeExecutablePath();
+        const cliPath = await this.getAIExecutablePath();
 
         // 获取环境变量
         const env = await this.getMergedEnvironmentVariables();
@@ -180,8 +180,8 @@ export class ClaudeSdkService implements IClaudeSdkService {
 
         // 检查 CLI 是否存在
         if (!(await this.fileSystemService.pathExists(cliPath))) {
-          this.logService.error(`❌ Claude CLI not found at: ${cliPath}`);
-          throw new Error(`Claude CLI not found at: ${cliPath}`);
+          this.logService.error(`❌ AI引擎 CLI not found at: ${cliPath}`);
+          throw new Error(`AI引擎 CLI not found at: ${cliPath}`);
         }
         this.logService.info(`  ✓ CLI 文件存在`);
 
@@ -192,7 +192,7 @@ export class ClaudeSdkService implements IClaudeSdkService {
           this.logService.info(`  - File size: ${stats.size} bytes`);
           this.logService.info(`  - Is executable: ${isExec}`);
         } catch (e) {
-          this.logService.warn(`  ⚠ Could not check file stats: ${e}`);
+          this.logService.warn(`  ⚠ 无法检查文件状态: ${e}`);
         }
 
         // 构建 SDK Options
@@ -316,13 +316,13 @@ export class ClaudeSdkService implements IClaudeSdkService {
 
         // 调用 SDK
         this.logService.info('');
-        this.logService.info('🚀 准备调用 Claude Agent SDK');
+        this.logService.info('🚀 准备调用 AI Agent SDK');
         this.logService.info('----------------------------------------');
 
         // 设置入口点环境变量
-        process.env.CLAUDE_CODE_ENTRYPOINT = 'claude-vscode';
+        process.env.CLAUDE_CODE_ENTRYPOINT = 'ywcoder-vscode';
         this.logService.info(`🔧 环境变量:`);
-        this.logService.info(`  - CLAUDE_CODE_ENTRYPOINT: ${process.env.CLAUDE_CODE_ENTRYPOINT}`);
+        this.logService.info(`  - YWCODE_ENTRYPOINT: ${process.env.CLAUDE_CODE_ENTRYPOINT}`);
         const customEnvVars = await this.configService.getEnvironmentVariables();
         for (const [key, value] of Object.entries(customEnvVars)) {
             this.logService.info(`  - ${key}: ${value}`);
@@ -435,7 +435,7 @@ export class ClaudeSdkService implements IClaudeSdkService {
         // 立即关闭输入流（probe 不需要发送消息）
         inputStream.done();
 
-        const cliPath = await this.getClaudeExecutablePath();
+        const cliPath = await this.getAIExecutablePath();
 
         const options: Options = {
             // 最小化配置
@@ -478,7 +478,7 @@ export class ClaudeSdkService implements IClaudeSdkService {
      */
     async interrupt(query: Query): Promise<void> {
         try {
-            this.logService.info('🛑 中断 Claude SDK 查询');
+            this.logService.info('🛑 中断 AI SDK 查询');
             await query.interrupt();
             this.logService.info('✓ 查询已中断');
         } catch (error) {
@@ -509,9 +509,9 @@ export class ClaudeSdkService implements IClaudeSdkService {
     }
 
     /**
-     * 获取 Claude CLI 可执行文件路径
+     * 获取 AI引擎 CLI 可执行文件路径
      */
-    private async getClaudeExecutablePath(): Promise<string> {
+    private async getAIExecutablePath(): Promise<string> {
         const binaryName = process.platform === 'win32' ? 'claude.exe' : 'claude';
         const arch = process.arch;
 

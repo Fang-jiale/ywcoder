@@ -19,7 +19,7 @@
       <DropdownItem
         :item="{
           id: 'default',
-          label: 'Default',
+          label: '默认',
           icon: 'codicon-chat text-[14px]!',
           checked: permissionMode === 'default',
           type: 'default-mode'
@@ -31,7 +31,7 @@
       <DropdownItem
         :item="{
           id: 'acceptEdits',
-          label: 'Agent',
+          label: '代理',
           icon: 'codicon-infinity text-[14px]!',
           checked: permissionMode === 'acceptEdits',
           type: 'agent-mode'
@@ -43,7 +43,7 @@
       <DropdownItem
         :item="{
           id: 'plan',
-          label: 'Plan',
+          label: '规划',
           icon: 'codicon-todos text-[14px]!',
           checked: permissionMode === 'plan',
           type: 'plan-mode'
@@ -79,13 +79,13 @@ const emit = defineEmits<Emits>()
 const selectedModeLabel = computed(() => {
   switch (props.permissionMode) {
     case 'acceptEdits':
-      return 'Agent'
+      return '代理'
     case 'plan':
-      return 'Plan'
+      return '规划'
     case 'default':
-      return 'Default'
+      return '默认'
     default:
-      return 'Default'
+      return '默认'
   }
 })
 

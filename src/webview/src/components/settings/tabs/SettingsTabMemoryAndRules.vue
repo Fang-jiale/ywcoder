@@ -1,89 +1,89 @@
 <template>
-  <SettingsTab title="Memory and Rules">
-    <!-- CLAUDE.md Files Section -->
-    <SettingsSection title="Memory Files (CLAUDE.md)">
+  <SettingsTab title="记忆与规则">
+    <!-- CLAUDE.md 文件部分 -->
+    <SettingsSection title="记忆文件 (YWCODE.md)">
       <SettingsSubSection>
-        <SettingsCell label="User Memory" description="Personal instructions loaded for all projects">
+        <SettingsCell label="用户记忆" description="为所有项目加载的个人指令">
           <template #trailing>
-            <Button variant="tertiary" size="small" @click="openConfigFile('user-claude-md')">
+            <Button variant="tertiary" size="small" @click="openConfigFile('user-ywcoder-md')">
               <span class="codicon codicon-edit" style="font-size: 12px; margin-right: 4px"></span>
-              Edit
+              编辑
             </Button>
           </template>
           <template #bottom>
             <div class="text-xs text-(--cursor-text-tertiary) mt-1">
-              <code>~/.claude/CLAUDE.md</code>
+              <code>~/.ywcoder/YWCODE.md</code>
             </div>
           </template>
         </SettingsCell>
 
-        <SettingsCell label="Project Memory" description="Project-specific instructions shared with team" :divider="true">
+        <SettingsCell label="项目记忆" description="与团队共享的特定项目指令" :divider="true">
           <template #trailing>
-            <Button variant="tertiary" size="small" @click="openConfigFile('project-claude-md')">
+            <Button variant="tertiary" size="small" @click="openConfigFile('project-ywcoder-md')">
               <span class="codicon codicon-edit" style="font-size: 12px; margin-right: 4px"></span>
-              Edit
+              编辑
             </Button>
           </template>
           <template #bottom>
             <div class="text-xs text-(--cursor-text-tertiary) mt-1">
-              <code>.claude/CLAUDE.md</code> (checked into source control)
+              <code>.ywcoder/YWCODE.md</code>（已纳入版本控制）
             </div>
           </template>
         </SettingsCell>
 
-        <SettingsCell label="Local Project Memory" description="Personal project-specific instructions (not committed)" :divider="true">
+        <SettingsCell label="本地项目记忆" description="个人项目特定指令（不提交）" :divider="true">
           <template #trailing>
-            <Button variant="tertiary" size="small" @click="openConfigFile('local-claude-md')">
+            <Button variant="tertiary" size="small" @click="openConfigFile('local-ywcoder-md')">
               <span class="codicon codicon-edit" style="font-size: 12px; margin-right: 4px"></span>
-              Edit
+              编辑
             </Button>
           </template>
           <template #bottom>
             <div class="text-xs text-(--cursor-text-tertiary) mt-1">
-              <code>.claude/CLAUDE.local.md</code> (git ignored)
+              <code>.ywcoder/YWCODE.local.md</code>（被 git 忽略）
             </div>
           </template>
         </SettingsCell>
       </SettingsSubSection>
     </SettingsSection>
 
-    <!-- Custom Agents Section -->
-    <SettingsSection title="Custom Agents">
+    <!-- 自定义代理部分 -->
+    <SettingsSection title="自定义代理">
       <SettingsSubSection>
-        <SettingsCell label="User Agents" description="Personal subagents available across all projects">
+        <SettingsCell label="用户代理" description="跨所有项目可用的个人子代理">
           <template #trailing>
             <Button variant="tertiary" size="small" @click="openConfigFile('user-agents')">
               <span class="codicon codicon-folder-opened" style="font-size: 12px; margin-right: 4px"></span>
-              Open
+              打开
             </Button>
           </template>
           <template #bottom>
             <div class="text-xs text-(--cursor-text-tertiary) mt-1">
-              <code>~/.claude/agents/</code>
+              <code>~/.ywcoder/agents/</code>
             </div>
           </template>
         </SettingsCell>
 
-        <SettingsCell label="Project Agents" description="Project-specific subagents shared with team" :divider="true">
+        <SettingsCell label="项目代理" description="与团队共享的特定项目子代理" :divider="true">
           <template #trailing>
             <Button variant="tertiary" size="small" @click="openConfigFile('project-agents')">
               <span class="codicon codicon-folder-opened" style="font-size: 12px; margin-right: 4px"></span>
-              Open
+              打开
             </Button>
           </template>
           <template #bottom>
             <div class="text-xs text-(--cursor-text-tertiary) mt-1">
-              <code>.claude/agents/</code>
+              <code>.ywcoder/agents/</code>
             </div>
           </template>
         </SettingsCell>
       </SettingsSubSection>
     </SettingsSection>
 
-    <!-- Company Announcements Section -->
-    <SettingsSection title="Company Announcements">
+    <!-- 公司公告部分 -->
+    <SettingsSection title="公司公告">
       <SettingsSubSection>
-        <SettingsCell label="Announcements" description="Messages displayed to users at startup (managed in settings.json)">
+        <SettingsCell label="公告" description="启动时向用户显示的消息（在 settings.json 中管理）">
           <template #bottom>
             <div class="flex flex-wrap gap-2 mt-2">
               <div
@@ -101,7 +101,7 @@
               </div>
               <TextInput
                 v-model="newAnnouncement"
-                placeholder="Add announcement..."
+                placeholder="添加公告..."
                 class="w-full"
                 @keydown.enter="addAnnouncement"
               />
@@ -153,5 +153,5 @@ const removeAnnouncement = (index: number) => {
 </script>
 
 <style scoped>
-/* TextInput handles all styling via Common/TextInput.vue */
+/* TextInput 通过 Common/TextInput.vue 处理所有样式 */
 </style>

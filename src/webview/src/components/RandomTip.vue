@@ -1,13 +1,13 @@
 <template>
   <div class="empty-state-content">
-    <ClawdIcon class="empty-mascot" />
+    <YwCoderIcon class="empty-mascot" />
     <p class="empty-state-message">{{ currentTip }}</p>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import ClawdIcon from './ClawdIcon.vue';
+import YwCoderIcon from './YwCoderIcon.vue';
 
 interface Props {
   platform: string;
@@ -21,8 +21,8 @@ const tips = computed(() => {
     '不知道从哪里开始？可以询问关于代码库的问题，或者我们一起开始写代码。',
     "准备好编程了吗？\n让我们一起写些值得部署的代码。",
     '输入 /model 选择适合当前任务的模型。',
-    '创建一个 CLAUDE.md 文件，Claude 每次都会读取其中的指令。',
-    "厌倦了重复说明？使用 CLAUDE.md 告诉 Claude 记住你告诉过它的事情。",
+    '创建一个 YWCODER.md 文件，YwCoder 每次都会读取其中的指令。',
+    "厌倦了重复说明？使用 YWCODER.md 告诉 YwCoder 记住你告诉过它的事情。",
     '按 Shift + Tab 自动批准代码编辑。',
     `高亮选中文本后按 ${platformKey} + K 开始讨论。`,
     '使用规划模式在提交前讨论重大变更。按 Shift + Tab 在模式间切换。',

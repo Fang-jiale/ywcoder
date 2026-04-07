@@ -19,10 +19,10 @@ import { INotificationService, NotificationService } from './notificationService
 import { IDialogService, DialogService } from './dialogService';
 import { IWebViewService, WebViewService } from './webViewService';
 
-// Claude services
-import { IClaudeSdkService, ClaudeSdkService } from './claude/ClaudeSdkService';
-import { IClaudeSessionService, ClaudeSessionService } from './claude/ClaudeSessionService';
-import { IClaudeAgentService, ClaudeAgentService } from './claude/ClaudeAgentService';
+// AI Engine services
+import { IAISdkService, AISdkService } from './ai-engine/AISdkService';
+import { ISessionService, SessionService } from './ai-engine/SessionService';
+import { IAIAgentService, AIAgentService } from './ai-engine/AIAgentService';
 
 /**
  * Register all services to the builder
@@ -58,10 +58,10 @@ export function registerServices(
 	// WebView service
 	builder.define(IWebViewService, new SyncDescriptor(WebViewService, [context]));
 
-	// Claude services
-	builder.define(IClaudeSdkService, new SyncDescriptor(ClaudeSdkService, [context]));
-	builder.define(IClaudeSessionService, new SyncDescriptor(ClaudeSessionService));
-	builder.define(IClaudeAgentService, new SyncDescriptor(ClaudeAgentService));
+	// AI Engine services
+	builder.define(IAISdkService, new SyncDescriptor(AISdkService, [context]));
+	builder.define(ISessionService, new SyncDescriptor(SessionService));
+	builder.define(IAIAgentService, new SyncDescriptor(AIAgentService));
 }
 
 // Export all service interfaces for convenience
@@ -76,7 +76,7 @@ export {
 	INotificationService,
 	IDialogService,
 	IWebViewService,
-	IClaudeSdkService,
-	IClaudeSessionService,
-	IClaudeAgentService
+	IAISdkService,
+	ISessionService,
+	IAIAgentService
 };
