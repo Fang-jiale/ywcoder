@@ -15,10 +15,10 @@ export const IConfigurationService = createDecorator<IConfigurationService>('con
 export type SettingScope =
   | 'managed' // managed-settings.json (Enterprise Policies)
   | 'cli' // CLI args via extraArgs
-  | 'local' // .ywcoder/settings.local.json (Workspace Local)
-  | 'shared' // .ywcoder/settings.json (Workspace Shared)
-  | 'profile' // ~/.ywcoder/settings.<name>.json (Profile overlay, only when profile active)
-  | 'global' // ~/.ywcoder/settings.json (User Global, always the default file)
+  | 'local' // .claude/settings.local.json (Workspace Local)
+  | 'shared' // .claude/settings.json (Workspace Shared)
+  | 'profile' // ~/.claude/settings.<name>.json (Profile overlay, only when profile active)
+  | 'global' // ~/.claude/settings.json (User Global, always the default file)
   | 'default'; // Internal defaults
 
 export interface ConfigurationInspectResult<T> {
@@ -30,8 +30,8 @@ export interface ConfigurationInspectResult<T> {
     cli?: T;
     local?: T;
     shared?: T;
-    profile?: T;  // ~/.ywcoder/settings.<name>.json (only when profile is active)
-    global?: T;   // ~/.ywcoder/settings.json (always the default file)
+    profile?: T;  // ~/.claude/settings.<name>.json (only when profile is active)
+    global?: T;   // ~/.claude/settings.json (always the default file)
     default?: T;
   };
 }
@@ -56,6 +56,17 @@ export interface ExtensionConfig {
   // Model management
   customModels: Array<{ id: string; name?: string }>;
   disabledModels: string[];
+
+  // Local Claude CLI path (if set, use local installed CLI instead of bundled)
+  localClaudeCliPath: string | null;
+
+  // Default environment variables for CLI
+  defaultEnvVars: {
+    CLAUDE_CODE_USE_OPENAI: string;
+    OPENAI_API_KEY: string;
+    OPENAI_BASE_URL: string;
+    OPENAI_MODEL: string;
+  };
 }
 
 export interface IConfigurationService {
@@ -126,7 +137,7 @@ export class ConfigurationService implements IConfigurationService {
   // Used as in-memory fallback for inspect(), and as the baseline for delta-only write logic.
   private _defaults: Record<string, any> = {};
 
-  // Default keys injected into ~/.ywcoder/settings.json on first use.
+  // Default keys injected into ~/.claude/settings.json on first use.
   // Only missing keys are inserted; existing user values are never overwritten.
   // These become part of userSettings (lowest user-controlled priority).
   private readonly _defaultTemplate: any = {
@@ -146,7 +157,7 @@ export class ConfigurationService implements IConfigurationService {
     "skipWebFetchPreflight": true
   };
 
-  // Default template for extension config (~/.ywcoder.json)
+  // Default template for extension config (~/.ywcoder.json - 扩展专属配置，保持不变)
   private readonly _extensionConfigDefaults: ExtensionConfig = {
     activeProfile: null,
     defaultPermissionMode: 'default',
@@ -155,7 +166,14 @@ export class ConfigurationService implements IConfigurationService {
     systemNotifications: false,
     completionSound: true,
     customModels: [],
-    disabledModels: []
+    disabledModels: [],
+    localClaudeCliPath: null,
+    defaultEnvVars: {
+      CLAUDE_CODE_USE_OPENAI: '1',
+      OPENAI_API_KEY: 'glm',
+      OPENAI_BASE_URL: 'http://76.13.61.16:8015/v1',
+      OPENAI_MODEL: 'GLM5'
+    }
   };
 
   constructor(@IFileSystemService private readonly fileSystemService: IFileSystemService) {
@@ -173,7 +191,7 @@ export class ConfigurationService implements IConfigurationService {
     // Ensure extension config (~/.ywcoder.json) exists
     await this.ensureExtensionConfigExists();
 
-    // Ensure CLI config (~/.ywcoder/ywcoder.json) exists with default template
+    // Ensure CLI config (~/.claude/ywcoder.json) exists with default template
     await this.ensureYWCoderExists();
 
     // Load active profile from extension config (~/.ywcoder.json)
@@ -222,7 +240,7 @@ export class ConfigurationService implements IConfigurationService {
     }
 
     const filename = `settings.${name}.json`;
-    const filepath = path.join(os.homedir(), '.ywcoder', filename);
+    const filepath = path.join(os.homedir(), '.claude', filename);
 
     if (await this.fileSystemService.pathExists(filepath)) {
       throw new Error(`Profile '${name}' already exists.`);
@@ -236,7 +254,7 @@ export class ConfigurationService implements IConfigurationService {
     if (!name) {return;}
 
     const filename = `settings.${name}.json`;
-    const filepath = path.join(os.homedir(), '.ywcoder', filename);
+    const filepath = path.join(os.homedir(), '.claude', filename);
 
     if (await this.fileSystemService.pathExists(filepath)) {
       // Check if active, switch to default if so
@@ -258,21 +276,21 @@ export class ConfigurationService implements IConfigurationService {
   }
 
   /**
-   * CLI config path: ~/.ywcoder/ywcoder.json
+   * CLI config path: ~/.claude/ywcoder.json
    * Synced with active Profile
    */
   private getYWCoderConfigPath(): string {
-    return path.join(os.homedir(), '.ywcoder', 'ywcoder.json');
+    return path.join(os.homedir(), '.claude', 'ywcoder.json');
   }
 
   // Mock implementation for Managed Settings path
   private getManagedSettingsPath(): string {
-    return path.join(os.homedir(), '.ywcoder', 'managed-settings.json');
+    return path.join(os.homedir(), '.claude', 'managed-settings.json');
   }
 
   private getGlobalSettingsPath(profile: string | null): string {
     const filename = profile ? `settings.${profile}.json` : 'settings.json';
-    return path.join(os.homedir(), '.ywcoder', filename);
+    return path.join(os.homedir(), '.claude', filename);
   }
 
   get hasWorkspace(): boolean {
@@ -289,12 +307,12 @@ export class ConfigurationService implements IConfigurationService {
 
   private getSharedSettingsPath(): string | undefined {
     const root = this.getWorkspaceRoot();
-    return root ? path.join(root, '.ywcoder', 'settings.json') : undefined;
+    return root ? path.join(root, '.claude', 'settings.json') : undefined;
   }
 
   private getLocalSettingsPath(): string | undefined {
     const root = this.getWorkspaceRoot();
-    return root ? path.join(root, '.ywcoder', 'settings.local.json') : undefined;
+    return root ? path.join(root, '.claude', 'settings.local.json') : undefined;
   }
 
   // --- File Operations ---
@@ -338,7 +356,7 @@ export class ConfigurationService implements IConfigurationService {
   }
 
   /**
-   * Ensure ~/.ywcoder/settings.json exists and contains required defaults.
+   * Ensure ~/.claude/settings.json exists and contains required defaults.
    *
    * This is the correct place to inject extension defaults (permissions, env, mcpServers, etc.)
    * because settings.json is the userSettings layer — the lowest user-controlled priority.
@@ -384,7 +402,7 @@ export class ConfigurationService implements IConfigurationService {
   private async ensureYWCoderExists(): Promise<void> {
     const ywcoderPath = this.getYWCoderConfigPath();
     if (!(await this.fileSystemService.pathExists(ywcoderPath))) {
-      // Empty object — SDK reads ~/.ywcoder/settings.json via userSettings layer,
+      // Empty object — SDK reads ~/.claude/settings.json via userSettings layer,
       // ywcoder.json only serves as flagSettings overlay for profile-specific overrides
       await this.writeJsonFile(ywcoderPath, {});
     }
@@ -394,7 +412,7 @@ export class ConfigurationService implements IConfigurationService {
    * Sync current Profile content to ywcoder.json
    *
    * ywcoder.json is passed to SDK via --settings flag as the flagSettings layer.
-   * SDK already reads ~/.ywcoder/settings.json as userSettings (lower priority).
+   * SDK already reads ~/.claude/settings.json as userSettings (lower priority).
    * So ywcoder.json only needs profile-specific overrides, NOT a full copy.
    *
    * - No profile (Default): write empty object — SDK uses settings.json directly
@@ -480,7 +498,7 @@ export class ConfigurationService implements IConfigurationService {
   }
 
   async getProfiles(): Promise<string[]> {
-    const claudeDir = path.join(os.homedir(), '.ywcoder');
+    const claudeDir = path.join(os.homedir(), '.claude');
     if (!(await this.fileSystemService.pathExists(claudeDir))) {return [];}
 
     try {
@@ -599,19 +617,9 @@ export class ConfigurationService implements IConfigurationService {
   }
 
   async getEnvironmentVariables(): Promise<Record<string, string>> {
-    const vars = await this.getSetting<Array<{ name: string; value: string }>>(
-      'environmentVariables',
-      []
-    );
-    const env: Record<string, string> = {};
-    if (Array.isArray(vars)) {
-      for (const item of vars) {
-        if (item.name) {
-          env[item.name] = item.value || '';
-        }
-      }
-    }
-    return env;
+    // 从 settings.json 的 env 字段读取环境变量（与界面使用的键一致）
+    const env = await this.getSetting<Record<string, string>>('env', {});
+    return env && typeof env === 'object' ? env : {};
   }
 
   async inspectAll(): Promise<Record<string, ConfigurationInspectResult<any>>> {
@@ -715,10 +723,24 @@ export class ConfigurationService implements IConfigurationService {
     const configPath = this.getExtensionConfigPath();
     const stored = await this.readJsonFile(configPath);
 
+    // 如果 localClaudeCliPath 未设置，尝试从环境变量 YWCODER_CLI_PATH 读取
+    let localClaudeCliPath = stored.localClaudeCliPath ?? this._extensionConfigDefaults.localClaudeCliPath;
+    if (!localClaudeCliPath && process.env.YWCODER_CLI_PATH) {
+      localClaudeCliPath = process.env.YWCODER_CLI_PATH;
+    }
+
+    // 合并 defaultEnvVars（确保所有默认键都存在）
+    const mergedDefaultEnvVars = {
+      ...this._extensionConfigDefaults.defaultEnvVars,
+      ...stored.defaultEnvVars
+    };
+
     // Merge with defaults to ensure all keys exist
     return {
       ...this._extensionConfigDefaults,
-      ...stored
+      ...stored,
+      localClaudeCliPath,
+      defaultEnvVars: mergedDefaultEnvVars
     };
   }
 
@@ -732,8 +754,8 @@ export class ConfigurationService implements IConfigurationService {
     const configPath = this.getExtensionConfigPath();
     const current = await this.readJsonFile(configPath);
 
+    // 只更新指定的 key，保留其他已保存的配置
     const updated = {
-      ...this._extensionConfigDefaults,
       ...current,
       [key]: value
     };

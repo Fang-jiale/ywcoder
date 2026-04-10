@@ -281,9 +281,11 @@ interface EnvSuggestion {
 }
 
 const KNOWN_ENV_VARS: EnvSuggestion[] = [
+  // 端点配置（用于 OpenAI 兼容的内部大模型）
+  { key: 'ANTHROPIC_BASE_URL', description: 'API 基础 URL（用于内部 OpenAI 兼容端点，如 http://localhost:1234/v1）' },
+  { key: 'ANTHROPIC_AUTH_TOKEN', description: 'API 认证令牌（用于内部 OpenAI 兼容端点）' },
   // 认证
   { key: 'ANTHROPIC_API_KEY', description: 'API 密钥，用于认证服务' },
-  { key: 'ANTHROPIC_AUTH_TOKEN', description: '认证令牌' },
   { key: 'ANTHROPIC_CUSTOM_HEADERS', description: 'API 请求的自定义 HTTP 头' },
   // 遥测与报告
   { key: 'CLAUDE_CODE_ENABLE_TELEMETRY', description: '启用 OpenTelemetry' },

@@ -1,9 +1,9 @@
 {
   "name": "ywcoder",
-  "displayName": "YwCoder",
-  "description": "YwCoder - 自研智能编程助手，深度集成于 VSCode，提供智能代码分析、重构建议、自动化编程等功能。",
+  "displayName": "运维Coder",
+  "description": "运维Coder - 自研智能编程助手，深度集成于 VSCode，提供智能代码分析、重构建议、自动化编程等功能。",
   "version": "1.0.0",
-  "publisher": "yw-support",
+  "publisher": "dc-ops-support",
   "engines": {
     "vscode": "^1.98.0",
     "node": ">=18.0.0"
@@ -20,7 +20,7 @@
   "main": "./dist/extension.cjs",
   "contributes": {
     "configuration": {
-      "title": "YwCoder 配置",
+      "title": "运维Coder 配置",
       "properties": {
         "ywcoder.selectedModel": {
           "type": "string",
@@ -55,29 +55,29 @@
       "activitybar": [
         {
           "id": "ywcoder-chat-sidebar",
-          "title": "YwCoder",
-          "icon": "resources/ywcoder-logo.svg"
+          "title": "运维Coder",
+          "icon": "resources/ywcoder-icon.svg"
         }
       ]
     },
     "views": {
       "ywcoder-chat-sidebar": [
         {
-          "icon": "resources/ywcoder-logo.svg",
+          "icon": "resources/ywcoder-icon.svg",
           "type": "webview",
           "id": "ywcoder.chatView",
-          "name": "YwCoder"
+          "name": "运维Coder"
         }
       ]
     },
     "commands": [
       {
         "command": "ywcoder.showChat",
-        "title": "显示 YwCoder"
+        "title": "显示 运维Coder"
       },
       {
         "command": "ywcoder.openSettings",
-        "title": "YwCoder: 打开设置",
+        "title": "运维Coder: 打开设置",
         "icon": "$(gear)"
       }
     ],

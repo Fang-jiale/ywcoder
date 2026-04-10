@@ -1,0 +1,29 @@
+{
+  "_comment": "YwCoder 扩展配置文件 (~/.ywcoder.json)",
+  "_comment2": "此文件包含 YwCoder 扩展专属配置，独立于 AI 引擎配置",
+
+  "activeProfile": null,
+  "defaultPermissionMode": "default",
+  "defaultModel": "default",
+  "defaultThinkingLevel": "default_on",
+  "systemNotifications": false,
+  "completionSound": true,
+  "customModels": [],
+  "disabledModels": [],
+
+  "_comment3": "使用本地已安装的 Claude CLI (可选)",
+  "_comment4": "如果设置，优先使用本地 CLI 而不是扩展内置的 CLI",
+  "localClaudeCliPath": null,
+
+  "_comment5": "localClaudeCliPath 示例:",
+  "_comment6": "  - macOS (Homebrew): /opt/homebrew/bin/claude 或 /usr/local/bin/claude",
+  "_comment7": "  - Linux: /usr/local/bin/claude 或 ~/.local/bin/claude",
+  "_comment8": "  - Windows: C:\\Users\\<用户名>\\AppData\\Local\\anthropic\\claude\\claude.exe",
+  "_comment9": "  - 使用环境变量: $HOME/.local/bin/claude",
+
+  "_comment10": "OpenAI 适配器设置 - 用于连接 OpenAI 兼容 API (LM Studio, Ollama 等)",
+  "_comment11": "启用后，会自动将 Anthropic 格式请求转换为 OpenAI 格式",
+  "useOpenAIAdapter": false,
+  "_comment12": "OpenAI 模型名称 (如 gpt-4, gpt-3.5-turbo, llama2 等)",
+  "openAIModel": null
+}

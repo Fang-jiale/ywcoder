@@ -2,7 +2,7 @@
   <SettingsTab title="钩子">
     <SettingsSection>
       <SettingsCell label="生命周期钩子">
-        <template #description> 管理生命周期钩子 (.ywcoder/hooks) </template>
+        <template #description> 管理生命周期钩子 (.claude/hooks) </template>
         <template #trailing>
           <div class="text-xs text-(--cursor-text-secondary)">即将推出</div>
         </template>

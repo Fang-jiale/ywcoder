@@ -788,6 +788,10 @@ export class AIAgentService implements IAIAgentService {
             // case "open_claude_in_terminal":
             //     return handleOpenClaudeInTerminal(request, this.handlerContext);
 
+            case "reload_webview":
+                this.webviewPanel?.webview.postMessage({ type: 'reload' });
+                return { type: "reload_webview_response" };
+
             // 认证
             // case "get_auth_status":
             //     return handleGetAuthStatus(request, this.handlerContext);

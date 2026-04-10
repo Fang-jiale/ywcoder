@@ -1,0 +1,175 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "_comment": "YwCoder 离线环境配置文件 - 放置到 ~/.ywcoder/settings.json (本文件)",
+  "_comment2": "扩展配置 (~/.ywcoder.json) 可设置: localClaudeCliPath 使用本地 Claude CLI",
+
+  "model": "claude-sonnet-4-6",
+
+  "env": {
+    "ANTHROPIC_BASE_URL": "http://your-internal-api-endpoint.com/v1",
+    "ANTHROPIC_AUTH_TOKEN": "your-api-key-here",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "CLAUDE_CODE_ATTRIBUTION_HEADER": "0",
+    "DISABLE_INSTALLATION_CHECKS": "1",
+    "CLAUDE_CODE_SKIP_VERSION_CHECK": "1",
+    "CLAUDE_CODE_OFFLINE_MODE": "1"
+  },
+
+  "permissions": {
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "MultiEdit",
+      "Glob",
+      "Grep",
+      "Bash(git *)",
+      "Bash(npm *)",
+      "Bash(node *)",
+      "Bash(python *)",
+      "Bash(python3 *)",
+      "Bash(pip *)",
+      "Bash(yarn *)",
+      "Bash(pnpm *)",
+      "Bash(make *)",
+      "Bash(cargo *)",
+      "Bash(rustc *)",
+      "Bash(go *)",
+      "Bash(javac *)",
+      "Bash(java *)",
+      "Bash(gcc *)",
+      "Bash(g++)",
+      "Bash(clang *)",
+      "Bash(ls *)",
+      "Bash(cat *)",
+      "Bash(find *)",
+      "Bash(grep *)",
+      "Bash(sed *)",
+      "Bash(awk *)",
+      "Bash(tar *)",
+      "Bash(zip *)",
+      "Bash(unzip *)",
+      "Bash(mkdir *)",
+      "Bash(rm *)",
+      "Bash(cp *)",
+      "Bash(mv *)",
+      "Bash(chmod *)",
+      "Bash(chown *)",
+      "Bash(echo *)",
+      "Bash(printf *)",
+      "Bash(test *)",
+      "Bash([ *)",
+      "Bash(cd *)",
+      "Bash(pwd)",
+      "Bash(whoami)",
+      "Bash(uname *)",
+      "Bash(date)",
+      "Bash(env)",
+      "Bash(export *)",
+      "Bash(source *)",
+      "Bash(\. *)",
+      "LSP",
+      "LS",
+      "NotebookRead",
+      "NotebookEdit",
+      "TodoWrite",
+      "Skill",
+      "Task",
+      "TaskCreate",
+      "TaskGet",
+      "TaskList",
+      "TaskOutput",
+      "TaskStop",
+      "TaskUpdate",
+      "ToolSearch"
+    ],
+    "deny": [
+      "Bash(curl *)",
+      "Bash(wget *)",
+      "Bash(ssh *)",
+      "Bash(scp *)",
+      "Bash(sftp *)",
+      "Bash(telnet *)",
+      "Bash(nc *)",
+      "Bash(netcat *)",
+      "Bash(ping *)",
+      "Bash(traceroute *)",
+      "Bash(nslookup *)",
+      "Bash(dig *)",
+      "Bash(ftp *)",
+      "Bash(sudo *)",
+      "Bash(su *)",
+      "WebFetch",
+      "WebSearch"
+    ],
+    "ask": [
+      "Bash(rm -rf *)",
+      "Bash(rm -r *)",
+      "Bash(rm -f *)",
+      "Bash(dd *)",
+      "Bash(mkfs *)",
+      "Bash(fdisk *)",
+      "Bash(format *)",
+      "KillShell"
+    ],
+    "defaultMode": "acceptEdits"
+  },
+
+  "skipWebFetchPreflight": true,
+
+  "respectGitignore": true,
+
+  "cleanupPeriodDays": 7,
+
+  "autoUpdatesChannel": "stable",
+
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
+
+  "sandbox": {
+    "enabled": true,
+    "network": {
+      "allowLocalBinding": true,
+      "allowedDomains": [],
+      "deniedDomains": ["*"]
+    },
+    "excludedCommands": ["git", "docker"],
+    "autoAllowBashIfSandboxed": false,
+    "allowUnsandboxedCommands": true
+  },
+
+  "disableAllHooks": false,
+
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '[YwCoder] 执行 Bash 命令: $ARGUMENTS'",
+            "async": true
+          }
+        ]
+      }
+    ]
+  },
+
+  "outputStyle": "default",
+
+  "spinnerTipsEnabled": true,
+
+  "terminalProgressBarEnabled": true,
+
+  "showTurnDuration": true,
+
+  "prefersReducedMotion": false,
+
+  "alwaysThinkingEnabled": false,
+
+  "teammateMode": "auto",
+
+  "mcpServers": {}
+}

@@ -10,6 +10,7 @@
 <script setup lang="ts">
   import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
   import type { PermissionMode } from '@anthropic-ai/claude-agent-sdk';
+  import { getVerbs } from '../../locales';
 
   interface Props {
     size?: number;
@@ -23,22 +24,9 @@
 
   const SPINNER_ICONS = ['·', '✢', '*', '✶', '✻', '✽'];
   const ANIMATION_ICONS = [...SPINNER_ICONS, ...[...SPINNER_ICONS].reverse()];
-  const VERBS = [
-    '正在完成', '正在执行', '正在实现', '正在分析', '正在处理', '正在酝酿',
-    '正在计算', '正在思考', '正在引导', '正在迭代', '正在编码', '正在优化',
-    '正在思索', '正在运算', '正在组合', '正在调配', '正在考虑', '正在推理',
-    '正在生成', '正在制作', '正在创造', '正在解析', '正在推断', '正在商议',
-    '正在确定', '正在重排', '正在构建', '正在实现', '正在阐明', '正在设计',
-    '正在构想', '正在谋划', '正在探索', '正在锻造', '正在形成', '正在演练',
-    '正在编译', '正在整合', '正在孵化', '正在聚集', '正在核验', '正在构思',
-    '正在想象', '正在培育', '正在预测', '正在显现', '正在提炼', '正在评估',
-    '正在调试', '正在梳理', '正在研究', '正在召集', '正在总结', '正在筛选',
-    '正在检索', '正在解析', '正在论证', '正在验证', '正在运行', '正在优化',
-    '正在困惑', '正在编织', '正在反思', '正在策划', '正在编排', '正在调整',
-    '正在合成', '正在构建', '正在探索', '正在旋转', '正在模拟', '正在确认',
-    '正在集成', '正在思考', '正在修复', '正在转化', '正在展开', '正在解开',
-    '正在感受', '正在漫游', '正在轰鸣', '正在摇摆', '正在工作', '正在驾驭'
-  ];
+
+  // Get localized verbs
+  const VERBS = getVerbs();
   const MAX_VERB_LENGTH = Math.max(...VERBS.map(v => v.length));
 
   const iconIndex = ref(0);

@@ -1,46 +1,46 @@
 <template>
   <SettingsTab title="记忆与规则">
     <!-- CLAUDE.md 文件部分 -->
-    <SettingsSection title="记忆文件 (YWCODE.md)">
+    <SettingsSection title="记忆文件 (CLAUDE.md)">
       <SettingsSubSection>
         <SettingsCell label="用户记忆" description="为所有项目加载的个人指令">
           <template #trailing>
-            <Button variant="tertiary" size="small" @click="openConfigFile('user-ywcoder-md')">
+            <Button variant="tertiary" size="small" @click="openConfigFile('user-claude-md')">
               <span class="codicon codicon-edit" style="font-size: 12px; margin-right: 4px"></span>
               编辑
             </Button>
           </template>
           <template #bottom>
             <div class="text-xs text-(--cursor-text-tertiary) mt-1">
-              <code>~/.ywcoder/YWCODE.md</code>
+              <code>~/.claude/CLAUDE.md</code>
             </div>
           </template>
         </SettingsCell>
 
         <SettingsCell label="项目记忆" description="与团队共享的特定项目指令" :divider="true">
           <template #trailing>
-            <Button variant="tertiary" size="small" @click="openConfigFile('project-ywcoder-md')">
+            <Button variant="tertiary" size="small" @click="openConfigFile('project-claude-md')">
               <span class="codicon codicon-edit" style="font-size: 12px; margin-right: 4px"></span>
               编辑
             </Button>
           </template>
           <template #bottom>
             <div class="text-xs text-(--cursor-text-tertiary) mt-1">
-              <code>.ywcoder/YWCODE.md</code>（已纳入版本控制）
+              <code>.claude/CLAUDE.md</code>（已纳入版本控制）
             </div>
           </template>
         </SettingsCell>
 
         <SettingsCell label="本地项目记忆" description="个人项目特定指令（不提交）" :divider="true">
           <template #trailing>
-            <Button variant="tertiary" size="small" @click="openConfigFile('local-ywcoder-md')">
+            <Button variant="tertiary" size="small" @click="openConfigFile('local-claude-md')">
               <span class="codicon codicon-edit" style="font-size: 12px; margin-right: 4px"></span>
               编辑
             </Button>
           </template>
           <template #bottom>
             <div class="text-xs text-(--cursor-text-tertiary) mt-1">
-              <code>.ywcoder/YWCODE.local.md</code>（被 git 忽略）
+              <code>.claude/CLAUDE.local.md</code>（被 git 忽略）
             </div>
           </template>
         </SettingsCell>
@@ -59,7 +59,7 @@
           </template>
           <template #bottom>
             <div class="text-xs text-(--cursor-text-tertiary) mt-1">
-              <code>~/.ywcoder/agents/</code>
+              <code>~/.claude/agents/</code>
             </div>
           </template>
         </SettingsCell>
@@ -73,7 +73,7 @@
           </template>
           <template #bottom>
             <div class="text-xs text-(--cursor-text-tertiary) mt-1">
-              <code>.ywcoder/agents/</code>
+              <code>.claude/agents/</code>
             </div>
           </template>
         </SettingsCell>

@@ -537,6 +537,17 @@ export interface OpenYwCoderInTerminalResponse {
 }
 
 /**
+ * 重新加载 Webview
+ */
+export interface ReloadWebviewRequest {
+    type: "reload_webview";
+}
+
+export interface ReloadWebviewResponse {
+    type: "reload_webview_response";
+}
+
+/**
  * 认证 URL 通知（Extension → WebView）
  */
 // export interface AuthURLRequest {
@@ -808,6 +819,7 @@ export type WebViewRequest =
     | OpenConfigFileRequest
     | OpenConfigFileRequest
     | OpenYwCoderInTerminalRequest
+    | ReloadWebviewRequest
     | GetSettingsRequest
     | UpdateSettingRequest
     | ResetSettingRequest
@@ -848,6 +860,7 @@ export type WebViewRequestResponse =
     | OpenConfigFileResponse
     | OpenConfigFileResponse
     | OpenYwCoderInTerminalResponse
+    | ReloadWebviewResponse
     | GetSettingsResponse
     | UpdateSettingResponse
     | ResetSettingResponse

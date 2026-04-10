@@ -89,6 +89,12 @@ export interface IAISdkService {
      * 中断正在进行的查询
      */
     interrupt(query: Query): Promise<void>;
+
+    /**
+     * 重置 OpenAI 代理配置
+     * 在环境变量或代理配置变更后调用，下次 query() 会重新初始化代理
+     */
+    resetOpenAIProxy(): Promise<void>;
 }
 
 const VS_CODE_APPEND_PROMPT = `
@@ -488,31 +494,90 @@ export class AISdkService implements IAISdkService {
     }
 
     /**
-     * 获取合并后的环境变量 (process.env + custom)
+     * OpenAI 适配代理功能已禁用
+     * 由内置 CLI 通过环境变量处理 OpenAI 兼容模式
+     */
+    private async maybeStartOpenAIProxy(_env: Record<string, string>): Promise<string | null> {
+        // 代理功能已完全禁用 - 内置 CLI 直接处理 OpenAI 兼容模式
+        return null;
+    }
+
+    /**
+     * OpenAI 代理功能已禁用
+     * 由内置 CLI 通过环境变量处理 OpenAI 兼容模式
+     */
+    async resetOpenAIProxy(): Promise<void> {
+        // OpenAI 代理功能已完全禁用 - 无需重置
+        this.logService.info('[AISdkService] OpenAI 代理功能已禁用（由内置 CLI 处理）');
+    }
+
+    /**
+     * 获取合并后的环境变量 (process.env + custom + config defaults)
+     * 优先级: process.env > custom > config defaults
      */
     private async getMergedEnvironmentVariables(): Promise<Record<string, string>> {
         const customVars = await this.configService.getEnvironmentVariables();
+        const extensionConfig = await this.configService.getExtensionConfig();
+
+        // 从配置获取默认环境变量
+        const configDefaults = extensionConfig.defaultEnvVars || {
+            CLAUDE_CODE_USE_OPENAI: '1',
+            OPENAI_API_KEY: 'glm',
+            OPENAI_BASE_URL: 'http://76.13.61.16:8015/v1',
+            OPENAI_MODEL: 'GLM5'
+        };
 
         // 安全合并 process.env (过滤 undefined)
-        const env: Record<string, string> = {
-          // CLAUDE_CODE_ENABLE_ASK_USER_QUESTION_TOOL: '1'
-          // ANTHROPIC_BASE_URL: 'https://anyrouter.top',
-          // ANTHROPIC_AUTH_TOKEN: 'sk-PNPwKAii2iEHlPxERYW8zt4xMH60O9iHVFJRbg7z9rnur8HG',
-        };
+        const env: Record<string, string> = {};
+
+        // 1. 首先应用配置中的默认值（最低优先级）
+        for (const [key, value] of Object.entries(configDefaults)) {
+            env[key] = value;
+        }
+
+        // 2. 合并 process.env
         Object.entries(process.env).forEach(([key, value]) => {
             if (value !== undefined) {
                 env[key] = value;
             }
         });
 
-      return { ...env, ...customVars };
+        // 3. 应用自定义环境变量（最高优先级）
+        for (const [key, value] of Object.entries(customVars)) {
+            env[key] = value;
+        }
+
+        // 记录环境变量来源
+        this.logService.info(`[AISdkService] 环境变量合并完成:`);
+        this.logService.info(`  - 配置默认值: CLAUDE_CODE_USE_OPENAI=${configDefaults['CLAUDE_CODE_USE_OPENAI']}`);
+        this.logService.info(`  - OPENAI_BASE_URL=${configDefaults['OPENAI_BASE_URL']}`);
+        this.logService.info(`  - 实际值: CLAUDE_CODE_USE_OPENAI=${env['CLAUDE_CODE_USE_OPENAI']}`);
+
+        // OpenAI 代理功能已禁用 - 由内置 CLI 处理
+        return env;
     }
 
     /**
      * 获取 AI引擎 CLI 可执行文件路径
+     * 优先级: 1. 用户配置的本地路径 > 2. 内置原生二进制
      */
     private async getAIExecutablePath(): Promise<string> {
-        const binaryName = process.platform === 'win32' ? 'claude.exe' : 'claude';
+        // 1. 检查用户是否配置了本地 Claude CLI 路径
+        const extensionConfig = await this.configService.getExtensionConfig();
+        const localCliPath = extensionConfig.localClaudeCliPath;
+
+        if (localCliPath) {
+            const resolvedPath = this.resolveLocalCliPath(localCliPath);
+            if (await this.fileSystemService.pathExists(resolvedPath)) {
+                this.logService.info(`[AISdkService] 使用本地安装的 Claude CLI: ${resolvedPath}`);
+                return resolvedPath;
+            } else {
+                this.logService.warn(`[AISdkService] 配置的本地 CLI 路径不存在: ${resolvedPath}，将使用内置 CLI`);
+            }
+        }
+
+        // 2. 查找内置原生二进制
+        const binaryName = process.platform === 'win32' ? 'ywcoder.exe' : 'ywcoder';
         const arch = process.arch;
 
         const nativePath = this.context.asAbsolutePath(
@@ -523,6 +588,26 @@ export class AISdkService implements IAISdkService {
             return nativePath;
         }
 
-        return this.context.asAbsolutePath('resources/claude-code/cli.js');
+        throw new Error('AI引擎 CLI 未找到。请配置本地 CLI 路径或确保内置二进制文件存在。');
+    }
+
+    /**
+     * 解析本地 CLI 路径（支持 ~ 展开和环境变量）
+     */
+    private resolveLocalCliPath(cliPath: string): string {
+        if (!cliPath) {
+            return cliPath;
+        }
+
+        // 展开 ~ 为用户主目录
+        let resolved = cliPath.startsWith('~')
+            ? path.join(os.homedir(), cliPath.slice(1))
+            : cliPath;
+
+        // 展开环境变量（如 $HOME, ${HOME}）
+        resolved = resolved.replace(/\$\{([^}]+)\}/g, (_, varName) => process.env[varName] || '');
+        resolved = resolved.replace(/\$([A-Za-z_][A-Za-z0-9_]*)/g, (match, varName) => process.env[varName] || match);
+
+        return path.normalize(resolved);
     }
 }

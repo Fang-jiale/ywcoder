@@ -2,11 +2,11 @@
   <div class="cursor-settings-sidebar">
     <div class="cursor-settings-sidebar-header">
       <div class="cursor-settings-sidebar-avatar">
-        <img :src="avatarUrl" alt="Avatar" class="cursor-settings-sidebar-avatar-img" />
+        <YwCoderIcon class="cursor-settings-sidebar-avatar-icon" />
       </div>
       <div class="cursor-settings-sidebar-header-content">
-        <p class="cursor-settings-sidebar-header-email">YW Coder@cometix.dev</p>
-        <p class="cursor-settings-sidebar-header-plan">Ultra Plan</p>
+        <p class="cursor-settings-sidebar-header-email">运维coder</p>
+        <p class="cursor-settings-sidebar-header-plan">运维支持部</p>
       </div>
     </div>
 
@@ -69,8 +69,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import _avatarUrl from '../../assets/ywcoder-avatar.png';
-const avatarUrl = _avatarUrl;
+import YwCoderIcon from '../YwCoderIcon.vue';
 import ProfileSelector from './SettingsProfileSelector.vue';
 import Separator from '../Common/Separator.vue';
 import { useSettingsStore } from '../../composables/useSettingsStore';
@@ -176,11 +175,10 @@ const getIconClass = (icon: string): string[] => {
     width: 28px;
 }
 
-.cursor-settings-sidebar-avatar-img {
+.cursor-settings-sidebar-avatar-icon {
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    /* border-radius: 50%; */
+    object-fit: contain;
 }
 
 .cursor-settings-sidebar-header-content {

@@ -220,7 +220,14 @@ export async function handleSwitchProfile(
   request: SwitchProfileRequest,
   context: HandlerContext
 ): Promise<SwitchProfileResponse> {
+  const { logService, sdkService } = context;
+
   await context.configService.switchProfile(request.profile);
+
+  // Profile 切换可能改变环境变量配置，重置代理
+  logService.info('[handleSwitchProfile] Profile 已切换，重置 OpenAI 代理配置');
+  await sdkService.resetOpenAIProxy();
+
   return {
     type: 'switch_profile_response',
     success: true
@@ -281,6 +288,14 @@ export async function handleUpdateSetting(
     // Default to 'global' if target not specified
     const target = request.target || 'global';
     await context.configService.updateSetting(request.key, request.value, target);
+
+    // 如果更新了环境变量（ANTHROPIC_BASE_URL 等），重置 OpenAI 代理
+    if (request.key === 'env') {
+        const { logService, sdkService } = context;
+        logService.info('[handleUpdateSetting] 环境变量已更新，重置 OpenAI 代理配置');
+        await sdkService.resetOpenAIProxy();
+    }
+
     return {
         type: "update_setting_response",
         success: true
@@ -295,6 +310,14 @@ export async function handleResetSetting(
     context: HandlerContext
 ): Promise<ResetSettingResponse> {
     await context.configService.resetSetting(request.key, request.target);
+
+    // 如果重置了环境变量，重置 OpenAI 代理
+    if (request.key === 'env') {
+        const { logService, sdkService } = context;
+        logService.info('[handleResetSetting] 环境变量已重置，重置 OpenAI 代理配置');
+        await sdkService.resetOpenAIProxy();
+    }
+
     return {
         type: "reset_setting_response",
         success: true
@@ -322,6 +345,8 @@ export async function handleUpdateExtensionConfig(
     request: UpdateExtensionConfigRequest,
     context: HandlerContext
 ): Promise<UpdateExtensionConfigResponse> {
+    const { logService, sdkService } = context;
+
     await context.configService.updateExtensionConfig(request.key as any, request.value);
 
     // Broadcast config change to all webviews (so chat page ModelSelect can refresh)
@@ -352,20 +377,45 @@ export async function handleOpenFile(
     const cwd = workspaceService.getDefaultWorkspaceFolder()?.uri.fsPath || process.cwd();
     const { filePath, location } = request;
 
+    logService.info(`[handleOpenFile] 请求打开文件: ${filePath}, cwd: ${cwd}`);
+
     try {
+        // 1. 搜索文件
         const searchResults = await fileSystemService.findFiles(filePath, cwd);
+        logService.info(`[handleOpenFile] 搜索结果: ${searchResults.length} 个匹配`);
+        if (searchResults.length > 0) {
+            searchResults.forEach((r, i) => logService.info(`  [${i}] ${r.path}`));
+        }
+
+        // 2. 解析路径
         const resolvedPath = await fileSystemService.resolveExistingPath(filePath, cwd, searchResults);
+        logService.info(`[handleOpenFile] 解析后的路径: ${resolvedPath}`);
+
+        // 3. 检查路径是否存在
+        const pathExists = await fileSystemService.pathExists(resolvedPath);
+        if (!pathExists) {
+            logService.error(`[handleOpenFile] 文件不存在: ${resolvedPath}`);
+            throw new Error(`文件不存在: ${resolvedPath}`);
+        }
+
+        // 4. 获取文件状态
         const stat = await fs.promises.stat(resolvedPath);
         const uri = vscode.Uri.file(resolvedPath);
 
+        // 5. 如果是目录，在资源管理器中显示
         if (stat.isDirectory()) {
+            logService.info(`[handleOpenFile] 路径是目录，在资源管理器中显示`);
             await vscode.commands.executeCommand("revealInExplorer", uri);
             return { type: "open_file_response" };
         }
 
+        // 6. 打开文件
+        logService.info(`[handleOpenFile] 正在打开文件: ${resolvedPath}`);
         const doc = await vscode.workspace.openTextDocument(uri);
         const editor = await vscode.window.showTextDocument(doc, { preview: false });
+        logService.info(`[handleOpenFile] 文件已打开`);
 
+        // 7. 跳转到指定位置
         if (location) {
             const startLine = Math.max((location.startLine ?? 1) - 1, 0);
             const endLine = Math.max((location.endLine ?? location.startLine ?? 1) - 1, startLine);
@@ -379,12 +429,15 @@ export async function handleOpenFile(
 
             editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
             editor.selection = new vscode.Selection(range.start, range.end);
+            logService.info(`[handleOpenFile] 跳转到位置: ${startLine + 1}:${startColumn}-${endLine + 1}:${endColumn}`);
         }
 
         return { type: "open_file_response" };
     } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
         logService.error(`[handleOpenFile] 打开文件失败: ${errorMsg}`);
+        // 显示错误通知给用户
+        vscode.window.showErrorMessage(`无法打开文件: ${errorMsg}`);
         throw new Error(`Failed to open file: ${errorMsg}`);
     }
 }
@@ -1121,17 +1174,34 @@ function getConfigFilePath(configType: string): string {
         case "settings":
             return path.join(homeDir, ".claude", "settings.json");
         case "config":
-            return path.join(homeDir, ".claude", "config.json");
+            return path.join(homeDir, ".claude", "ywcoder.json");
         case "mcp-global":
-            // Global MCP servers: ~/.claude.json (home directory root, NOT inside .claude/)
-            return path.join(homeDir, ".claude.json");
+            // Global MCP servers: ~/.claude/mcp.json
+            return path.join(homeDir, ".claude", "mcp.json");
         case "mcp-project": {
-            // Project MCP servers: .mcp.json in workspace root
+            // Project MCP servers: .claude/mcp.json in workspace root
             const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
             if (!workspaceRoot) {
                 throw new Error("No workspace folder open");
             }
-            return path.join(workspaceRoot, ".mcp.json");
+            return path.join(workspaceRoot, ".claude", "mcp.json");
+        }
+        // CLAUDE.md memory files
+        case "user-claude-md":
+            return path.join(homeDir, ".claude", "CLAUDE.md");
+        case "project-claude-md": {
+            const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+            if (!workspaceRoot) {
+                throw new Error("No workspace folder open");
+            }
+            return path.join(workspaceRoot, ".claude", "CLAUDE.md");
+        }
+        case "local-claude-md": {
+            const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+            if (!workspaceRoot) {
+                throw new Error("No workspace folder open");
+            }
+            return path.join(workspaceRoot, ".claude", "CLAUDE.local.md");
         }
         default:
             return path.join(homeDir, ".claude", `${configType}.json`);
