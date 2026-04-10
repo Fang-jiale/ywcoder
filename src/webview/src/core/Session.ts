@@ -165,8 +165,20 @@ export class Session {
   }
 
   async preloadConnection(): Promise<void> {
-    await this.getConnection();
-    await this.launchYwCoder();
+    try {
+      await this.getConnection();
+      await this.launchYwCoder();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.error(message);
+      console.error('[Session] 预加载连接失败:', message);
+      // 通知用户连接失败
+      this.context.showNotification?.(
+        `无法启动 YW Coder: ${message}`,
+        'error'
+      );
+      throw error;
+    }
   }
 
   async loadFromServer(): Promise<void> {
@@ -187,7 +199,10 @@ export class Session {
       // 移除 ReadCoalesced 合并逻辑
       // this.messages(mergeConsecutiveReadMessages(accumulator));
       this.messages(accumulator);
-      await this.launchYwCoder();
+      const channelId = await this.launchYwCoder();
+      if (!channelId) {
+        throw new Error('Failed to launch YwCoder');
+      }
     } finally {
       this.isLoading(false);
     }
@@ -205,7 +220,12 @@ export class Session {
     const isSlash = this.isSlashCommand(input);
 
     // 启动 channel（确保已带上当前 thinkingLevel）
-    await this.launchYwCoder();
+    const launchedChannelId = await this.launchYwCoder();
+    if (!launchedChannelId) {
+      // launchYwCoder 已经显示了错误通知，这里直接返回
+      this.busy(false);
+      return;
+    }
 
     const shouldIncludeSelection = includeSelection && !isSlash;
     let selectionPayload: SelectionRange | undefined;
@@ -239,7 +259,7 @@ export class Session {
     }
   }
 
-  async launchYwCoder(): Promise<string> {
+  async launchYwCoder(): Promise<string | undefined> {
     const existingChannel = this.ywcoderChannelId();
     if (existingChannel) {
       return existingChannel;
@@ -249,31 +269,51 @@ export class Session {
     const channelId = Math.random().toString(36).slice(2);
     this.ywcoderChannelId(channelId);
 
-    const connection = await this.getConnection();
+    try {
+      const connection = await this.getConnection();
 
-    if (!this.cwd()) {
-      this.cwd(connection.config()?.defaultCwd);
+      if (!this.cwd()) {
+        this.cwd(connection.config()?.defaultCwd);
+      }
+
+      if (!this.modelSelection()) {
+        this.modelSelection(connection.config()?.modelSetting);
+      }
+
+      if (!this.thinkingLevel()) {
+        this.thinkingLevel(connection.config()?.thinkingLevel || 'default_on');
+      }
+
+      const stream = connection.launchYwCoder(
+        channelId,
+        this.sessionId() ?? undefined,
+        this.cwd() ?? undefined,
+        this.modelSelection() ?? undefined,
+        this.permissionMode(),
+        this.thinkingLevel()
+      );
+
+      void this.readMessages(stream);
+      return channelId;
+    } catch (error) {
+      this.ywcoderChannelId(undefined);
+      const message = error instanceof Error ? error.message : String(error);
+      this.error(message);
+      console.error('[Session] 启动 YwCoder 失败:', message);
+      // 显示用户友好的错误提示
+      this.context.showNotification?.(
+        `CLI 启动失败: ${message}`,
+        'error',
+        ['打开设置', '重试']
+      ).then((action) => {
+        if (action === '打开设置') {
+          void this.openConfigFile('general');
+        } else if (action === '重试') {
+          void this.launchYwCoder();
+        }
+      });
+      return undefined;
     }
-
-    if (!this.modelSelection()) {
-      this.modelSelection(connection.config()?.modelSetting);
-    }
-
-    if (!this.thinkingLevel()) {
-      this.thinkingLevel(connection.config()?.thinkingLevel || 'default_on');
-    }
-
-    const stream = connection.launchYwCoder(
-      channelId,
-      this.sessionId() ?? undefined,
-      this.cwd() ?? undefined,
-      this.modelSelection() ?? undefined,
-      this.permissionMode(),
-      this.thinkingLevel()
-    );
-
-    void this.readMessages(stream);
-    return channelId;
   }
 
   async interrupt(): Promise<void> {
@@ -285,11 +325,12 @@ export class Session {
     connection.interruptYwCoder(channelId);
   }
 
-  async restartYwCoder(): Promise<void> {
+  async restartYwCoder(): Promise<boolean> {
     await this.interrupt();
     this.ywcoderChannelId(undefined);
     this.busy(false);
-    await this.launchYwCoder();
+    const channelId = await this.launchYwCoder();
+    return !!channelId;
   }
 
   async listFiles(pattern?: string, signal?: AbortSignal): Promise<any> {
@@ -348,6 +389,9 @@ export class Session {
   async getMcpServers(): Promise<any> {
     const connection = await this.getConnection();
     const channelId = await this.launchYwCoder();
+    if (!channelId) {
+      throw new Error('Failed to launch YwCoder');
+    }
     return connection.getMcpServers(channelId);
   }
 

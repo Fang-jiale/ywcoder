@@ -1,14 +1,14 @@
 <template>
   <SettingsTab title="MCP 服务器">
     <!-- Section 1: Server Status (SDK probe, read-only) -->
-    <SettingsSection title="Server Status">
+    <SettingsSection title="服务器状态">
       <SettingsSubSection>
         <!-- Loading state -->
         <SettingsCell v-if="loading">
           <template #label>
             <div class="mcp-loading">
               <span class="codicon codicon-loading mcp-spin" />
-              <span>Probing MCP servers...</span>
+              <span>正在探测 MCP 服务器...</span>
             </div>
           </template>
         </SettingsCell>
@@ -37,7 +37,7 @@
         <!-- Empty state -->
         <SettingsCell v-if="!loading && mcpServers.length === 0">
           <template #label>
-            <span class="mcp-empty">No MCP servers configured</span>
+            <span class="mcp-empty">未配置 MCP 服务器</span>
           </template>
         </SettingsCell>
 
@@ -45,22 +45,22 @@
         <SettingsCell :divider="mcpServers.length > 0 || loading">
           <template #label>
             <div class="mcp-actions">
-              <Tooltip content="Re-probe MCP servers">
+              <Tooltip content="重新探测 MCP 服务器">
                 <button class="mcp-action-btn" :disabled="loading" @click="handleRefresh">
                   <span class="codicon codicon-refresh" :class="{ 'mcp-spin': loading }" />
-                  <span>Refresh</span>
+                  <span>刷新</span>
                 </button>
               </Tooltip>
-              <Tooltip content="Open ~/.ywcoder.json (global MCP config)">
+              <Tooltip content="打开 ~/.ywcoder.json (全局 MCP 配置)">
                 <button class="mcp-action-btn" @click="openGlobalConfig">
                   <span class="codicon codicon-globe" />
-                  <span>Global Config</span>
+                  <span>全局配置</span>
                 </button>
               </Tooltip>
-              <Tooltip content="Open .mcp.json (project MCP config)">
+              <Tooltip content="打开 .mcp.json (项目 MCP 配置)">
                 <button class="mcp-action-btn" :disabled="!hasWorkspace" @click="openProjectConfig">
                   <span class="codicon codicon-folder" />
-                  <span>Project Config</span>
+                  <span>项目配置</span>
                 </button>
               </Tooltip>
             </div>
@@ -70,13 +70,13 @@
     </SettingsSection>
 
     <!-- Section 2: Project Server Policy -->
-    <SettingsSection title="Project Server Policy">
-      <SettingsSubSection caption="Control which MCP servers from .mcp.json files are automatically approved.">
+    <SettingsSection title="项目服务器策略">
+      <SettingsSubSection caption="控制来自 .mcp.json 文件的哪些 MCP 服务器被自动批准。">
         <!-- enableAllProjectMcpServers -->
         <SettingsItem
           setting-key="enableAllProjectMcpServers"
-          label="Auto-Approve All Project Servers"
-          description="Automatically approve all MCP servers defined in .mcp.json"
+          label="自动批准所有项目服务器"
+          description="自动批准在 .mcp.json 中定义的所有 MCP 服务器"
         >
           <template #default="{ effectiveValue, update }">
             <div class="cursor-settings-cell-switch-container">
@@ -93,8 +93,8 @@
         <!-- enabledMcpjsonServers -->
         <SettingsItem
           setting-key="enabledMcpjsonServers"
-          label="Approved Servers"
-          description="Explicitly approved MCP servers from .mcp.json"
+          label="已批准的服务器"
+          description="从 .mcp.json 显式批准的 MCP 服务器"
           :divider="true"
         >
           <template #content="{ effectiveValue, update }">
@@ -111,7 +111,7 @@
               </div>
               <TextInput
                 v-model="newEnabledServer"
-                placeholder="Server name..."
+                placeholder="服务器名称..."
                 size="small"
                 monospace
                 class="mcp-pill-input"
@@ -124,8 +124,8 @@
         <!-- disabledMcpjsonServers -->
         <SettingsItem
           setting-key="disabledMcpjsonServers"
-          label="Rejected Servers"
-          description="Explicitly rejected MCP servers from .mcp.json"
+          label="已拒绝的服务器"
+          description="从 .mcp.json 显式拒绝的 MCP 服务器"
           :divider="true"
         >
           <template #content="{ effectiveValue, update }">
@@ -142,7 +142,7 @@
               </div>
               <TextInput
                 v-model="newDisabledServer"
-                placeholder="Server name..."
+                placeholder="服务器名称..."
                 size="small"
                 monospace
                 class="mcp-pill-input"
@@ -155,14 +155,14 @@
     </SettingsSection>
 
     <!-- Section 3: Enterprise Policy (conditional) -->
-    <SettingsSection v-if="hasEnterprisePolicies" title="Enterprise Policy">
+    <SettingsSection v-if="hasEnterprisePolicies" title="企业策略">
       <SettingsSubSection>
-        <SettingsCell v-if="managedAllowedServers.length" label="Allowed Servers">
+        <SettingsCell v-if="managedAllowedServers.length" label="允许的服务器">
           <template #label>
             <div class="flex items-center gap-2">
               <span>Allowed Servers</span>
-              <Tooltip content="Controlled by managed policy">
-                <Badge variant="danger">Managed</Badge>
+              <Tooltip content="由托管策略控制">
+                <Badge variant="danger">托管</Badge>
               </Tooltip>
             </div>
           </template>
@@ -181,14 +181,14 @@
 
         <SettingsCell
           v-if="managedDeniedServers.length"
-          label="Denied Servers"
+          label="拒绝的服务器"
           :divider="managedAllowedServers.length > 0"
         >
           <template #label>
             <div class="flex items-center gap-2">
               <span>Denied Servers</span>
-              <Tooltip content="Controlled by managed policy">
-                <Badge variant="danger">Managed</Badge>
+              <Tooltip content="由托管策略控制">
+                <Badge variant="danger">托管</Badge>
               </Tooltip>
             </div>
           </template>
@@ -208,8 +208,8 @@
     </SettingsSection>
 
     <!-- Section 4: MCP Environment Variables -->
-    <SettingsSection title="MCP Environment Variables">
-      <SettingsSubSection caption="Environment variables for MCP server configuration. Written to the env object in settings.json.">
+    <SettingsSection title="MCP 环境变量">
+      <SettingsSubSection caption="MCP 服务器配置的环境变量。写入 settings.json 中的 env 对象。">
         <SettingsCell
           v-for="(field, index) in MCP_ENV_FIELDS"
           :key="field.key"
@@ -220,8 +220,8 @@
           <template #label>
             <div class="flex items-center gap-2">
               <span>{{ field.label }}</span>
-              <Tooltip v-if="isEnvInherited(field.key)" content="Inherited from a lower-priority scope">
-                <Badge variant="subtle">inherited</Badge>
+              <Tooltip v-if="isEnvInherited(field.key)" content="继承自低优先级作用域">
+                <Badge variant="subtle">已继承</Badge>
               </Tooltip>
             </div>
           </template>
@@ -281,10 +281,10 @@ function statusVariant(status: string): BadgeVariant {
 
 function statusLabel(status: string): string {
   switch (status) {
-    case 'connected': return 'Connected';
-    case 'failed': return 'Failed';
-    case 'needs-auth': return 'Needs Auth';
-    case 'pending': return 'Pending';
+    case 'connected': return '已连接';
+    case 'failed': return '失败';
+    case 'needs-auth': return '需要认证';
+    case 'pending': return '待处理';
     default: return status;
   }
 }
@@ -365,12 +365,12 @@ interface McpEnvField {
 }
 
 const MCP_ENV_FIELDS: McpEnvField[] = [
-  { key: 'MCP_TIMEOUT', label: 'Server Timeout', description: 'Timeout for MCP server startup (ms)', placeholder: '10000' },
-  { key: 'MCP_TOOL_TIMEOUT', label: 'Tool Timeout', description: 'Timeout for individual MCP tool calls (ms)', placeholder: '300000' },
-  { key: 'MAX_MCP_OUTPUT_TOKENS', label: 'Max Output Tokens', description: 'Maximum tokens in MCP server response (default 25000)', placeholder: '25000' },
-  { key: 'ENABLE_TOOL_SEARCH', label: 'Tool Search', description: 'Enable tool search: auto, auto:N, true, or false', placeholder: 'auto' },
-  { key: 'MCP_OAUTH_CALLBACK_PORT', label: 'OAuth Callback Port', description: 'Fixed port for MCP OAuth redirect', placeholder: '8080' },
-  { key: 'MCP_CLIENT_SECRET', label: 'Client Secret', description: 'OAuth client secret for MCP authentication', placeholder: '••••••', type: 'password' },
+  { key: 'MCP_TIMEOUT', label: '服务器超时', description: 'MCP 服务器启动超时时间（毫秒）', placeholder: '10000' },
+  { key: 'MCP_TOOL_TIMEOUT', label: '工具超时', description: '单个 MCP 工具调用超时时间（毫秒）', placeholder: '300000' },
+  { key: 'MAX_MCP_OUTPUT_TOKENS', label: '最大输出令牌数', description: 'MCP 服务器响应中的最大令牌数（默认 25000）', placeholder: '25000' },
+  { key: 'ENABLE_TOOL_SEARCH', label: '工具搜索', description: '启用工具搜索：auto、auto:N、true 或 false', placeholder: 'auto' },
+  { key: 'MCP_OAUTH_CALLBACK_PORT', label: 'OAuth 回调端口', description: 'MCP OAuth 重定向的固定端口', placeholder: '8080' },
+  { key: 'MCP_CLIENT_SECRET', label: '客户端密钥', description: 'MCP 认证的 OAuth 客户端密钥', placeholder: '••••••', type: 'password' },
 ];
 
 const MCP_ENV_KEYS = MCP_ENV_FIELDS.map(f => f.key);

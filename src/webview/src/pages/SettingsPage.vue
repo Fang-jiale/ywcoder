@@ -64,23 +64,23 @@ const activeScope = ref<SettingsScope>('global');
 provide(SETTINGS_SCOPE_KEY, activeScope);
 
 const tabs = [
-  // Profiles & Preferences
-  { id: 'general', label: 'General', icon: 'mdi-cog' },
-  { id: 'models', label: 'Models', icon: 'codicon-cube' },
-  { id: 'profiles', label: 'Profiles', icon: 'mdi-account-cog-outline', divider: true },
-  // Plugins & Environments
-  { id: 'plugins', label: 'Plugins', icon: 'codicon-extensions' },
-  { id: 'environments', label: 'Environments', icon: 'codicon-symbol-variable' },
-  { id: 'memory-and-rules', label: 'Memory and Rules', icon: 'codicon-clipboard-list', divider: true },
-  // Security & Permissions
-  { id: 'permissions', label: 'Permissions', icon: 'mdi-shield-key-outline' },
-  { id: 'sandbox', label: 'Sandbox', icon: 'mdi-file-table-box-outline' },
-  { id: 'network', label: 'Network', icon: 'mdi-earth', divider: true },
-  // Extensions & Customization
-  { id: 'hooks', label: 'Hooks', icon: 'codicon-debug-line-by-line' },
-  { id: 'skills', label: 'Skills', icon: 'codicon-wand' },
-  { id: 'mcp-servers', label: 'MCP Servers', icon: 'codicon-cube-nodes' },
-  { id: 'slash-commands', label: 'Slash Commands', icon: 'mdi-apple-keyboard-command' },
+  // 配置与首选项
+  { id: 'general', label: '通用', icon: 'mdi-cog' },
+  { id: 'models', label: '模型管理', icon: 'codicon-cube' },
+  { id: 'profiles', label: '配置方案', icon: 'mdi-account-cog-outline', divider: true },
+  // 插件与环境
+  { id: 'plugins', label: '插件', icon: 'codicon-extensions' },
+  { id: 'environments', label: '环境变量', icon: 'codicon-symbol-variable' },
+  { id: 'memory-and-rules', label: '记忆与规则', icon: 'codicon-clipboard-list', divider: true },
+  // 安全与权限
+  { id: 'permissions', label: '权限', icon: 'mdi-shield-key-outline' },
+  { id: 'sandbox', label: '沙箱', icon: 'mdi-file-table-box-outline' },
+  { id: 'network', label: '网络', icon: 'mdi-earth', divider: true },
+  // 扩展与定制
+  { id: 'hooks', label: '钩子', icon: 'codicon-debug-line-by-line' },
+  { id: 'skills', label: '技能', icon: 'codicon-wand' },
+  { id: 'mcp-servers', label: 'MCP 服务器', icon: 'codicon-cube-nodes' },
+  { id: 'slash-commands', label: '斜杠命令', icon: 'mdi-apple-keyboard-command' },
 ];
 
 const currentTabComponent = computed(() => {

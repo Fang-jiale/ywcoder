@@ -3,7 +3,7 @@
     <SettingsSection>
       <SettingsSubSection>
         <div class="coming-soon-container">
-          <Badge variant="subtle" size="medium">Coming Soon</Badge>
+          <Badge variant="subtle" size="medium">即将推出</Badge>
           <p class="coming-soon-text">
             从市场发现和管理 YW Coder 插件。
           </p>

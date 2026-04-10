@@ -3,13 +3,13 @@
     v-model="model"
     class="scope-tabs"
   >
-    <TabsList class="scope-tabs-list" aria-label="Settings scope">
+    <TabsList class="scope-tabs-list" aria-label="设置作用域">
       <TabsTrigger value="global" class="scope-tab-trigger">
         <span class="codicon codicon-account" />
-        <span>{{ activeProfile ? `User (${activeProfile})` : 'User' }}</span>
+        <span>{{ activeProfile ? `用户 (${activeProfile})` : '用户' }}</span>
       </TabsTrigger>
       <Tooltip
-        :content="!hasWorkspace ? 'Open a workspace to use Workspace settings' : ''"
+        :content="!hasWorkspace ? '打开工作区以使用工作区设置' : ''"
         :delay-duration="hasWorkspace ? 99999 : 400"
       >
         <TabsTrigger
@@ -18,11 +18,11 @@
           :disabled="!hasWorkspace"
         >
           <span class="codicon codicon-folder" />
-          <span>Workspace</span>
+          <span>工作区</span>
         </TabsTrigger>
       </Tooltip>
       <Tooltip
-        :content="!hasWorkspace ? 'Open a workspace to use Local settings' : ''"
+        :content="!hasWorkspace ? '打开工作区以使用本地设置' : ''"
         :delay-duration="hasWorkspace ? 99999 : 400"
       >
         <TabsTrigger
@@ -31,7 +31,7 @@
           :disabled="!hasWorkspace"
         >
           <span class="codicon codicon-lock" />
-          <span>Local</span>
+          <span>本地</span>
         </TabsTrigger>
       </Tooltip>
       <TabsIndicator class="scope-tabs-indicator" />

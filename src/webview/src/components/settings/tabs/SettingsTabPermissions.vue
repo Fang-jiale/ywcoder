@@ -1,21 +1,21 @@
 <template>
   <SettingsTab title="权限">
     <!-- Section 1: Default Mode -->
-    <SettingsSection title="Default Mode">
+    <SettingsSection title="默认模式">
       <SettingsSubSection>
         <SettingsCell
-          label="Permission Mode"
-          description="Default behavior when YwCoder requests permission for an operation"
+          label="权限模式"
+          description="YwCoder 请求操作权限时的默认行为"
           :class="{ 'perm-inherited-cell': isModeInherited }"
         >
           <template #label>
             <div class="flex items-center gap-2">
-              <span>Permission Mode</span>
-              <Tooltip v-if="isModeInherited" content="Inherited from a lower-priority scope">
-                <Badge variant="subtle">inherited</Badge>
+              <span>权限模式</span>
+              <Tooltip v-if="isModeInherited" content="继承自低优先级作用域">
+                <Badge variant="subtle">已继承</Badge>
               </Tooltip>
-              <Tooltip v-if="isModeOverridden" :content="`Overridden by ${modeOverriddenByLabel} scope`">
-                <Badge variant="warning">overridden</Badge>
+              <Tooltip v-if="isModeOverridden" :content="`被 ${modeOverriddenByLabel} 作用域覆盖`">
+                <Badge variant="warning">已覆盖</Badge>
               </Tooltip>
             </div>
           </template>
@@ -36,15 +36,15 @@
         <!-- Managed: disableBypassPermissionsMode -->
         <SettingsCell
           v-if="bypassDisabledByManaged"
-          label="Bypass Mode Disabled"
-          description="The ability to bypass permission prompts has been disabled by managed policy"
+          label="绕过模式已禁用"
+          description="绕过权限提示的功能已被管理策略禁用"
           :divider="true"
         >
           <template #label>
             <div class="flex items-center gap-2">
-              <span>Bypass Mode Disabled</span>
-              <Tooltip content="Controlled by managed policy">
-                <Badge variant="danger">Managed</Badge>
+              <span>绕过模式已禁用</span>
+              <Tooltip content="由管理策略控制">
+                <Badge variant="danger">托管</Badge>
               </Tooltip>
             </div>
           </template>
@@ -53,15 +53,15 @@
     </SettingsSection>
 
     <!-- Section 2: Permission Rules -->
-    <SettingsSection title="Permission Rules">
-      <SettingsSubSection caption="Evaluation order: Deny → Ask → Allow (first match wins). Rules use the format: ToolName or ToolName(pattern) or mcp__server__tool.">
+    <SettingsSection title="权限规则">
+      <SettingsSubSection caption="评估顺序：拒绝 → 询问 → 允许（首个匹配生效）。规则格式：工具名 或 工具名(模式) 或 mcp__服务器__工具。">
         <!-- Deny Rules -->
-        <SettingsCell label="Deny Rules" description="Operations that are always blocked">
+        <SettingsCell label="拒绝规则" description="始终阻止的操作">
           <template #label>
             <div class="flex items-center gap-2">
-              <span>Deny Rules</span>
-              <Tooltip v-if="isListInherited('deny')" content="Inherited from a lower-priority scope">
-                <Badge variant="subtle">inherited</Badge>
+              <span>拒绝规则</span>
+              <Tooltip v-if="isListInherited('deny')" content="继承自低优先级作用域">
+                <Badge variant="subtle">已继承</Badge>
               </Tooltip>
             </div>
           </template>
@@ -79,7 +79,7 @@
                 </button>
               </div>
               <!-- Inherited rules (read-only) -->
-              <Tooltip v-for="(rule, index) in inheritedDenyRules" :key="'deny-inh-' + index" content="Inherited — remove from the source scope to change">
+              <Tooltip v-for="(rule, index) in inheritedDenyRules" :key="'deny-inh-' + index" content="已继承 — 从源作用域移除以更改">
                 <div class="perm-pill perm-pill--deny perm-pill--inherited">
                   <span>{{ rule }}</span>
                 </div>
@@ -87,7 +87,7 @@
               <!-- Add input -->
               <TextInput
                 v-model="newDenyRule"
-                placeholder="e.g. Bash(rm:*)"
+                placeholder="例如 Bash(rm:*)"
                 size="small"
                 monospace
                 class="perm-rule-input"
@@ -98,12 +98,12 @@
         </SettingsCell>
 
         <!-- Ask Rules -->
-        <SettingsCell label="Ask Rules" description="Operations that always require confirmation" :divider="true">
+        <SettingsCell label="询问规则" description="始终需要确认的操作" :divider="true">
           <template #label>
             <div class="flex items-center gap-2">
-              <span>Ask Rules</span>
-              <Tooltip v-if="isListInherited('ask')" content="Inherited from a lower-priority scope">
-                <Badge variant="subtle">inherited</Badge>
+              <span>询问规则</span>
+              <Tooltip v-if="isListInherited('ask')" content="继承自低优先级作用域">
+                <Badge variant="subtle">已继承</Badge>
               </Tooltip>
             </div>
           </template>
@@ -119,14 +119,14 @@
                   <span class="codicon codicon-close" />
                 </button>
               </div>
-              <Tooltip v-for="(rule, index) in inheritedAskRules" :key="'ask-inh-' + index" content="Inherited — remove from the source scope to change">
+              <Tooltip v-for="(rule, index) in inheritedAskRules" :key="'ask-inh-' + index" content="已继承 — 从源作用域移除以更改">
                 <div class="perm-pill perm-pill--ask perm-pill--inherited">
                   <span>{{ rule }}</span>
                 </div>
               </Tooltip>
               <TextInput
                 v-model="newAskRule"
-                placeholder="e.g. Bash(git push:*)"
+                placeholder="例如 Bash(git push:*)"
                 size="small"
                 monospace
                 class="perm-rule-input"
@@ -137,12 +137,12 @@
         </SettingsCell>
 
         <!-- Allow Rules -->
-        <SettingsCell label="Allow Rules" description="Operations that are auto-approved" :divider="true">
+        <SettingsCell label="允许规则" description="自动批准的操作" :divider="true">
           <template #label>
             <div class="flex items-center gap-2">
-              <span>Allow Rules</span>
-              <Tooltip v-if="isListInherited('allow')" content="Inherited from a lower-priority scope">
-                <Badge variant="subtle">inherited</Badge>
+              <span>允许规则</span>
+              <Tooltip v-if="isListInherited('allow')" content="继承自低优先级作用域">
+                <Badge variant="subtle">已继承</Badge>
               </Tooltip>
             </div>
           </template>
@@ -158,14 +158,14 @@
                   <span class="codicon codicon-close" />
                 </button>
               </div>
-              <Tooltip v-for="(rule, index) in inheritedAllowRules" :key="'allow-inh-' + index" content="Inherited — remove from the source scope to change">
+              <Tooltip v-for="(rule, index) in inheritedAllowRules" :key="'allow-inh-' + index" content="已继承 — 从源作用域移除以更改">
                 <div class="perm-pill perm-pill--allow perm-pill--inherited">
                   <span>{{ rule }}</span>
                 </div>
               </Tooltip>
               <TextInput
                 v-model="newAllowRule"
-                placeholder="e.g. Bash(npm run *)"
+                placeholder="例如 Bash(npm run *)"
                 size="small"
                 monospace
                 class="perm-rule-input"
@@ -178,14 +178,14 @@
     </SettingsSection>
 
     <!-- Section 3: Additional Directories -->
-    <SettingsSection title="Additional Directories">
-      <SettingsSubSection caption="Extra directories to include in the permission scope, allowing YwCoder to access files outside the project root.">
-        <SettingsCell label="Directories" description="Paths to additional allowed directories">
+    <SettingsSection title="额外目录">
+      <SettingsSubSection caption="要包含在权限范围内的额外目录，允许 YwCoder 访问项目根目录之外的文件。">
+        <SettingsCell label="目录" description="额外允许目录的路径">
           <template #label>
             <div class="flex items-center gap-2">
-              <span>Directories</span>
-              <Tooltip v-if="isListInherited('additionalDirectories')" content="Inherited from a lower-priority scope">
-                <Badge variant="subtle">inherited</Badge>
+              <span>目录</span>
+              <Tooltip v-if="isListInherited('additionalDirectories')" content="继承自低优先级作用域">
+                <Badge variant="subtle">已继承</Badge>
               </Tooltip>
             </div>
           </template>
@@ -201,14 +201,14 @@
                   <span class="codicon codicon-close" />
                 </button>
               </div>
-              <Tooltip v-for="(dir, index) in inheritedAdditionalDirs" :key="'dir-inh-' + index" content="Inherited — remove from the source scope to change">
+              <Tooltip v-for="(dir, index) in inheritedAdditionalDirs" :key="'dir-inh-' + index" content="已继承 — 从源作用域移除以更改">
                 <div class="perm-pill perm-pill--dir perm-pill--inherited">
                   <span>{{ dir }}</span>
                 </div>
               </Tooltip>
               <TextInput
                 v-model="newDir"
-                placeholder="e.g. ~/docs, ../shared"
+                placeholder="例如 ~/docs, ../shared"
                 size="small"
                 monospace
                 class="perm-rule-input"
@@ -271,12 +271,12 @@ const effectivePermissions = computed<PermissionsConfig>(() => {
 // ── Default Mode ──
 
 const defaultModeOptions = [
-  { label: 'Default', value: 'default', description: 'Prompts on first use' },
-  { label: 'Accept Edits', value: 'acceptEdits', description: 'Auto-accept file edits' },
-  { label: 'Plan', value: 'plan', description: 'Read-only, no modifications' },
-  { label: 'Delegate', value: 'delegate', description: 'Coordination-only for agent teams' },
-  { label: "Don't Ask", value: 'dontAsk', description: 'Auto-deny unless pre-approved' },
-  { label: 'Bypass', value: 'bypassPermissions', description: 'Skip all prompts (isolated environments only)' },
+  { label: '默认', value: 'default', description: '首次使用时提示' },
+  { label: '接受编辑', value: 'acceptEdits', description: '自动接受文件编辑' },
+  { label: '规划模式', value: 'plan', description: '只读，不做修改' },
+  { label: '委托模式', value: 'delegate', description: '仅用于代理团队协调' },
+  { label: '不再询问', value: 'dontAsk', description: '除非预先批准，否则自动拒绝' },
+  { label: '绕过权限', value: 'bypassPermissions', description: '跳过所有提示（仅隔离环境）' },
 ];
 
 const defaultMode = computed(() => effectivePermissions.value.defaultMode || 'default');
@@ -302,7 +302,7 @@ const isModeOverridden = computed(() => {
   return false;
 });
 
-const SCOPE_MAP: Record<string, string> = { global: 'User', shared: 'Workspace', local: 'Local' };
+const SCOPE_MAP: Record<string, string> = { global: '用户', shared: '工作区', local: '本地' };
 
 const modeOverriddenByLabel = computed(() => {
   void settings.value;

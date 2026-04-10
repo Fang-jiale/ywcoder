@@ -198,6 +198,10 @@ export const zhCN = {
     permissionDenied: '权限不足，无法执行此操作',
     configError: '配置错误，请检查设置',
     sessionExpired: '会话已过期，请重新登录',
+    cliConnectionFailed: '无法连接到 YW Coder CLI',
+    cliConnectionError: 'CLI 连接错误：{message}',
+    cliNotFound: '未找到 CLI 可执行文件，请检查设置中的本地 CLI 路径',
+    cliLaunchFailed: '启动 CLI 失败，请检查配置或尝试重启',
   },
 
   // 状态信息

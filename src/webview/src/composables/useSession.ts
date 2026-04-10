@@ -73,9 +73,9 @@ export interface UseSessionReturn {
     attachments?: Array<{ fileName: string; mediaType: string; data: string }>,
     includeSelection?: boolean
   ) => Promise<void>;
-  launchYwCoder: () => Promise<string>;
+  launchYwCoder: () => Promise<string | undefined>;
   interrupt: () => Promise<void>;
-  restartYwCoder: () => Promise<void>;
+  restartYwCoder: () => Promise<boolean>;
   listFiles: (pattern?: string) => Promise<any>;
   setPermissionMode: (mode: PermissionMode, applyToConnection?: boolean) => Promise<boolean>;
   setModel: (model: ModelOption) => Promise<boolean>;

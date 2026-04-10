@@ -82,20 +82,50 @@ export abstract class BaseTransport {
   }
 
   async initialize(): Promise<void> {
-    const initResponse = await this.sendRequest<InitResponse>({ type: "init" });
-    this.config({
-      defaultCwd: initResponse.state.defaultCwd,
-      openNewInTab: initResponse.state.openNewInTab ?? false,
-      modelSetting: initResponse.state.modelSetting,
-      platform: initResponse.state.platform,
-      thinkingLevel: initResponse.state.thinkingLevel,
-    } as InitResponse["state"]);
+    try {
+      const initResponse = await this.sendRequest<InitResponse>({ type: "init" });
+      this.config({
+        defaultCwd: initResponse.state.defaultCwd,
+        openNewInTab: initResponse.state.openNewInTab ?? false,
+        modelSetting: initResponse.state.modelSetting,
+        platform: initResponse.state.platform,
+        thinkingLevel: initResponse.state.thinkingLevel,
+      } as InitResponse["state"]);
 
-    const ywcoderState = await this.sendRequest<GetYwCoderStateResponse>({
-      type: "get_ywcoder_state",
+      const ywcoderState = await this.sendRequest<GetYwCoderStateResponse>({
+        type: "get_ywcoder_state",
+      });
+      this.ywcoderConfig(ywcoderState.config);
+      this.state("connected");
+    } catch (error) {
+      this.state("disconnected");
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error('[BaseTransport] 初始化失败:', errorMessage);
+      // 显示错误通知
+      this.showConnectionError(errorMessage);
+      throw error;
+    }
+  }
+
+  /**
+   * 显示连接错误提示 - 子类可覆盖此方法自定义通知方式
+   */
+  protected showConnectionError(message: string): void {
+    // 默认通过 showNotification 请求发送错误提示
+    void this.showNotification(
+      `CLI 连接失败: ${message}`,
+      'error',
+      ['查看设置', '重试']
+    ).then((button) => {
+      if (button === '查看设置') {
+        void this.openConfigFile('general');
+      } else if (button === '重试') {
+        // 重置初始化状态，允许重试
+        this.initialized = false;
+        this.initPromise = undefined;
+        void this.ensureInitialized();
+      }
     });
-    this.ywcoderConfig(ywcoderState.config);
-    this.state("connected");
   }
 
   launchYwCoder(

@@ -24,7 +24,7 @@
       <div>
         <input
           type="text"
-          placeholder="Search settings ⌘F"
+          placeholder="搜索设置 ⌘F"
           style="
             width: 100%;
             padding: 6px;
@@ -56,7 +56,7 @@
       <div class="cursor-settings-sidebar-footer">
         <div class="cursor-settings-sidebar-cell">
           <span class="codicon codicon-book" style="font-size: 16px"></span>
-          <span class="cursor-settings-sidebar-cell-label" title="Docs">Docs</span>
+          <span class="cursor-settings-sidebar-cell-label" title="文档">文档</span>
           <span
             class="codicon codicon-link-external"
             style="font-size: 14px; color: var(--cursor-text-tertiary)"
@@ -95,20 +95,20 @@ const currentProfileLabel = computed(() => {
 });
 
 const profileOptions = computed(() => {
-  const opts = [{ label: 'Default Profile', value: 'default', description: 'Standard settings' }];
+  const opts = [{ label: '默认配置', value: 'default', description: '标准设置' }];
 
   // Add custom profiles
   if (profiles.value && profiles.value.length > 0) {
     profiles.value.forEach((p) => {
-      opts.push({ label: p, value: p, description: 'Custom Profile' });
+      opts.push({ label: p, value: p, description: '自定义配置' });
     });
   }
 
   // Manage action
   opts.push({
-    label: 'Manage Profiles...',
+    label: '管理配置...',
     value: 'manage_profiles',
-    description: 'Create or edit profiles'
+    description: '创建或编辑配置'
   });
 
   return opts;

@@ -9,17 +9,17 @@
         <span>{{ label }}</span>
 
         <!-- Inherited badge (when current scope has no value) -->
-        <Tooltip v-if="inherited && !isReadOnly" content="Inherited from a lower-priority scope">
-          <Badge variant="subtle">inherited</Badge>
+        <Tooltip v-if="inherited && !isReadOnly" content="继承自低优先级作用域">
+          <Badge variant="subtle">已继承</Badge>
         </Tooltip>
 
         <!-- Override warning (when value is overridden by a higher-priority scope) -->
-        <Tooltip v-if="overriddenBy && !isReadOnly" :content="`Overridden by ${overriddenByLabel} scope`">
-          <Badge variant="warning">overridden</Badge>
+        <Tooltip v-if="overriddenBy && !isReadOnly" :content="`被 ${overriddenByLabel} 作用域覆盖`">
+          <Badge variant="warning">已覆盖</Badge>
         </Tooltip>
 
         <!-- Read-Only Badge (managed/cli) -->
-        <Tooltip v-if="isReadOnly" content="Setting is managed by policy or CLI arguments">
+        <Tooltip v-if="isReadOnly" content="设置由策略或 CLI 参数管理">
           <Badge :variant="badgeVariant">{{ badgeLabel }}</Badge>
         </Tooltip>
       </div>
@@ -42,7 +42,7 @@
         ></slot>
 
         <!-- Reset button (only when current scope has an explicit value set) -->
-        <Tooltip v-if="scopeValue !== undefined && !isReadOnly" content="Reset to default">
+        <Tooltip v-if="scopeValue !== undefined && !isReadOnly" content="重置为默认值">
           <button
             class="settings-item-reset-btn"
             @click="onReset"
@@ -101,9 +101,9 @@ const effectiveScope = computed(() => meta.value.effectiveScope || 'default');
 
 // Scope name mapping for display
 const SCOPE_MAP: Record<string, string> = {
-  global: 'User',
-  shared: 'Workspace',
-  local: 'Local'
+  global: '用户',
+  shared: '工作区',
+  local: '本地'
 };
 
 // The value at the CURRENT editing scope (may be undefined if not set at this level).
@@ -160,9 +160,9 @@ const onReset = () => {
 };
 
 const badgeLabel = computed(() => {
-  if (effectiveScope.value === 'managed') return 'Managed';
+  if (effectiveScope.value === 'managed') return '托管';
   if (effectiveScope.value === 'cli') return 'CLI';
-  return 'Unknown';
+  return '未知';
 });
 
 const badgeVariant = computed<'danger' | 'warning' | 'subtle'>(() => {

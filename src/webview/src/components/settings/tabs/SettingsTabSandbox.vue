@@ -1,17 +1,17 @@
 <template>
   <SettingsTab title="沙箱">
     <!-- Sandbox Isolation Section -->
-    <SettingsSection title="Sandbox Isolation">
+    <SettingsSection title="沙盒隔离">
       <SettingsSubSection>
-        <SettingsCell label="Enable Sandbox" description="Isolate Bash commands in a sandbox for enhanced security (macOS/Linux only)">
+        <SettingsCell label="启用沙盒" description="在沙盒中隔离 Bash 命令以增强安全性（仅限 macOS/Linux）">
           <template #trailing>
             <Switch v-model="sandboxEnabled" />
           </template>
         </SettingsCell>
 
         <SettingsCell
-          label="Auto-approve Bash when Sandboxed"
-          description="Automatically approve Bash commands when sandbox is enabled"
+          label="沙盒启用时自动批准 Bash"
+          description="沙盒启用时自动批准 Bash 命令"
           :divider="true"
         >
           <template #trailing>
@@ -20,8 +20,8 @@
         </SettingsCell>
 
         <SettingsCell
-          label="Allow Unsandboxed Commands"
-          description="Allow commands to run outside sandbox via dangerouslyDisableSandbox parameter"
+          label="允许非沙盒命令"
+          description="允许通过 dangerouslyDisableSandbox 参数在沙盒外运行命令"
           :divider="true"
         >
           <template #trailing>
@@ -32,9 +32,9 @@
     </SettingsSection>
 
     <!-- Excluded Commands Section -->
-    <SettingsSection title="Excluded Commands">
+    <SettingsSection title="排除的命令">
       <SettingsSubSection>
-        <SettingsCell label="Commands to Run Outside Sandbox" description="Commands that should always run outside the sandbox (e.g., docker, git)">
+        <SettingsCell label="在沙盒外运行的命令" description="应始终在沙盒外运行的命令（例如 docker、git）">
           <template #bottom>
             <div class="flex flex-wrap gap-2 mt-2">
               <div
@@ -52,7 +52,7 @@
               </div>
               <TextInput
                 v-model="newCommand"
-                placeholder="Add command..."
+                placeholder="添加命令..."
                 @keydown.enter="addExcludedCommand"
               />
             </div>
@@ -62,17 +62,17 @@
     </SettingsSection>
 
     <!-- Network Configuration Section -->
-    <SettingsSection title="Network Configuration">
+    <SettingsSection title="网络配置">
       <SettingsSubSection>
-        <SettingsCell label="Allow Local Binding" description="Allow sandboxed commands to bind to localhost ports (macOS only)">
+        <SettingsCell label="允许本地绑定" description="允许沙盒命令绑定到本地主机端口（仅限 macOS）">
           <template #trailing>
             <Switch v-model="allowLocalBinding" :disabled="!sandboxEnabled" />
           </template>
         </SettingsCell>
 
         <SettingsCell
-          label="Allowed Unix Sockets"
-          description="Unix socket paths that sandboxed commands can access (e.g., SSH agent)"
+          label="允许的 Unix 套接字"
+          description="沙盒命令可以访问的 Unix 套接字路径（例如 SSH 代理）"
           :divider="true"
         >
           <template #bottom>
@@ -92,7 +92,7 @@
               </div>
               <TextInput
                 v-model="newSocket"
-                placeholder="Add socket path..."
+                placeholder="添加套接字路径..."
                 monospace
                 @keydown.enter="addUnixSocket"
               />
@@ -103,9 +103,9 @@
     </SettingsSection>
 
     <!-- Proxy Configuration Section -->
-    <SettingsSection title="Proxy Configuration">
+    <SettingsSection title="代理配置">
       <SettingsSubSection>
-        <SettingsCell label="HTTP Proxy Port" description="Custom HTTP proxy port for sandboxed network access">
+        <SettingsCell label="HTTP 代理端口" description="沙盒网络访问的自定义 HTTP 代理端口">
           <template #trailing>
             <NumberInput
               :model-value="httpProxyPort ?? 0"
@@ -118,7 +118,7 @@
           </template>
         </SettingsCell>
 
-        <SettingsCell label="SOCKS Proxy Port" description="Custom SOCKS5 proxy port for sandboxed network access" :divider="true">
+        <SettingsCell label="SOCKS 代理端口" description="沙盒网络访问的自定义 SOCKS5 代理端口" :divider="true">
           <template #trailing>
             <NumberInput
               :model-value="socksProxyPort ?? 0"

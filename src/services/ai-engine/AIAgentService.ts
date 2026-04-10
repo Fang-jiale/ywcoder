@@ -789,7 +789,8 @@ export class AIAgentService implements IAIAgentService {
             //     return handleOpenClaudeInTerminal(request, this.handlerContext);
 
             case "reload_webview":
-                this.webviewPanel?.webview.postMessage({ type: 'reload' });
+                // 通过 webViewService 发送 reload 消息到 webview
+                this.webViewService.postMessage({ type: 'reload' });
                 return { type: "reload_webview_response" };
 
             // 认证
