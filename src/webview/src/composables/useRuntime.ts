@@ -74,7 +74,6 @@ export function useRuntime(): RuntimeInstance {
             },
             'Slash Commands',
             () => {
-              console.log('[Runtime] Execute slash command:', cmd.name);
               const activeSession = sessionStore.activeSession();
               if (activeSession) {
                 void activeSession.send(`/${cmd.name}`, [], false);
@@ -85,7 +84,6 @@ export function useRuntime(): RuntimeInstance {
           );
         });
 
-      console.log('[Runtime] Registered', slashCommandDisposers.length, 'slash commands');
     }
   });
 

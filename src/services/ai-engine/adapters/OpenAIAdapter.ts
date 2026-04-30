@@ -130,7 +130,6 @@ export class OpenAIAdapter {
     onChunk?: (chunk: string) => void
   ): Promise<string> {
     const openAIRequest = this.convertToOpenAIRequest(messages, systemPrompt);
-    this.logService.debug('[OpenAIAdapter] 转换后的请求:', JSON.stringify(openAIRequest, null, 2));
 
     try {
       if (this.config.stream && onChunk) {

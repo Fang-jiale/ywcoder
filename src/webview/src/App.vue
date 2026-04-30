@@ -59,11 +59,7 @@ if (runtime) {
 }
 
 onMounted(() => {
-  if (runtime) {
-    console.log('[App] runtime initialized', runtime);
-  } else {
-    console.log('[App] runtime not initialized for page', initialPage);
-  }
+  // runtime initialization complete
 });
 
 function switchToPage(page: 'sessions' | 'chat') {
@@ -86,9 +82,6 @@ function switchToPage(page: 'sessions' | 'chat') {
 }
 
 function handleSwitchToChat(sessionId?: string) {
-  if (sessionId) {
-    console.log('Switching to chat with session:', sessionId);
-  }
   switchToPage('chat');
 }
 </script>

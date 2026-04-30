@@ -12,7 +12,7 @@
           <template #default="{ effectiveValue, update }">
             <Dropdown
               :model-value="effectiveValue ?? 'default'"
-              @update:model-value="(val: string) => val === 'default' ? resetSetting('model', scope) : update(val)"
+              @update:model-value="(val: string) => handleModelChange(val, update)"
               :options="allDropdownOptions"
               menu-align="right"
             >
@@ -22,6 +22,31 @@
             </Dropdown>
           </template>
         </SettingsItem>
+
+        <!-- OpenAI Compatible Model (auto-set OPENAI_MODEL env var) -->
+        <SettingsCell :divider="true">
+          <template #label>
+            <span>OpenAI 兼容模型</span>
+          </template>
+          <template #description>
+            同步设置 OPENAI_MODEL 环境变量，用于 OpenAI 兼容后端
+          </template>
+          <template #trailing>
+            <Dropdown
+              :model-value="getEnvVar('OPENAI_MODEL') || '__not_set__'"
+              @update:model-value="setEnvVar('OPENAI_MODEL', $event === '__not_set__' ? '' : $event)"
+              :options="openAiModelOptions"
+              menu-align="right"
+            >
+              <template #trigger="{ selected }">
+                <span :class="{ 'env-not-set': !getEnvVar('OPENAI_MODEL') }">
+                  {{ selected?.label || getEnvVar('OPENAI_MODEL') || '未设置' }}
+                </span>
+              </template>
+            </Dropdown>
+          </template>
+        </SettingsCell>
+
         <!-- Add custom model row -->
         <SettingsCell>
           <template #label>
@@ -139,165 +164,6 @@
         </SettingsCell>
       </SettingsSubSection>
     </SettingsSection>
-
-    <!-- Section 2: Thinking & Effort -->
-    <SettingsSection title="思考与努力程度">
-      <SettingsSubSection>
-        <SettingsItem
-          setting-key="alwaysThinkingEnabled"
-          label="始终思考"
-          description="为所有请求启用深度思考"
-        >
-          <template #default="{ effectiveValue, update }">
-            <div class="cursor-settings-cell-switch-container">
-              <Switch
-                :model-value="effectiveValue ?? false"
-                @update:model-value="update"
-                title="始终思考"
-              />
-            </div>
-          </template>
-        </SettingsItem>
-        <SettingsItem
-          setting-key="effortLevel"
-          label="努力程度"
-          :description="effortLevelDescription"
-          :divider="true"
-        >
-          <template #default="{ effectiveValue, update }">
-            <Dropdown
-              :model-value="effectiveValue ?? 'high'"
-              @update:model-value="effortEnabled ? update($event) : undefined"
-              :options="effortLevelOptions"
-              menu-align="right"
-              :class="{ 'dropdown-disabled': !effortEnabled }"
-            >
-              <template #trigger="{ selected }">
-                {{ selected?.label || effectiveValue || 'high' }}
-              </template>
-            </Dropdown>
-          </template>
-        </SettingsItem>
-      </SettingsSubSection>
-    </SettingsSection>
-
-    <!-- Section 3: Model Routing (Advanced Env Vars) -->
-    <SettingsSection title="模型路由">
-      <SettingsSubSection caption="通过环境变量覆盖模型选择。从可用模型中选择或保持未设置。值将写入 settings.json 中的 'env' 对象。">
-        <SettingsCell
-          label="ANTHROPIC_DEFAULT_SONNET_MODEL"
-          description="选择 'sonnet' 别名时使用的模型 ID"
-        >
-          <template #trailing>
-            <Dropdown
-              :model-value="getEnvVar('ANTHROPIC_DEFAULT_SONNET_MODEL') || '__not_set__'"
-              @update:model-value="setEnvVar('ANTHROPIC_DEFAULT_SONNET_MODEL', $event === '__not_set__' ? '' : $event)"
-              :options="envModelOptions('ANTHROPIC_DEFAULT_SONNET_MODEL')"
-              menu-align="right"
-            >
-              <template #trigger="{ selected }">
-                <span :class="{ 'env-not-set': !getEnvVar('ANTHROPIC_DEFAULT_SONNET_MODEL') }">
-                  {{ selected?.label || getEnvVar('ANTHROPIC_DEFAULT_SONNET_MODEL') || '未设置' }}
-                </span>
-              </template>
-            </Dropdown>
-          </template>
-        </SettingsCell>
-
-        <SettingsCell
-          label="ANTHROPIC_DEFAULT_OPUS_MODEL"
-          description="选择 'opus' 别名时使用的模型 ID"
-          :divider="true"
-        >
-          <template #trailing>
-            <Dropdown
-              :model-value="getEnvVar('ANTHROPIC_DEFAULT_OPUS_MODEL') || '__not_set__'"
-              @update:model-value="setEnvVar('ANTHROPIC_DEFAULT_OPUS_MODEL', $event === '__not_set__' ? '' : $event)"
-              :options="envModelOptions('ANTHROPIC_DEFAULT_OPUS_MODEL')"
-              menu-align="right"
-            >
-              <template #trigger="{ selected }">
-                <span :class="{ 'env-not-set': !getEnvVar('ANTHROPIC_DEFAULT_OPUS_MODEL') }">
-                  {{ selected?.label || getEnvVar('ANTHROPIC_DEFAULT_OPUS_MODEL') || '未设置' }}
-                </span>
-              </template>
-            </Dropdown>
-          </template>
-        </SettingsCell>
-
-        <SettingsCell
-          label="ANTHROPIC_DEFAULT_HAIKU_MODEL"
-          description="选择 'haiku' 别名时使用的模型 ID"
-          :divider="true"
-        >
-          <template #trailing>
-            <Dropdown
-              :model-value="getEnvVar('ANTHROPIC_DEFAULT_HAIKU_MODEL') || '__not_set__'"
-              @update:model-value="setEnvVar('ANTHROPIC_DEFAULT_HAIKU_MODEL', $event === '__not_set__' ? '' : $event)"
-              :options="envModelOptions('ANTHROPIC_DEFAULT_HAIKU_MODEL')"
-              menu-align="right"
-            >
-              <template #trigger="{ selected }">
-                <span :class="{ 'env-not-set': !getEnvVar('ANTHROPIC_DEFAULT_HAIKU_MODEL') }">
-                  {{ selected?.label || getEnvVar('ANTHROPIC_DEFAULT_HAIKU_MODEL') || '未设置' }}
-                </span>
-              </template>
-            </Dropdown>
-          </template>
-        </SettingsCell>
-
-        <SettingsCell
-          label="CLAUDE_CODE_SUBAGENT_MODEL"
-          description="子代理（任务工具）调用时使用的模型 ID"
-          :divider="true"
-        >
-          <template #trailing>
-            <Dropdown
-              :model-value="getEnvVar('CLAUDE_CODE_SUBAGENT_MODEL') || '__not_set__'"
-              @update:model-value="setEnvVar('CLAUDE_CODE_SUBAGENT_MODEL', $event === '__not_set__' ? '' : $event)"
-              :options="envModelOptions('CLAUDE_CODE_SUBAGENT_MODEL')"
-              menu-align="right"
-            >
-              <template #trigger="{ selected }">
-                <span :class="{ 'env-not-set': !getEnvVar('CLAUDE_CODE_SUBAGENT_MODEL') }">
-                  {{ selected?.label || getEnvVar('CLAUDE_CODE_SUBAGENT_MODEL') || '未设置' }}
-                </span>
-              </template>
-            </Dropdown>
-          </template>
-        </SettingsCell>
-
-        <SettingsCell
-          label="MAX_THINKING_TOKENS"
-          description="深度思考的最大思考令牌数"
-          :divider="true"
-        >
-          <template #trailing>
-            <NumberInput
-              :model-value="getEnvVarNumber('MAX_THINKING_TOKENS')"
-              @update:model-value="setEnvVarNumber('MAX_THINKING_TOKENS', $event)"
-              :min="0"
-              width="100px"
-            />
-          </template>
-        </SettingsCell>
-
-        <SettingsCell
-          label="CLAUDE_CODE_MAX_OUTPUT_TOKENS"
-          description="每次响应的最大输出令牌数"
-          :divider="true"
-        >
-          <template #trailing>
-            <NumberInput
-              :model-value="getEnvVarNumber('CLAUDE_CODE_MAX_OUTPUT_TOKENS')"
-              @update:model-value="setEnvVarNumber('CLAUDE_CODE_MAX_OUTPUT_TOKENS', $event)"
-              :min="0"
-              width="100px"
-            />
-          </template>
-        </SettingsCell>
-      </SettingsSubSection>
-    </SettingsSection>
   </SettingsTab>
 </template>
 
@@ -310,7 +176,6 @@ import SettingsCell from '../SettingsCell.vue'
 import SettingsItem from '../SettingsItem.vue'
 import Switch from '../../Common/Switch.vue'
 import Dropdown from '../../Common/Dropdown.vue'
-import NumberInput from '../../Common/NumberInput.vue'
 import TextInput from '../../Common/TextInput.vue'
 import Badge from '../../Common/Badge.vue'
 import Tooltip from '../../Common/Tooltip.vue'
@@ -321,13 +186,68 @@ import { transport } from '../../../core/runtimeTransport'
 const { settings, activeProfile, sdkCapabilities, sdkCapabilitiesLoading, inspect, updateSetting, resetSetting } = useSettingsStore()
 const scope = useSettingsScope()
 
+// 默认模型切换时同步更新 OPENAI_MODEL 环境变量
+async function handleModelChange(val: string, originalUpdate: (v: any) => void) {
+  if (val === 'default') {
+    await resetSetting('model', scope.value)
+  } else {
+    originalUpdate(val)
+  }
+  // 同步更新 OPENAI_MODEL 环境变量
+  setEnvVar('OPENAI_MODEL', val === 'default' ? '' : val)
+}
+
+// ── Env Var Helpers ──
+
+const effectiveEnv = computed<Record<string, string>>(() => {
+  const val = settings.value.env
+  return (val && typeof val === 'object' ? val : {}) as Record<string, string>
+})
+
+const scopeEnv = computed<Record<string, string>>(() => {
+  void settings.value
+  const meta = inspect('env')
+  const values = meta?.values || {}
+  if (activeProfile.value && scope.value === 'global') {
+    return (values.profile as Record<string, string>) || {}
+  }
+  return (values[scope.value] as Record<string, string>) || {}
+})
+
+function getEnvVar(key: string): string {
+  return effectiveEnv.value[key] || ''
+}
+
+function setEnvVar(key: string, value: string) {
+  const currentEnv = { ...scopeEnv.value }
+  const trimmed = value.trim()
+  if (trimmed) {
+    currentEnv[key] = trimmed
+  } else {
+    delete currentEnv[key]
+  }
+  updateSetting('env', currentEnv, scope.value)
+}
+
+const openAiModelOptions = computed(() => {
+  const NOT_SET = { label: '未设置', value: '__not_set__', description: '使用默认值' }
+  const currentVal = getEnvVar('OPENAI_MODEL')
+  const opts = allDropdownOptions.value.map((o) => ({
+    label: o.label,
+    value: o.value,
+    description: o.description,
+  }))
+  const allOpts = [NOT_SET, ...opts]
+  if (currentVal && !allOpts.some((o) => o.value === currentVal)) {
+    allOpts.splice(1, 0, { label: currentVal, value: currentVal, description: '当前值' })
+  }
+  return allOpts
+})
+
 // ── 模型别名（静态） ──
 
 const MODEL_ALIASES = [
   { label: '默认', value: 'default', description: '账户默认模型' },
-  { label: 'Sonnet', value: 'sonnet', description: '当前 Sonnet 模型' },
-  { label: 'Opus', value: 'opus', description: '当前 Opus 模型' },
-  { label: 'Haiku', value: 'haiku', description: '当前 Haiku 模型' },
 ]
 
 // ── Custom Models & Disabled Models (Pipeline B: ~/.ywcoder.json) ──
@@ -518,101 +438,6 @@ const filteredBuiltinModels = computed(() => {
       model.description?.toLowerCase().includes(query)
   )
 })
-
-// ── Thinking & Effort ──
-
-const effortLevelOptions = [
-  { label: '低', value: 'low', description: '最小思考努力' },
-  { label: '中', value: 'medium', description: '平衡的思考努力' },
-  { label: '高', value: 'high', description: '最大思考努力' },
-]
-
-const effortEnabled = computed(() => {
-  const model = ((settings.value.model as string) || 'default').toLowerCase()
-  return model.includes('opus-4-6')
-})
-
-const effortLevelDescription = computed(() => {
-  if (!effortEnabled.value) {
-    return '控制推理努力程度。仅 Opus 4.6 可用 — 当前模型不支持努力程度设置。'
-  }
-  return '控制推理努力程度（低、中、高）'
-})
-
-// ── Env Var Model Options (shared from model list) ──
-
-function envModelOptions(envKey: string) {
-  const currentVal = getEnvVar(envKey)
-  const NOT_SET = { label: '未设置', value: '__not_set__', description: '使用默认值' }
-
-  const modelOpts = builtinModels.value.map((m) => ({
-    label: m.name,
-    value: m.id,
-    description: m.id,
-  }))
-
-  const customOpts = customModels.value
-    .filter((cm) => !builtinModels.value.some((m) => m.id === cm.id))
-    .map((cm) => ({
-      label: cm.name || cm.id,
-      value: cm.id,
-      description: cm.name ? cm.id : '自定义模型',
-    }))
-
-  const allOpts = [NOT_SET, ...modelOpts, ...customOpts]
-
-  // If the current value is set but not in the list, prepend it so Dropdown can display it
-  if (currentVal && !allOpts.some((o) => o.value === currentVal)) {
-    allOpts.splice(1, 0, { label: currentVal, value: currentVal, description: '当前值' })
-  }
-
-  return allOpts
-}
-
-// ── Env Vars ──
-
-const effectiveEnv = computed<Record<string, string>>(() => {
-  const val = settings.value.env
-  return (val && typeof val === 'object' ? val : {}) as Record<string, string>
-})
-const scopeEnv = computed<Record<string, string>>(() => {
-  // Touch settings.value to establish Vue reactivity tracking.
-  // inspect() reads alien-signals directly, which Vue cannot track.
-  void settings.value
-  const meta = inspect('env')
-  const values = meta?.values || {}
-  // When a profile is active and viewing User scope, edit the profile layer
-  if (activeProfile.value && scope.value === 'global') {
-    return (values.profile as Record<string, string>) || {}
-  }
-  return (values[scope.value] as Record<string, string>) || {}
-})
-
-function getEnvVar(key: string): string {
-  return effectiveEnv.value[key] || ''
-}
-
-function getEnvVarNumber(key: string): number {
-  const raw = effectiveEnv.value[key]
-  if (!raw) return 0
-  const num = parseInt(raw, 10)
-  return isNaN(num) ? 0 : num
-}
-
-function setEnvVar(key: string, value: string) {
-  const currentEnv = { ...scopeEnv.value }
-  const trimmed = value.trim()
-  if (trimmed) {
-    currentEnv[key] = trimmed
-  } else {
-    delete currentEnv[key]
-  }
-  updateSetting('env', currentEnv, scope.value)
-}
-
-function setEnvVarNumber(key: string, value: number) {
-  setEnvVar(key, value > 0 ? String(value) : '')
-}
 </script>
 
 <style scoped>
@@ -714,13 +539,6 @@ function setEnvVarNumber(key: string, value: number) {
   flex: 1 1 0;
 }
 
-/* ── Env Var Dropdowns ── */
-
-.env-not-set {
-  color: var(--cursor-text-tertiary);
-  font-style: italic;
-}
-
 /* ── States ── */
 
 .loading-text {
@@ -733,9 +551,9 @@ function setEnvVarNumber(key: string, value: number) {
   font-style: italic;
 }
 
-.dropdown-disabled {
-  opacity: 0.45;
-  pointer-events: none;
+.env-not-set {
+  color: var(--cursor-text-tertiary);
+  font-style: italic;
 }
 
 /* Isolate Tooltip's as-child from Switch's data-state */

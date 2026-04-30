@@ -126,7 +126,6 @@ const handleCreate = async () => {
 
 const handleEdit = (name: string) => {
   // TODO: 实现配置方案重命名
-  console.log('编辑配置方案:', name);
 };
 
 const handleDelete = async (name: string) => {

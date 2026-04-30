@@ -349,8 +349,6 @@
 
       // 添加到附件列表
       attachments.value = [...attachments.value, ...conversions];
-
-      console.log('[ChatPage] Added attachments:', conversions.map(a => a.fileName));
     } catch (e) {
       console.error('[ChatPage] Failed to convert files:', e);
     }

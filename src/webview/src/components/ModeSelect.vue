@@ -104,7 +104,6 @@ const selectedModeIcon = computed(() => {
 })
 
 function handleModeSelect(item: DropdownItemData, close: () => void) {
-  console.log('Selected mode:', item)
   close()
 
   // 发送模式切换事件

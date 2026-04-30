@@ -16,7 +16,7 @@ export class TelemetryService implements ITelemetryService {
 	readonly _serviceBrand: undefined;
 
 	logEvent(eventName: string, data?: Record<string, any>): void {
-		console.log(`[Telemetry] Event: ${eventName}`, data);
+		// Telemetry event logging is currently a no-op
 	}
 
 	logError(error: Error, data?: Record<string, any>): void {

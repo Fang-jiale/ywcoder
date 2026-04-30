@@ -215,7 +215,6 @@ export class AnthropicProxyServer {
     }
 
     const url = req.url || '/';
-    this.logService.debug(`[AnthropicProxyServer] ${req.method} ${url}`);
 
     try {
       // 处理健康检查
@@ -263,8 +262,6 @@ export class AnthropicProxyServer {
   private async handleMessages(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
     const body = await this.readBody(req);
     const anthropicReq: AnthropicRequest = JSON.parse(body);
-
-    this.logService.debug('[AnthropicProxyServer] Anthropic 请求:', JSON.stringify(anthropicReq, null, 2));
 
     // 转换为 OpenAI 格式
     const openAIReq = this.convertToOpenAIRequest(anthropicReq);

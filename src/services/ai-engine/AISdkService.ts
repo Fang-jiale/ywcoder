@@ -15,6 +15,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as os from 'os';
+import * as http from 'http';
 import { createDecorator } from '../../di/instantiation';
 import { ILogService } from '../logService';
 import { IConfigurationService } from '../configurationService';
@@ -422,6 +423,26 @@ export class AISdkService implements IAISdkService {
             }
         }
 
+        // 如果探测了 supportedModels，额外从外部 OpenAI 兼容 API 获取并合并
+        if (capabilities.includes('supportedModels')) {
+            try {
+                const externalModels = await this.fetchOpenAIModels();
+                const sdkModels = Array.isArray(data.supportedModels) ? data.supportedModels : [];
+                const seen = new Set(sdkModels.map((m: any) => m.value || m.id));
+                const merged = [...sdkModels];
+                for (const em of externalModels) {
+                    if (!seen.has(em.value)) {
+                        merged.push(em);
+                        seen.add(em.value);
+                    }
+                }
+                data.supportedModels = merged;
+            } catch (e) {
+                // 外部模型获取失败不影响 SDK 模型
+                this.logService.warn(`[AISdkService] 合并外部模型失败: ${e}`);
+            }
+        }
+
         // 打印探测结果
         // this.logService.info(`[Probe] 结果: ${JSON.stringify(data, null, 2)}`);
 
@@ -490,6 +511,54 @@ export class AISdkService implements IAISdkService {
         } catch (error) {
             this.logService.error(`❌ 中断查询失败: ${error}`);
             throw error;
+        }
+    }
+
+    /**
+     * 从外部 OpenAI 兼容 API 获取可用模型列表
+     */
+    async fetchOpenAIModels(): Promise<Array<{ value: string; displayName: string; description: string }>> {
+        try {
+            const extensionConfig = await this.configService.getExtensionConfig();
+            const baseUrl = (extensionConfig.defaultEnvVars?.OPENAI_BASE_URL || 'http://76.13.61.16:8015/v1').replace(/\/$/, '');
+            const apiKey = extensionConfig.defaultEnvVars?.OPENAI_API_KEY || 'glm';
+
+            const url = `${baseUrl}/models`;
+            this.logService.info(`[AISdkService] 获取外部模型列表: ${url}`);
+
+            const result = await new Promise<any>((resolve, reject) => {
+                const req = http.get(url, { headers: { 'Authorization': `Bearer ${apiKey}` } }, (res) => {
+                    let data = '';
+                    res.on('data', chunk => data += chunk);
+                    res.on('end', () => {
+                        try {
+                            const parsed = JSON.parse(data);
+                            resolve(parsed);
+                        } catch (e) {
+                            reject(new Error(`Failed to parse response: ${e}`));
+                        }
+                    });
+                });
+                req.on('error', (err) => reject(err));
+                req.setTimeout(10000, () => {
+                    req.destroy();
+                    reject(new Error('Request timeout'));
+                });
+            });
+
+            const models = result?.data || [];
+            const formatted = models.map((m: any) => ({
+                value: m.id,
+                displayName: m.id,
+                description: m.owned_by ? `Provider: ${m.owned_by}` : 'External model'
+            }));
+
+            this.logService.info(`[AISdkService] 获取到 ${formatted.length} 个外部模型`);
+            return formatted;
+        } catch (error) {
+            const msg = error instanceof Error ? error.message : String(error);
+            this.logService.warn(`[AISdkService] 获取外部模型列表失败: ${msg}`);
+            return [];
         }
     }
 

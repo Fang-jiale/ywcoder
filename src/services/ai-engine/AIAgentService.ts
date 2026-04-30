@@ -962,6 +962,14 @@ export class AIAgentService implements IAIAgentService {
         // 设置模型到 channel
         await channel.query.setModel(model);
 
+        // 同步更新 CLI 配置中的 model 字段（写入 global settings.json）
+        try {
+            await this.configService.updateSetting('model', model, 'global');
+            this.logService.info(`[setModel] 已同步 model 配置到 settings.json: ${model}`);
+        } catch (e) {
+            this.logService.warn(`[setModel] 同步 model 配置到 settings.json 失败: ${e}`);
+        }
+
         this.logService.info(`[setModel] Set channel ${channelId} to model: ${model}`);
     }
 }

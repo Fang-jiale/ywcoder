@@ -206,8 +206,6 @@ export class SettingsStore {
     this.transport
       .updateSetting(key as string, value, target)
       .catch((err) => console.error('Failed to update setting:', err));
-
-    console.log(`Setting updated: ${String(key)} = ${value} (target: ${scope})`);
   }
 
   async resetSetting(key: string, target: 'local' | 'shared' | 'global') {

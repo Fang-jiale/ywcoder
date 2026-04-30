@@ -110,9 +110,6 @@ onUnmounted(() => {
 
 const MODEL_ALIASES: Array<{ id: string; label: string }> = [
   { id: 'default', label: 'Default' },
-  { id: 'sonnet', label: 'Sonnet' },
-  { id: 'opus', label: 'Opus' },
-  { id: 'haiku', label: 'Haiku' },
 ]
 
 // ── Available models: aliases + SDK + custom, minus disabled ──

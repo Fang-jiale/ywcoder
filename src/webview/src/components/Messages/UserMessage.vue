@@ -155,7 +155,6 @@ function handleSaveEdit(content?: string) {
 
   if (finalContent.trim() && finalContent !== displayContent.value) {
     // TODO: 调用 session.send() 发送编辑后的消息
-    console.log('[UserMessage] Save edit:', finalContent.trim());
   }
 
   cancelEdit();
@@ -163,7 +162,6 @@ function handleSaveEdit(content?: string) {
 
 function handleRestore() {
   // TODO: 实现 restore checkpoint 逻辑
-  console.log('[UserMessage] Restore checkpoint clicked');
 }
 
 // 监听键盘事件
