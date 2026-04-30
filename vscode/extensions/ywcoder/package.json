@@ -1,0 +1,109 @@
+{
+  "name": "ywcoder",
+  "displayName": "运维Coder",
+  "description": "运维Coder - 自研智能编程助手，深度集成于 VSCode，提供智能代码分析、重构建议、自动化编程等功能。",
+  "version": "1.0.0",
+  "publisher": "dc-ops-support",
+  "engines": {
+    "vscode": "^1.98.0",
+    "node": ">=18.0.0"
+  },
+  "categories": [
+    "AI",
+    "Machine Learning",
+    "Programming Languages"
+  ],
+  "icon": "resources/ywcoder-logo.png",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.cjs",
+  "contributes": {
+    "configuration": {
+      "title": "运维Coder 配置",
+      "properties": {
+        "ywcoder.selectedModel": {
+          "type": "string",
+          "default": "default",
+          "description": "选择 AI 模型"
+        },
+        "ywcoder.environmentVariables": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "环境变量名称"
+              },
+              "value": {
+                "type": "string",
+                "description": "环境变量值"
+              }
+            },
+            "required": [
+              "name",
+              "value"
+            ]
+          },
+          "default": [],
+          "description": "启动时设置的环境变量"
+        }
+      }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "ywcoder-chat-sidebar",
+          "title": "运维Coder",
+          "icon": "resources/ywcoder-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "ywcoder-chat-sidebar": [
+        {
+          "icon": "resources/ywcoder-icon.svg",
+          "type": "webview",
+          "id": "ywcoder.chatView",
+          "name": "运维Coder"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "ywcoder.showChat",
+        "title": "显示 运维Coder"
+      },
+      {
+        "command": "ywcoder.openSettings",
+        "title": "运维Coder: 打开设置",
+        "icon": "$(gear)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "ywcoder.openSettings",
+          "when": "view == ywcoder.chatView",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "keywords": [
+    "vscode",
+    "extension",
+    "ai",
+    "coding-assistant",
+    "programming",
+    "code-analysis",
+    "智能编程",
+    "代码助手"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourcompany/ywcoder"
+  },
+  "license": "AGPL-3.0"
+}
