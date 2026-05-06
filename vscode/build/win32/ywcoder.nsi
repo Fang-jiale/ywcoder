@@ -8,7 +8,7 @@
 ; ------------------------------------
 !define PRODUCT_NAME "YwCoder"
 !define PRODUCT_VERSION "1.118.0"
-!define PRODUCT_PUBLISHER "YwCoder"
+!define PRODUCT_PUBLISHER "icbc"
 !define PRODUCT_WEB_SITE "https://ywcoder.com"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\YwCoder.exe"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
