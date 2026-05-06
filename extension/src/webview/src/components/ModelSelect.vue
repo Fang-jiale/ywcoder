@@ -115,36 +115,8 @@ const MODEL_ALIASES: Array<{ id: string; label: string }> = [
 // ── Available models: aliases + SDK + custom, minus disabled ──
 
 const availableModels = computed(() => {
-  const disabledSet = new Set(disabledModels.value)
-  const seenIds = new Set<string>()
-  const result: Array<{ id: string; label: string }> = []
-
-  // 1. Static aliases
-  for (const alias of MODEL_ALIASES) {
-    if (!disabledSet.has(alias.id)) {
-      result.push(alias)
-      seenIds.add(alias.id)
-    }
-  }
-
-  // 2. SDK probed models
-  for (const m of sdkModels.value) {
-    if (!seenIds.has(m.value) && !disabledSet.has(m.value)) {
-      const cleanLabel = m.displayName.replace(/\s*\(recommended\)\s*$/i, '')
-      result.push({ id: m.value, label: cleanLabel })
-      seenIds.add(m.value)
-    }
-  }
-
-  // 3. Custom models
-  for (const cm of customModels.value) {
-    if (!seenIds.has(cm.id) && !disabledSet.has(cm.id)) {
-      result.push({ id: cm.id, label: cm.name || cm.id })
-      seenIds.add(cm.id)
-    }
-  }
-
-  return result
+  // 只保留 static aliases（目前只有 default）
+  return MODEL_ALIASES.filter(alias => !disabledModels.value.includes(alias.id))
 })
 
 // ── Label for trigger display ──
