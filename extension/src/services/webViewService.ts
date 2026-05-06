@@ -282,11 +282,11 @@ export class WebViewService implements IWebViewService {
 
 		const csp = [
 			`default-src 'none';`,
-			`img-src ${webview.cspSource} https: data:;`,
+			`img-src ${webview.cspSource} https: data: http:;`,
 			`style-src ${webview.cspSource} 'unsafe-inline' https://*.vscode-cdn.net;`,
 			`font-src ${webview.cspSource} data:;`,
 			`script-src ${webview.cspSource} 'nonce-${nonce}';`,
-			`connect-src ${webview.cspSource} https:;`,
+			`connect-src ${webview.cspSource} https: http:;`,
 			`worker-src ${webview.cspSource} blob:;`,
 		].join(' ');
 

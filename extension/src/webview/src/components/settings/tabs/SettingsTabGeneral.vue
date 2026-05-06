@@ -44,7 +44,7 @@
       <SettingsSubSection>
         <SettingsCell
           label="界面语言"
-          description="运维Coder 界面的显示语言"
+          description="YwCoder 界面的显示语言"
         >
           <template #trailing>
             <Dropdown

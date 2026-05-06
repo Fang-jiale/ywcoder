@@ -30,10 +30,34 @@
 	"darwinProfilePayloadUUID": "9DE86C87-F704-4563-9B48-47D31879BAA3",
 	"linuxIconName": "ywcoder",
 	"licenseFileName": "LICENSE",
-	"reportIssueUrl": "https://github.com/yourcompany/ywcoder/issues/new",
-	"nodejsRepository": "https://nodejs.org",
+	"reportIssueUrl": "",
+	"nodejsRepository": "",
 	"urlProtocol": "ywcoder",
-	"webviewContentExternalBaseUrlTemplate": "https://{{uuid}}.vscode-cdn.net/insider/ef65ac1ba57f57f2a3961bfe94aa20481caca4c6/out/vs/workbench/contrib/webview/browser/pre/",
+	"webviewContentExternalBaseUrlTemplate": "",
+	"defaultChatAgent": {
+		"extensionId": "dc-ops-support.ywcoder",
+		"chatExtensionId": "dc-ops-support.ywcoder",
+		"chatExtensionOutputId": "dc-ops-support.ywcoder.YwCoder.log",
+		"documentationUrl": "https://github.com/yourcompany/ywcoder",
+		"termsStatementUrl": "https://github.com/yourcompany/ywcoder",
+		"privacyStatementUrl": "https://github.com/yourcompany/ywcoder",
+		"provider": {
+			"default": {
+				"id": "ywcoder",
+				"name": "YwCoder"
+			},
+			"enterprise": {
+				"id": "ywcoder-enterprise",
+				"name": "YwCoder Enterprise"
+			}
+		},
+		"providerExtensionId": "dc-ops-support.ywcoder",
+		"providerScopes": [
+			[
+				"read:user"
+			]
+		]
+	},
 	"builtInExtensions": [
 		{
 			"name": "ms-vscode.js-debug-companion",
@@ -84,114 +108,38 @@
 			}
 		}
 	],
-	"defaultChatAgent": {
-		"extensionId": "dc-ops-support.ywcoder",
-		"chatExtensionId": "dc-ops-support.ywcoder",
-		"chatExtensionOutputId": "dc-ops-support.ywcoder.YwCoder.log",
-		"documentationUrl": "https://github.com/yourcompany/ywcoder",
-		"termsStatementUrl": "https://github.com/yourcompany/ywcoder",
-		"privacyStatementUrl": "https://github.com/yourcompany/ywcoder",
-		"provider": {
-			"default": {
-				"id": "ywcoder",
-				"name": "YwCoder"
-			},
-			"enterprise": {
-				"id": "ywcoder-enterprise",
-				"name": "YwCoder Enterprise"
-			}
-		},
-		"providerExtensionId": "dc-ops-support.ywcoder",
-		"providerScopes": [
-			[
-				"read:user"
-			]
-		]
-	},
-	"trustedExtensionAuthAccess": {
-		"github": [
-			"GitHub.copilot-chat"
-		],
-		"github-enterprise": [
-			"GitHub.copilot-chat"
-		]
-	},
 	"onboardingKeymaps": [
 		{
 			"id": "vscode",
-			"label": "VS Code",
-			"description": "Default keyboard mapping"
-		},
-		{
-			"id": "sublime",
-			"label": "Sublime Text",
-			"extensionId": "ms-vscode.sublime-keybindings",
-			"description": "Keyboard mapping from Sublime Text"
-		},
-		{
-			"id": "intellij",
-			"label": "IntelliJ / JetBrains",
-			"extensionId": "k--kato.intellij-idea-keybindings",
-			"description": "Keyboard mapping from IntelliJ IDEA"
-		},
-		{
-			"id": "vim",
-			"label": "Vim",
-			"extensionId": "vscodevim.vim",
-			"description": "Vim modal editing"
-		},
-		{
-			"id": "eclipse",
-			"label": "Eclipse",
-			"extensionId": "alphabotsec.vscode-eclipse-keybindings",
-			"description": "Keyboard mapping from Eclipse"
-		},
-		{
-			"id": "notepadpp",
-			"label": "Notepad++",
-			"extensionId": "ms-vscode.notepadplusplus-keybindings",
-			"description": "Keyboard mapping from Notepad++"
+			"label": "YwCoder",
+			"description": "默认键盘映射"
 		}
 	],
 	"onboardingThemes": [
 		{
 			"id": "dark-2026",
-			"label": "Dark 2026",
+			"label": "深色 2026",
 			"themeId": "Dark 2026",
 			"type": "dark"
 		},
 		{
 			"id": "hc-dark",
-			"label": "Dark High Contrast",
+			"label": "深色高对比度",
 			"themeId": "Default High Contrast",
 			"type": "hcDark"
 		},
 		{
-			"id": "solarized-dark",
-			"label": "Solarized Dark",
-			"themeId": "Solarized Dark",
-			"type": "dark"
-		},
-		{
 			"id": "light-2026",
-			"label": "Light 2026",
+			"label": "浅色 2026",
 			"themeId": "Light 2026",
 			"type": "light"
 		},
 		{
 			"id": "hc-light",
-			"label": "Light High Contrast",
+			"label": "浅色高对比度",
 			"themeId": "Default High Contrast Light",
 			"type": "hcLight"
-		},
-		{
-			"id": "solarized-light",
-			"label": "Solarized Light",
-			"themeId": "Solarized Light",
-			"type": "light"
 		}
 	],
-	"builtInExtensionsEnabledWithAutoUpdates": [
-		"GitHub.copilot-chat"
-	]
+	"builtInExtensionsEnabledWithAutoUpdates": []
 }

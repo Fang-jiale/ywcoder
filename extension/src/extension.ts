@@ -35,7 +35,6 @@ export function activate(context: vscode.ExtensionContext) {
 		const logService = accessor.get(ILogService);
 		const webViewService = accessor.get(IWebViewService);
 		const aiAgentService = accessor.get(IAIAgentService);
-		const subscriptions = context.subscriptions;
 
 		// Register WebView View Provider
 		const webviewProvider = vscode.window.registerWebviewViewProvider(
@@ -66,7 +65,7 @@ export function activate(context: vscode.ExtensionContext) {
 		context.subscriptions.push(webviewProvider);
 		context.subscriptions.push(
 			vscode.commands.registerCommand('ywcoder.openSettings', async () => {
-				await instantiationService.invokeFunction(accessorInner => {
+				instantiationService.invokeFunction(accessorInner => {
 					const webViewServiceInner = accessorInner.get(IWebViewService);
 					const logServiceInner = accessorInner.get(ILogService);
 					try {
