@@ -6,6 +6,7 @@
 import * as path from 'node:path';
 import * as fs from 'original-fs';
 import * as os from 'node:os';
+import { createHash } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
 import { configurePortable } from './bootstrap-node.js';
 import { bootstrapESM } from './bootstrap-esm.js';
@@ -108,6 +109,83 @@ protocol.registerSchemesAsPrivileged([
 registerListeners();
 
 /**
+ * Ensure languagepacks.json exists in userDataPath by scanning bundled extensions.
+ * This is needed on first startup before the extension management service runs.
+ */
+function ensureLanguagePacksConfiguration(userDataPath: string): void {
+	const languagePacksPath = path.join(userDataPath, 'languagepacks.json');
+	if (fs.existsSync(languagePacksPath)) {
+		return;
+	}
+
+	const languagePacks: Record<string, { hash: string; label: string | undefined; extensions: { extensionIdentifier: { id: string }; version: string }[]; translations: Record<string, string> }> = {};
+	const extensionsDir = path.join(import.meta.dirname, '..', 'extensions');
+
+	try {
+		const extensionDirs = fs.readdirSync(extensionsDir);
+		for (const extensionDir of extensionDirs) {
+			const packageJsonPath = path.join(extensionsDir, extensionDir, 'package.json');
+			if (!fs.existsSync(packageJsonPath)) {
+				continue;
+			}
+
+			let manifest: { publisher?: string; name?: string; version?: string; contributes?: { localizations?: Array<{ languageId: string; languageName?: string; localizedLanguageName?: string; translations?: Array<{ id: string; path: string }> }> } };
+			try {
+				manifest = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+			} catch {
+				continue;
+			}
+
+			const localizations = manifest.contributes?.localizations;
+			if (!Array.isArray(localizations)) {
+				continue;
+			}
+
+			for (const localization of localizations) {
+				if (!localization.languageId) {
+					continue;
+				}
+
+				const extensionPath = path.join(extensionsDir, extensionDir);
+				const translations: Record<string, string> = {};
+				if (Array.isArray(localization.translations)) {
+					for (const translation of localization.translations) {
+						if (translation.id && translation.path) {
+							translations[translation.id] = path.join(extensionPath, translation.path);
+						}
+					}
+				}
+
+				const id = `${manifest.publisher ?? 'unknown'}.${manifest.name ?? extensionDir}`;
+				const version = manifest.version ?? '0.0.0';
+				const hash = createHash('md5').update(id).update(version).digest('hex');
+
+				languagePacks[localization.languageId] = {
+					hash,
+					label: localization.localizedLanguageName ?? localization.languageName,
+					extensions: [{
+						extensionIdentifier: { id },
+						version
+					}],
+					translations
+				};
+			}
+		}
+	} catch {
+		// Ignore errors reading bundled extensions
+	}
+
+	if (Object.keys(languagePacks).length > 0) {
+		try {
+			fs.mkdirSync(userDataPath, { recursive: true });
+			fs.writeFileSync(languagePacksPath, JSON.stringify(languagePacks));
+		} catch {
+			// Ignore errors writing language packs file
+		}
+	}
+}
+
+/**
  * We can resolve the NLS configuration early if it is defined
  * in argv.json before `app.ready` event. Otherwise we can only
  * resolve NLS after `app.ready` event to resolve the OS locale.
@@ -121,10 +199,11 @@ let nlsConfigurationPromise: Promise<INLSConfiguration> | undefined = undefined;
 const osLocale = processZhLocale((app.getPreferredSystemLanguages()?.[0] ?? 'en').toLowerCase());
 const userLocale = getUserDefinedLocale(argvConfig);
 if (userLocale) {
+	ensureLanguagePacksConfiguration(userDataPath);
 	nlsConfigurationPromise = resolveNLSConfiguration({
 		userLocale,
 		osLocale,
-		commit: product.commit,
+		commit: product.commit || 'built',
 		userDataPath,
 		nlsMetadataPath: import.meta.dirname
 	});
@@ -395,6 +474,11 @@ function readArgvConfigSync(): IArgvConfig {
 	// Fallback to default
 	if (!argvConfig) {
 		argvConfig = {};
+	}
+
+	// Default to Chinese locale for internal deployment
+	if (!argvConfig.locale) {
+		argvConfig.locale = 'zh-cn';
 	}
 
 	return argvConfig;
@@ -718,7 +802,7 @@ async function resolveNlsConfiguration(): Promise<INLSConfiguration> {
 	return resolveNLSConfiguration({
 		userLocale,
 		osLocale,
-		commit: product.commit,
+		commit: product.commit || 'built',
 		userDataPath,
 		nlsMetadataPath: import.meta.dirname
 	});
