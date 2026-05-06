@@ -4,7 +4,11 @@ Thumbs.db
 
 # Build output
 VSCode-darwin-arm64/
+VSCode-win32-x64/
+VSCode-win32-arm64/
 *.vsix
+YwCoderSetup-*.exe
+.build/
 
 # Dependencies
 node_modules/
