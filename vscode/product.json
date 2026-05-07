@@ -1,0 +1,145 @@
+{
+	"nameShort": "YwCoder",
+	"nameLong": "YwCoder",
+	"applicationName": "ywcoder",
+	"dataFolderName": ".ywcoder",
+	"sharedDataFolderName": ".ywcoder-shared",
+	"win32MutexName": "ywcoder",
+	"licenseName": "AGPL-3.0",
+	"licenseUrl": "https://github.com/yourcompany/ywcoder/blob/main/LICENSE",
+	"serverLicenseUrl": "https://github.com/yourcompany/ywcoder/blob/main/LICENSE",
+	"serverGreeting": [],
+	"serverLicense": [],
+	"serverLicensePrompt": "",
+	"serverApplicationName": "ywcoder-server",
+	"serverDataFolderName": ".ywcoder-server",
+	"tunnelApplicationName": "ywcoder-tunnel",
+	"win32DirName": "YwCoder",
+	"win32NameVersion": "YwCoder",
+	"win32RegValueName": "YwCoder",
+	"win32x64AppId": "{{47E2A534-E1FA-4EC3-B83B-A22EB8A65EF5}",
+	"win32arm64AppId": "{{594B0DE5-689C-481C-B63C-5516D008E73A}",
+	"win32x64UserAppId": "{{17C53518-EE29-4616-951F-A82AC84556E7}",
+	"win32arm64UserAppId": "{{2F7528D2-9A43-4A72-AC45-208B8EF49596}",
+	"win32AppUserModelId": "YwCoder",
+	"win32ShellNameShort": "YwCoder",
+	"win32TunnelServiceMutex": "ywcoder-tunnelservice",
+	"win32TunnelMutex": "ywcoder-tunnel",
+	"darwinBundleIdentifier": "com.ywcoder.app",
+	"darwinProfileUUID": "1DC3B630-3E1B-40CB-B5F7-5643FD8019E2",
+	"darwinProfilePayloadUUID": "9DE86C87-F704-4563-9B48-47D31879BAA3",
+	"linuxIconName": "ywcoder",
+	"licenseFileName": "LICENSE",
+	"reportIssueUrl": "",
+	"nodejsRepository": "",
+	"urlProtocol": "ywcoder",
+	"webviewContentExternalBaseUrlTemplate": "",
+	"defaultChatAgent": {
+		"extensionId": "dc-ops-support.ywcoder",
+		"chatExtensionId": "dc-ops-support.ywcoder",
+		"chatExtensionOutputId": "dc-ops-support.ywcoder.YwCoder.log",
+		"documentationUrl": "https://github.com/yourcompany/ywcoder",
+		"termsStatementUrl": "https://github.com/yourcompany/ywcoder",
+		"privacyStatementUrl": "https://github.com/yourcompany/ywcoder",
+		"provider": {
+			"default": {
+				"id": "ywcoder",
+				"name": "YwCoder"
+			},
+			"enterprise": {
+				"id": "ywcoder-enterprise",
+				"name": "YwCoder Enterprise"
+			}
+		},
+		"providerExtensionId": "dc-ops-support.ywcoder",
+		"providerScopes": [
+			[
+				"read:user"
+			]
+		]
+	},
+	"builtInExtensions": [
+		{
+			"name": "ms-vscode.js-debug-companion",
+			"version": "1.1.3",
+			"sha256": "7380a890787452f14b2db7835dfa94de538caf358ebc263f9d46dd68ac52de93",
+			"repo": "https://github.com/microsoft/vscode-js-debug-companion",
+			"metadata": {
+				"id": "99cb0b7f-7354-4278-b8da-6cc79972169d",
+				"publisherId": {
+					"publisherId": "5f5636e7-69ed-4afe-b5d6-8d231fb3d3ee",
+					"publisherName": "ms-vscode",
+					"displayName": "Microsoft",
+					"flags": "verified"
+				},
+				"publisherDisplayName": "Microsoft"
+			}
+		},
+		{
+			"name": "ms-vscode.js-debug",
+			"version": "1.117.0",
+			"sha256": "854eeb8a785b1f41ba2bd02d7ccd4fdbe10021b61473293973c7e96d036c7fb8",
+			"repo": "https://github.com/microsoft/vscode-js-debug",
+			"metadata": {
+				"id": "25629058-ddac-4e17-abba-74678e126c5d",
+				"publisherId": {
+					"publisherId": "5f5636e7-69ed-4afe-b5d6-8d231fb3d3ee",
+					"publisherName": "ms-vscode",
+					"displayName": "Microsoft",
+					"flags": "verified"
+				},
+				"publisherDisplayName": "Microsoft"
+			}
+		},
+		{
+			"name": "ms-vscode.vscode-js-profile-table",
+			"version": "1.0.10",
+			"sha256": "7361748ddf9fd09d8a2ed1f2a2d7376a2cf9aae708692820b799708385c38e08",
+			"repo": "https://github.com/microsoft/vscode-js-profile-visualizer",
+			"metadata": {
+				"id": "7e52b41b-71ad-457b-ab7e-0620f1fc4feb",
+				"publisherId": {
+					"publisherId": "5f5636e7-69ed-4afe-b5d6-8d231fb3d3ee",
+					"publisherName": "ms-vscode",
+					"displayName": "Microsoft",
+					"flags": "verified"
+				},
+				"publisherDisplayName": "Microsoft"
+			}
+		}
+	],
+	"onboardingKeymaps": [
+		{
+			"id": "vscode",
+			"label": "YwCoder",
+			"description": "默认键盘映射"
+		}
+	],
+	"onboardingThemes": [
+		{
+			"id": "dark-2026",
+			"label": "深色 2026",
+			"themeId": "Dark 2026",
+			"type": "dark"
+		},
+		{
+			"id": "hc-dark",
+			"label": "深色高对比度",
+			"themeId": "Default High Contrast",
+			"type": "hcDark"
+		},
+		{
+			"id": "light-2026",
+			"label": "浅色 2026",
+			"themeId": "Light 2026",
+			"type": "light"
+		},
+		{
+			"id": "hc-light",
+			"label": "浅色高对比度",
+			"themeId": "Default High Contrast Light",
+			"type": "hcLight"
+		}
+	],
+	"builtInExtensionsEnabledWithAutoUpdates": []
+}
