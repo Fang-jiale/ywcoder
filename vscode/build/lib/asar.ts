@@ -23,9 +23,6 @@ export function createAsar(folderPath: string, unpackGlobs: string[], skipGlobs:
 
 	const shouldSkipFile = (file: VinylFile): boolean => {
 		for (const skipGlob of skipGlobs) {
-			if (skipGlob.startsWith('!')) {
-				continue;
-			}
 			if (minimatch(file.relative, skipGlob)) {
 				return true;
 			}
