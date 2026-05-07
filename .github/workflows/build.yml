@@ -19,6 +19,8 @@ jobs:
   build-darwin-arm64:
     runs-on: macos-14
     if: github.event.inputs.platform == 'all' || github.event.inputs.platform == 'darwin-arm64' || github.event_name == 'push'
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -78,6 +80,8 @@ jobs:
   build-win32-x64:
     runs-on: windows-latest
     if: github.event.inputs.platform == 'all' || github.event.inputs.platform == 'win32-x64' || github.event_name == 'push'
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
