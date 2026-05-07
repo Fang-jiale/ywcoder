@@ -46,9 +46,11 @@ jobs:
         working-directory: vscode
         run: npm install
 
-      - name: Compile VS Code
+      - name: Clean and compile VS Code
         working-directory: vscode
-        run: npm run compile
+        run: |
+          npx rimraf out-vscode
+          npm run compile
 
       - name: Build extension
         working-directory: extension
