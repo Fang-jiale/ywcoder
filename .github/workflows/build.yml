@@ -46,12 +46,6 @@ jobs:
         working-directory: vscode
         run: npm install
 
-      - name: Clean and compile VS Code
-        working-directory: vscode
-        run: |
-          npx rimraf out-vscode
-          npm run compile
-
       - name: Build extension
         working-directory: extension
         run: |
@@ -63,9 +57,9 @@ jobs:
           rm -rf vscode/extensions/ywcoder/dist
           cp -r extension/dist vscode/extensions/ywcoder/
 
-      - name: Package macOS arm64
+      - name: Build and package macOS arm64
         working-directory: vscode
-        run: npx gulp vscode-darwin-arm64-ci
+        run: npx gulp vscode-darwin-arm64
 
       - name: Create zip
         run: |
@@ -110,11 +104,6 @@ jobs:
         shell: pwsh
         run: npm install
 
-      - name: Compile VS Code
-        working-directory: vscode
-        shell: pwsh
-        run: npm run compile
-
       - name: Build extension
         working-directory: extension
         shell: pwsh
@@ -128,10 +117,10 @@ jobs:
           Remove-Item -Recurse -Force vscode/extensions/ywcoder/dist -ErrorAction SilentlyContinue
           Copy-Item -Recurse extension/dist vscode/extensions/ywcoder/
 
-      - name: Package Windows x64
+      - name: Build and package Windows x64
         working-directory: vscode
         shell: pwsh
-        run: npx gulp vscode-win32-x64-ci
+        run: npx gulp vscode-win32-x64
 
       - name: Create zip
         shell: pwsh
