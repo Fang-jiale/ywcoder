@@ -440,7 +440,7 @@ function configureCommandlineSwitchesSync(cliArgs: NativeParsedArgs) {
 
 interface IArgvConfig {
 	[key: string]: string | string[] | boolean | undefined;
-	readonly locale?: string;
+	locale?: string;
 	readonly 'disable-lcd-text'?: boolean;
 	readonly 'proxy-bypass-list'?: string;
 	readonly 'disable-hardware-acceleration'?: boolean;
