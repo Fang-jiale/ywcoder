@@ -1,0 +1,139 @@
+name: Build YwCoder
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Platform to build'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - darwin-arm64
+          - win32-x64
+  push:
+    branches: [master, main]
+
+jobs:
+  build-darwin-arm64:
+    runs-on: macos-14
+    if: github.event.inputs.platform == 'all' || github.event.inputs.platform == 'darwin-arm64' || github.event_name == 'push'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: |
+            vscode/package-lock.json
+            extension/package-lock.json
+
+      - name: Cache VS Code build
+        uses: actions/cache@v4
+        with:
+          path: |
+            vscode/out-vscode
+            vscode/.build
+          key: vscode-build-darwin-${{ hashFiles('vscode/**/!(node_modules)/**/*.ts', 'vscode/package-lock.json') }}
+
+      - name: Install VS Code dependencies
+        working-directory: vscode
+        run: npm install
+
+      - name: Compile VS Code
+        working-directory: vscode
+        run: npm run compile
+
+      - name: Build extension
+        working-directory: extension
+        run: |
+          npm install
+          npm run build
+
+      - name: Copy extension to vscode
+        run: |
+          rm -rf vscode/extensions/ywcoder/dist
+          cp -r extension/dist vscode/extensions/ywcoder/
+
+      - name: Package macOS arm64
+        working-directory: vscode
+        run: npx gulp vscode-darwin-arm64-ci
+
+      - name: Create zip
+        run: |
+          cd vscode/..
+          ditto -c -k --sequesterRsrc --keepParent VSCode-darwin-arm64 YwCoder-darwin-arm64.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: YwCoder-darwin-arm64
+          path: YwCoder-darwin-arm64.zip
+          retention-days: 7
+
+  build-win32-x64:
+    runs-on: windows-latest
+    if: github.event.inputs.platform == 'all' || github.event.inputs.platform == 'win32-x64' || github.event_name == 'push'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: |
+            vscode/package-lock.json
+            extension/package-lock.json
+
+      - name: Cache VS Code build
+        uses: actions/cache@v4
+        with:
+          path: |
+            vscode/out-vscode
+            vscode/.build
+          key: vscode-build-win32-${{ hashFiles('vscode/**/!(node_modules)/**/*.ts', 'vscode/package-lock.json') }}
+
+      - name: Install VS Code dependencies
+        working-directory: vscode
+        shell: pwsh
+        run: npm install
+
+      - name: Compile VS Code
+        working-directory: vscode
+        shell: pwsh
+        run: npm run compile
+
+      - name: Build extension
+        working-directory: extension
+        shell: pwsh
+        run: |
+          npm install
+          npm run build
+
+      - name: Copy extension to vscode
+        shell: pwsh
+        run: |
+          Remove-Item -Recurse -Force vscode/extensions/ywcoder/dist -ErrorAction SilentlyContinue
+          Copy-Item -Recurse extension/dist vscode/extensions/ywcoder/
+
+      - name: Package Windows x64
+        working-directory: vscode
+        shell: pwsh
+        run: npx gulp vscode-win32-x64-ci
+
+      - name: Create zip
+        shell: pwsh
+        run: Compress-Archive -Path VSCode-win32-x64 -DestinationPath YwCoder-win32-x64.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: YwCoder-win32-x64
+          path: YwCoder-win32-x64.zip
+          retention-days: 7
