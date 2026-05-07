@@ -52,6 +52,10 @@ jobs:
           npm install
           npm run build
 
+      - name: Install extension dependencies in vscode
+        working-directory: vscode/extensions/ywcoder
+        run: npm install
+
       - name: Copy extension to vscode
         run: |
           rm -rf vscode/extensions/ywcoder/dist
@@ -110,6 +114,11 @@ jobs:
         run: |
           npm install
           npm run build
+
+      - name: Install extension dependencies in vscode
+        working-directory: vscode/extensions/ywcoder
+        shell: pwsh
+        run: npm install
 
       - name: Copy extension to vscode
         shell: pwsh
