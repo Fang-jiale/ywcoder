@@ -31,7 +31,7 @@ import { IBrowserWorkbenchEnvironmentService } from '../../environment/browser/e
 
 export class DefaultConfiguration extends BaseDefaultConfiguration {
 
-	static readonly DEFAULT_OVERRIDES_CACHE_EXISTS_KEY = 'DefaultOverridesCacheExists';
+	static readonly DEFAULT_OVERRIDES_CACHE_EXISTS_KEY = 'ywcoder.DefaultOverridesCacheExists';
 
 	private readonly configurationRegistry = Registry.as<IConfigurationRegistry>(Extensions.Configuration);
 	private cachedConfigurationDefaultsOverrides: IStringDictionary<unknown> = {};

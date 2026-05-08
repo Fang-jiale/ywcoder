@@ -82,7 +82,7 @@
 		}
 
 		const splash = document.createElement('div');
-		splash.id = 'monaco-parts-splash';
+		splash.id = 'ywcoder-parts-splash';
 		splash.className = baseTheme ?? 'vs-dark';
 
 		window.document.body.appendChild(splash);

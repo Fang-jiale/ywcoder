@@ -205,8 +205,8 @@ export class UserDataProfilesService extends Disposable implements IUserDataProf
 
 	readonly _serviceBrand: undefined;
 
-	protected static readonly PROFILES_KEY = 'userDataProfiles';
-	protected static readonly PROFILE_ASSOCIATIONS_KEY = 'profileAssociations';
+	protected static readonly PROFILES_KEY = 'ywcoder.userDataProfiles';
+	protected static readonly PROFILE_ASSOCIATIONS_KEY = 'ywcoder.profileAssociations';
 
 	readonly profilesHome: URI;
 	private readonly profilesCacheHome: URI;

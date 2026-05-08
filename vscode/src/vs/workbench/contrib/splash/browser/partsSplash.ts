@@ -27,7 +27,7 @@ export class PartsSplash {
 
 	static readonly ID = 'workbench.contrib.partsSplash';
 
-	private static readonly _splashElementId = 'monaco-parts-splash';
+	private static readonly _splashElementId = 'ywcoder-parts-splash';
 
 	private readonly _disposables = new DisposableStore();
 

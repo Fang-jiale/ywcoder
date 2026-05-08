@@ -47,9 +47,9 @@ function doGetUserDataPath(cliArgs: NativeParsedArgs, productName: string): stri
 	// 0. Running out of sources has a fixed productName
 	if (process.env['VSCODE_DEV']) {
 		if ((process as INodeProcess).isEmbeddedApp) {
-			productName = 'agents-oss-dev';
+			productName = 'ywcoder-dev';
 		} else {
-			productName = 'code-oss-dev';
+			productName = 'ywcoder-dev';
 		}
 	}
 

@@ -17,8 +17,8 @@ import { ILogService } from '../../../../platform/log/common/log.js';
 
 const localeStorage = new class LocaleStorage {
 
-	private static readonly LOCAL_STORAGE_LOCALE_KEY = 'vscode.nls.locale';
-	private static readonly LOCAL_STORAGE_EXTENSION_ID_KEY = 'vscode.nls.languagePackExtensionId';
+	private static readonly LOCAL_STORAGE_LOCALE_KEY = 'ywcoder.nls.locale';
+	private static readonly LOCAL_STORAGE_EXTENSION_ID_KEY = 'ywcoder.nls.languagePackExtensionId';
 
 	setLocale(locale: string): void {
 		localStorage.setItem(LocaleStorage.LOCAL_STORAGE_LOCALE_KEY, locale);

@@ -131,13 +131,26 @@ jobs:
         shell: pwsh
         run: npx gulp vscode-win32-x64
 
+      - name: Build Windows x64 system setup
+        working-directory: vscode
+        shell: pwsh
+        run: npx gulp vscode-win32-x64-system-setup
+
+      - name: Build Windows x64 user setup
+        working-directory: vscode
+        shell: pwsh
+        run: npx gulp vscode-win32-x64-user-setup
+
       - name: Create zip
         shell: pwsh
-        run: Compress-Archive -Path VSCode-win32-x64 -DestinationPath YwCoder-win32-x64.zip
+        run: Compress-Archive -Path YwCoder-win32-x64 -DestinationPath YwCoder-win32-x64.zip
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: YwCoder-win32-x64
-          path: YwCoder-win32-x64.zip
+          path: |
+            YwCoder-win32-x64.zip
+            vscode/.build/win32-x64/system-setup/YwCoderSetup.exe
+            vscode/.build/win32-x64/user-setup/YwCoderSetup.exe
           retention-days: 7

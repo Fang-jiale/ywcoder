@@ -37,7 +37,7 @@ steps:
 
   - ${{ if eq(parameters.OS, 'win32') }}:
     - powershell: |
-        $AppRoot = "$(agent.builddirectory)\test\VSCode-win32-$(VSCODE_ARCH)"
+        $AppRoot = "$(agent.builddirectory)\test\YwCoder-win32-$(VSCODE_ARCH)"
         $ProductJsonPath = (Get-ChildItem -Path "$AppRoot" -Name "product.json" -Recurse | Select-Object -First 1)
         $AppProductJson = Get-Content -Raw -Path "$AppRoot\$ProductJsonPath" | ConvertFrom-Json
         $AppNameShort = $AppProductJson.nameShort

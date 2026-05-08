@@ -15,7 +15,7 @@ registerSingleton(ISplashStorageService, class SplashStorageService implements I
 
 	async saveWindowSplash(splash: IPartsSplash): Promise<void> {
 		const raw = JSON.stringify(splash);
-		localStorage.setItem('monaco-parts-splash', raw);
+		localStorage.setItem('ywcoder-parts-splash', raw);
 	}
 
 }, InstantiationType.Delayed);
