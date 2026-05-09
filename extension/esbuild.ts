@@ -30,47 +30,63 @@ const esbuildProblemMatcherPlugin = {
 
 
 /**
- * 在构建完成后，将 SDK 的 CLI 文件复制到 dist/
- * 这样运行时可通过显式 path 调用，避免 import.meta.url 在打包后失效。
+ * 在构建完成后，将 @dcywzc/ywcoder 的 CLI 文件复制到 dist/ywcoder/
+ * 用于离线部署，确保 vsix 打包后无需依赖外部 node_modules。
  * @type {import('esbuild').Plugin}
  */
-const copyClaudeCliPlugin = {
-    name: 'copy-claude-cli',
+const copyYwcoderCliPlugin = {
+    name: 'copy-ywcoder-cli',
     setup(build: { onEnd: (arg0: () => Promise<void>) => void; }) {
-        const require = createRequire(import.meta.url);
         build.onEnd(async () => {
             try {
-                const pkgDir = path.dirname(require.resolve('@anthropic-ai/claude-code/cli.js'));
-                const outDir = path.resolve(process.cwd(), 'dist');
+                const require = createRequire(import.meta.url);
+                const pkgDir = path.dirname(require.resolve('@dcywzc/ywcoder/package.json'));
+                const outDir = path.resolve(process.cwd(), 'dist', 'ywcoder');
                 await fs.mkdir(outDir, { recursive: true });
 
-                // copy cli.js
-                const cliSrc = path.join(pkgDir, 'cli.js');
-                const cliDst = path.join(outDir, 'claude-cli.js');
-                await fs.copyFile(cliSrc, cliDst);
-                console.log(`[build] Copied Claude CLI -> ${path.relative(process.cwd(), cliDst)}`);
-
-                // copy yoga.wasm (required by CLI at runtime)
-                const wasmSrc = path.join(pkgDir, 'yoga.wasm');
-                try {
-                    await fs.copyFile(wasmSrc, path.join(outDir, 'yoga.wasm'));
-                    console.log(`[build] Copied yoga.wasm`);
-                } catch (e) {
-                    console.warn('[build] yoga.wasm not found, SDK may fail at runtime');
+                // copy cli.mjs
+                const cliSrc = path.join(pkgDir, 'dist', 'cli.mjs');
+                const cliDst = path.join(outDir, 'cli.mjs');
+                if ((await fs.stat(cliSrc)).isFile()) {
+                    await fs.copyFile(cliSrc, cliDst);
+                    console.log(`[build] Copied YwCoder CLI -> ${path.relative(process.cwd(), cliDst)}`);
                 }
 
-                // copy vendor directory if exists (CLI may read assets/configs)
-                const vendorSrc = path.join(pkgDir, 'vendor');
+                // copy vendor directory (contains ripgrep binaries needed at runtime)
+                const vendorSrc = path.join(pkgDir, 'dist', 'vendor');
                 try {
                     const st = await fs.stat(vendorSrc);
                     if (st.isDirectory()) {
                         const vendorDst = path.join(outDir, 'vendor');
                         await copyDir(vendorSrc, vendorDst);
-                        console.log('[build] Copied vendor/ directory');
+                        console.log('[build] Copied YwCoder vendor/ directory');
                     }
-                } catch {}
+                } catch {
+                    console.warn('[build] vendor/ not found, ripgrep features may fail');
+                }
+
+                // 补充 resources/ywcoder/vendor/ripgrep/ 中缺失的平台（如 Windows）
+                const resourcesRipgrepSrc = path.resolve(process.cwd(), 'resources', 'ywcoder', 'vendor', 'ripgrep');
+                const ripgrepDst = path.join(outDir, 'vendor', 'ripgrep');
+                try {
+                    const st = await fs.stat(resourcesRipgrepSrc);
+                    if (st.isDirectory()) {
+                        await fs.mkdir(ripgrepDst, { recursive: true });
+                        const entries = await fs.readdir(resourcesRipgrepSrc, { withFileTypes: true });
+                        for (const ent of entries) {
+                            const srcPlatform = path.join(resourcesRipgrepSrc, ent.name);
+                            const dstPlatform = path.join(ripgrepDst, ent.name);
+                            if (ent.isDirectory()) {
+                                await copyDir(srcPlatform, dstPlatform);
+                            }
+                        }
+                        console.log('[build] Patched vendor/ripgrep with all platforms from resources');
+                    }
+                } catch {
+                    // resources/ywcoder/vendor/ripgrep may not exist
+                }
             } catch (err: any) {
-                console.warn('[build] copy-claude-cli failed:', err?.message || err);
+                console.warn('[build] copy-ywcoder-cli failed:', err?.message || err);
             }
         });
     },
@@ -107,7 +123,7 @@ async function main() {
 		plugins: [
 			/* add to the end of plugins array */
 			esbuildProblemMatcherPlugin,
-			// copyClaudeCliPlugin,
+			copyYwcoderCliPlugin,
 		],
 	});
 	if (watch) {
