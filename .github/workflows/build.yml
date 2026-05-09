@@ -54,9 +54,10 @@ jobs:
 
       - name: Sync extension to vscode
         run: |
-          # 同步 package.json（修正 tgz 路径）
+          # 同步 package.json（修正 tgz 路径，并移除 @dcywzc/ywcoder 避免安装 sharp 等导致 npm list 失败）
           cp extension/package.json vscode/extensions/ywcoder/package.json
           sed -i '' 's|"file:../dcywzc-ywcoder-1.0.1.tgz"|"file:../../../dcywzc-ywcoder-1.0.1.tgz"|g' vscode/extensions/ywcoder/package.json
+          sed -i '' '/"@dcywzc\/ywcoder"/d' vscode/extensions/ywcoder/package.json
           # 同步 resources
           cp -r extension/resources/* vscode/extensions/ywcoder/resources/
           # 同步构建产物 dist
@@ -126,10 +127,13 @@ jobs:
       - name: Sync extension to vscode
         shell: pwsh
         run: |
-          # 同步 package.json（修正 tgz 路径）
+          # 同步 package.json（修正 tgz 路径，并移除 @dcywzc/ywcoder 避免安装 sharp 等导致 npm list 失败）
           Copy-Item extension/package.json vscode/extensions/ywcoder/package.json -Force
           (Get-Content vscode/extensions/ywcoder/package.json) `
             -replace '"file:\.\./dcywzc-ywcoder-1\.0\.1\.tgz"', '"file:../../../dcywzc-ywcoder-1.0.1.tgz"' `
+            | Set-Content vscode/extensions/ywcoder/package.json
+          (Get-Content vscode/extensions/ywcoder/package.json) `
+            | Where-Object { $_ -notmatch '"@dcywzc/ywcoder"' } `
             | Set-Content vscode/extensions/ywcoder/package.json
           # 同步 resources
           if (Test-Path extension/resources) {
