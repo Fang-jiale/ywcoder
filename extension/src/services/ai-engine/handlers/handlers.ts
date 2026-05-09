@@ -877,7 +877,23 @@ export async function handleOpenConfigFile(
         else {
             const configPath = getConfigFilePath(configType);
             const uri = vscode.Uri.file(configPath);
-            await vscode.window.showTextDocument(uri);
+            const isDir = configType === "user-agents" || configType === "project-agents";
+
+            if (isDir) {
+                // 确保目录存在
+                if (!fs.existsSync(configPath)) {
+                    fs.mkdirSync(configPath, { recursive: true });
+                }
+                // 在系统文件管理器中打开文件夹
+                await vscode.env.openExternal(uri);
+            } else {
+                // 确保父目录存在
+                const parentDir = path.dirname(configPath);
+                if (!fs.existsSync(parentDir)) {
+                    fs.mkdirSync(parentDir, { recursive: true });
+                }
+                await vscode.window.showTextDocument(uri);
+            }
         }
 
         return { type: "open_config_file_response" };
@@ -1167,19 +1183,21 @@ function detectLanguage(fileName?: string): string {
     }
 }
 
+function getUserConfigDir(): string {
+    return process.env.YWCODER_CONFIG_DIR ?? process.env.CLAUDE_CONFIG_DIR ?? path.join(os.homedir(), ".ywcoder");
+}
+
 function getConfigFilePath(configType: string): string {
-    const homeDir = os.homedir();
+    const userDir = getUserConfigDir();
 
     switch (configType) {
         case "settings":
-            return path.join(homeDir, ".claude", "settings.json");
+            return path.join(userDir, "settings.json");
         case "config":
-            return path.join(homeDir, ".claude", "ywcoder.json");
+            return path.join(userDir, ".config.json");
         case "mcp-global":
-            // Global MCP servers: ~/.claude/mcp.json
-            return path.join(homeDir, ".claude", "mcp.json");
+            return path.join(userDir, "mcp.json");
         case "mcp-project": {
-            // Project MCP servers: .claude/mcp.json in workspace root
             const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
             if (!workspaceRoot) {
                 throw new Error("No workspace folder open");
@@ -1188,7 +1206,7 @@ function getConfigFilePath(configType: string): string {
         }
         // CLAUDE.md memory files
         case "user-claude-md":
-            return path.join(homeDir, ".claude", "CLAUDE.md");
+            return path.join(userDir, "CLAUDE.md");
         case "project-claude-md": {
             const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
             if (!workspaceRoot) {
@@ -1203,7 +1221,16 @@ function getConfigFilePath(configType: string): string {
             }
             return path.join(workspaceRoot, ".claude", "CLAUDE.local.md");
         }
+        case "user-agents":
+            return path.join(userDir, "agents");
+        case "project-agents": {
+            const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+            if (!workspaceRoot) {
+                throw new Error("No workspace folder open");
+            }
+            return path.join(workspaceRoot, ".claude", "agents");
+        }
         default:
-            return path.join(homeDir, ".claude", `${configType}.json`);
+            return path.join(userDir, `${configType}.json`);
     }
 }

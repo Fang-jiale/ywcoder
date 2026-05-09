@@ -12,7 +12,7 @@
           </template>
           <template #bottom>
             <div class="text-xs text-(--cursor-text-tertiary) mt-1">
-              <code>~/.claude/CLAUDE.md</code>
+              <code>~/.ywcoder/CLAUDE.md</code>
             </div>
           </template>
         </SettingsCell>
@@ -59,7 +59,7 @@
           </template>
           <template #bottom>
             <div class="text-xs text-(--cursor-text-tertiary) mt-1">
-              <code>~/.claude/agents/</code>
+              <code>~/.ywcoder/agents/</code>
             </div>
           </template>
         </SettingsCell>

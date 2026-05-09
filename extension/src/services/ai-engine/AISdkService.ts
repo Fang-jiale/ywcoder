@@ -16,6 +16,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as os from 'os';
 import * as http from 'http';
+import * as cp from 'child_process';
 import { createDecorator } from '../../di/instantiation';
 import { ILogService } from '../logService';
 import { IConfigurationService } from '../configurationService';
@@ -628,7 +629,12 @@ export class AISdkService implements IAISdkService {
 
     /**
      * 获取 AI引擎 CLI 可执行文件路径
-     * 优先级: 1. 用户配置的本地路径 > 2. npm 安装的 @dcywzc/ywcoder > 3. 内置原生二进制
+     * 优先级:
+     * 1. 用户配置的本地路径
+     * 2. 系统全局 npm 安装的 @dcywzc/ywcoder
+     * 3. 插件内置的 dist/ywcoder（离线 fallback）
+     * 4. 插件自身 node_modules（开发 fallback）
+     * 5. 内置原生二进制
      */
     private async getAIExecutablePath(): Promise<string> {
         // 1. 检查用户是否配置了本地 Claude CLI 路径
@@ -645,13 +651,19 @@ export class AISdkService implements IAISdkService {
             }
         }
 
-        // 2. 查找 npm 安装的 @dcywzc/ywcoder
+        // 2. 优先查找系统全局 npm 安装的 @dcywzc/ywcoder
+        const systemCliPath = await this.findSystemYwcoderPath();
+        if (systemCliPath) {
+            return systemCliPath;
+        }
+
+        // 3. 查找插件内置/bundled 的 @dcywzc/ywcoder（离线 fallback）
         const bundledCliPath = await this.findBundledYwcoderPath();
         if (bundledCliPath) {
             return bundledCliPath;
         }
 
-        // 3. 查找内置原生二进制
+        // 4. 查找内置原生二进制
         const binaryName = process.platform === 'win32' ? 'ywcoder.exe' : 'ywcoder';
         const arch = process.arch;
 
@@ -663,12 +675,48 @@ export class AISdkService implements IAISdkService {
             return nativePath;
         }
 
-        throw new Error('AI引擎 CLI 未找到。请配置本地 CLI 路径、npm 安装 @dcywzc/ywcoder，或确保内置二进制文件存在。');
+        throw new Error('AI引擎 CLI 未找到。请先全局安装 @dcywzc/ywcoder（npm i -g @dcywzc/ywcoder），或配置本地 CLI 路径。');
     }
 
     /**
-     * 查找 npm 安装的 @dcywzc/ywcoder CLI
-     * 支持开发环境（node_modules）和生产环境（dist/ywcoder）
+     * 查找系统全局 npm 安装的 @dcywzc/ywcoder CLI
+     * 通过 npm root -g 获取全局目录，也覆盖常见全局安装路径
+     */
+    private async findSystemYwcoderPath(): Promise<string | undefined> {
+        const candidates: string[] = [];
+
+        // 通过 npm 获取全局根目录
+        try {
+            const globalRoot = cp.execSync('npm root -g', { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
+            candidates.push(path.join(globalRoot, '@dcywzc', 'ywcoder', 'dist', 'cli.mjs'));
+        } catch {
+            // ignore
+        }
+
+        // 常见全局安装路径 fallback
+        const home = os.homedir();
+        candidates.push(
+            path.join(home, '.npm-global', 'lib', 'node_modules', '@dcywzc', 'ywcoder', 'dist', 'cli.mjs'),
+            path.join(home, '.nvm', 'versions', 'node', process.version, 'lib', 'node_modules', '@dcywzc', 'ywcoder', 'dist', 'cli.mjs'),
+            path.join('/usr', 'local', 'lib', 'node_modules', '@dcywzc', 'ywcoder', 'dist', 'cli.mjs'),
+            path.join('/opt', 'homebrew', 'lib', 'node_modules', '@dcywzc', 'ywcoder', 'dist', 'cli.mjs'),
+            path.join('/usr', 'lib', 'node_modules', '@dcywzc', 'ywcoder', 'dist', 'cli.mjs')
+        );
+
+        for (const cliPath of candidates) {
+            if (await this.fileSystemService.pathExists(cliPath)) {
+                this.logService.info(`[AISdkService] 使用系统全局安装的 YwCoder CLI: ${cliPath}`);
+                return cliPath;
+            }
+        }
+
+        this.logService.info('[AISdkService] 未找到系统全局安装的 @dcywzc/ywcoder');
+        return undefined;
+    }
+
+    /**
+     * 查找插件内置/bundled 的 @dcywzc/ywcoder CLI
+     * 支持生产环境（dist/ywcoder）和开发环境（node_modules）
      *
      * 注意：SDK 内部用 "node <path>" 方式 spawn，因此直接指向 cli.mjs 即可，
      * 不需要经过 bin/ywcoder wrapper。
@@ -676,21 +724,21 @@ export class AISdkService implements IAISdkService {
     private async findBundledYwcoderPath(): Promise<string | undefined> {
         const extensionRoot = this.context.extensionPath;
 
-        // 2.1 优先查找构建时复制到 dist/ywcoder/ 的 cli.mjs（生产环境）
+        // 3.1 查找构建时复制到 dist/ywcoder/ 的 cli.mjs（生产环境离线包）
         const distCliPath = path.join(extensionRoot, 'dist', 'ywcoder', 'cli.mjs');
         if (await this.fileSystemService.pathExists(distCliPath)) {
             this.logService.info(`[AISdkService] 使用内置 YwCoder CLI (dist): ${distCliPath}`);
             return distCliPath;
         }
 
-        // 2.2 查找 node_modules 里的 cli.mjs（开发环境）
+        // 3.2 查找插件自身 node_modules 里的 cli.mjs（开发环境）
         const pkgCliPath = path.join(extensionRoot, 'node_modules', '@dcywzc', 'ywcoder', 'dist', 'cli.mjs');
         if (await this.fileSystemService.pathExists(pkgCliPath)) {
-            this.logService.info(`[AISdkService] 使用 npm 安装的 YwCoder CLI: ${pkgCliPath}`);
+            this.logService.info(`[AISdkService] 使用插件内置 node_modules 的 YwCoder CLI: ${pkgCliPath}`);
             return pkgCliPath;
         }
 
-        this.logService.warn('[AISdkService] 未找到 npm 安装的 @dcywzc/ywcoder');
+        this.logService.warn('[AISdkService] 未找到内置的 @dcywzc/ywcoder');
         return undefined;
     }
 

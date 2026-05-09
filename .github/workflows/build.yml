@@ -54,10 +54,18 @@ jobs:
 
       - name: Install extension dependencies in vscode
         working-directory: vscode/extensions/ywcoder
-        run: npm install
-
-      - name: Copy extension to vscode
         run: |
+          rm -rf node_modules package-lock.json
+          npm install
+
+      - name: Sync extension to vscode
+        run: |
+          # 同步 package.json（修正 tgz 路径）
+          cp extension/package.json vscode/extensions/ywcoder/package.json
+          sed -i '' 's|"file:../dcywzc-ywcoder-1.0.1.tgz"|"file:../../../dcywzc-ywcoder-1.0.1.tgz"|g' vscode/extensions/ywcoder/package.json
+          # 同步 resources
+          cp -r extension/resources/* vscode/extensions/ywcoder/resources/
+          # 同步构建产物 dist
           rm -rf vscode/extensions/ywcoder/dist
           cp -r extension/dist vscode/extensions/ywcoder/
 
@@ -118,11 +126,24 @@ jobs:
       - name: Install extension dependencies in vscode
         working-directory: vscode/extensions/ywcoder
         shell: pwsh
-        run: npm install
+        run: |
+          Remove-Item -Recurse -Force node_modules -ErrorAction SilentlyContinue
+          Remove-Item -Force package-lock.json -ErrorAction SilentlyContinue
+          npm install
 
-      - name: Copy extension to vscode
+      - name: Sync extension to vscode
         shell: pwsh
         run: |
+          # 同步 package.json（修正 tgz 路径）
+          Copy-Item extension/package.json vscode/extensions/ywcoder/package.json -Force
+          (Get-Content vscode/extensions/ywcoder/package.json) `
+            -replace '"file:\.\./dcywzc-ywcoder-1\.0\.1\.tgz"', '"file:../../../dcywzc-ywcoder-1.0.1.tgz"' `
+            | Set-Content vscode/extensions/ywcoder/package.json
+          # 同步 resources
+          if (Test-Path extension/resources) {
+            Copy-Item -Recurse -Force extension/resources/* vscode/extensions/ywcoder/resources/
+          }
+          # 同步构建产物 dist
           Remove-Item -Recurse -Force vscode/extensions/ywcoder/dist -ErrorAction SilentlyContinue
           Copy-Item -Recurse extension/dist vscode/extensions/ywcoder/
 

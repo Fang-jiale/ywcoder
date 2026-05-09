@@ -2,7 +2,7 @@
  * SessionService - 历史会话加载和管理
  *
  * 职责：
- * 1. 从 ~/.ywconfig/projects/ 目录加载会话历史
+ * 1. 从 ~/.ywcoder/projects/ 目录加载会话历史
  * 2. 解析 .jsonl 文件（每行一个 JSON 对象）
  * 3. 组织会话消息和生成摘要
  * 4. 支持会话列表查询和消息检索
@@ -78,10 +78,10 @@ export interface ISessionService {
 // ============================================================================
 
 /**
- * 获取 YwCoder 配置目录
+ * 获取 YwCoder 配置目录（与 CLI 保持一致）
  */
 function getConfigDir(): string {
-    return process.env.YWCONFIG_DIR ?? path.join(os.homedir(), ".ywconfig");
+    return process.env.YWCODER_CONFIG_DIR ?? process.env.CLAUDE_CONFIG_DIR ?? path.join(os.homedir(), ".ywcoder");
 }
 
 /**
