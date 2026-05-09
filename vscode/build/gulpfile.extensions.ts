@@ -285,8 +285,8 @@ export const compileNativeExtensionsBuildTask = task.define('compile-native-exte
 gulp.task(compileNativeExtensionsBuildTask);
 
 // [YwCoder] Copilot extension removed
-// export const compileCopilotExtensionBuildTask = task.define('compile-copilot-extension-build', () => ext.packageCopilotExtensionStream(false).pipe(gulp.dest('.build')));
-// gulp.task(compileCopilotExtensionBuildTask);
+export const compileCopilotExtensionBuildTask = task.define('compile-copilot-extension-build', () => Promise.resolve());
+gulp.task(compileCopilotExtensionBuildTask);
 
 /**
  * Compiles the extensions for the build.
