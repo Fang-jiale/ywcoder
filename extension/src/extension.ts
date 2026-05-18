@@ -11,6 +11,16 @@ import { VSCodeTransport } from './services/ai-engine/transport/VSCodeTransport'
  * Extension Activation
  */
 export function activate(context: vscode.ExtensionContext) {
+	// 0. Force default appearance config for existing users
+	const APPEARANCE_CONFIG_KEY = 'ywcoder.appearanceConfigForced';
+	if (!context.globalState.get<boolean>(APPEARANCE_CONFIG_KEY)) {
+		const config = vscode.workspace.getConfiguration();
+		config.update('workbench.colorTheme', 'Default High Contrast Light', true);
+		config.update('workbench.activityBar.location', 'top', true);
+		config.update('window.menuBarVisibility', 'hidden', true);
+		context.globalState.update(APPEARANCE_CONFIG_KEY, true);
+	}
+
 	// 1. Create service builder
 	const builder = new InstantiationServiceBuilder();
 
