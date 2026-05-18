@@ -115,8 +115,37 @@ const MODEL_ALIASES: Array<{ id: string; label: string }> = [
 // ── Available models: aliases + SDK + custom, minus disabled ──
 
 const availableModels = computed(() => {
-  // 只保留 static aliases（目前只有 default）
-  return MODEL_ALIASES.filter(alias => !disabledModels.value.includes(alias.id))
+  const models: Array<{ id: string; label: string }> = []
+  const seen = new Set<string>()
+
+  // 1. Static aliases（优先级最高）
+  for (const alias of MODEL_ALIASES) {
+    if (!disabledModels.value.includes(alias.id) && !seen.has(alias.id)) {
+      models.push(alias)
+      seen.add(alias.id)
+    }
+  }
+
+  // 2. SDK models（来自 /model 命令的 same data）
+  for (const m of sdkModels.value) {
+    if (!disabledModels.value.includes(m.value) && !seen.has(m.value)) {
+      models.push({
+        id: m.value,
+        label: m.displayName.replace(/\s*\(recommended\)\s*$/i, '')
+      })
+      seen.add(m.value)
+    }
+  }
+
+  // 3. Custom models
+  for (const m of customModels.value) {
+    if (!disabledModels.value.includes(m.id) && !seen.has(m.id)) {
+      models.push({ id: m.id, label: m.name || m.id })
+      seen.add(m.id)
+    }
+  }
+
+  return models
 })
 
 // ── Label for trigger display ──
@@ -136,7 +165,7 @@ const selectedModelLabel = computed(() => {
   if (custom) return custom.name || custom.id
 
   // Last resort: show raw id
-  return props.selectedModel || 'Select model'
+  return props.selectedModel || '选择模型'
 })
 
 function handleModelSelect(item: DropdownItemData, close: () => void) {

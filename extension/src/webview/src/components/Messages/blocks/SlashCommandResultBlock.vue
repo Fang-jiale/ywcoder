@@ -2,7 +2,7 @@
   <div :class="resultClasses">
     <div class="command-result-header">
       <span class="command-icon">{{ block.isError ? '❌' : '✓' }}</span>
-      <span class="command-label">Command {{ block.isError ? 'Error' : 'Output' }}</span>
+      <span class="command-label">命令{{ block.isError ? '错误' : '输出' }}</span>
     </div>
     <pre class="command-result-content">{{ block.result }}</pre>
   </div>

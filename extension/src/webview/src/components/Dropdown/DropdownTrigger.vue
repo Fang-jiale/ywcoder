@@ -113,7 +113,7 @@ const props = withDefaults(defineProps<Props>(), {
   popoverStyle: () => ({}),
   triggerClass: '',
   showSearch: false,
-  searchPlaceholder: 'Search...',
+  searchPlaceholder: '搜索...',
   shouldAutoFocus: true,
   closeOnClickOutside: true,
   align: 'left',

@@ -1,6 +1,6 @@
 <template>
   <div class="system-message">
-    <div class="system-message-label">System</div>
+    <div class="system-message-label">系统</div>
     <div class="system-message-content">
       {{ content }}
     </div>
@@ -23,7 +23,7 @@ const content = computed(() => {
   if (typeof props.message.message.content === 'string') {
     return props.message.message.content;
   }
-  return props.message.subtype === 'init' ? 'Session initialized' : 'System message';
+  return props.message.subtype === 'init' ? '会话已初始化' : '系统消息';
 });
 </script>
 

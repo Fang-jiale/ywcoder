@@ -18,7 +18,7 @@
         >
           <div class="message-text">
             <div>{{ displayContent }}</div>
-            <Tooltip content="Restore checkpoint">
+            <Tooltip content="还原检查点">
               <button
                 class="restore-button"
                 @click.stop="handleRestore"

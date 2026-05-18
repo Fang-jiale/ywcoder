@@ -28,7 +28,7 @@ export class PermissionRequest {
     this.resolved.emit({ behavior: 'allow', updatedInput, updatedPermissions });
   }
 
-  reject(message: string = 'Denied by user', interrupt: boolean = true): void {
+  reject(message: string = '用户已拒绝', interrupt: boolean = true): void {
     this.resolved.emit({ behavior: 'deny', message, interrupt });
   }
 

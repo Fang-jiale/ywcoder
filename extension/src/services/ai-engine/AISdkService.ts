@@ -144,63 +144,18 @@ export class AISdkService implements IAISdkService {
     async query(params: SdkQueryParams): Promise<Query> {
         const { inputStream, resume, canUseTool, model, cwd, permissionMode, maxThinkingTokens, onStderrError } = params;
 
-        this.logService.info('========================================');
-        this.logService.info('AISdkService.query() 开始调用');
-        this.logService.info('========================================');
-        this.logService.info(`📋 输入参数:`);
-        this.logService.info(`  - model: ${model}`);
-        this.logService.info(`  - cwd: ${cwd}`);
-        this.logService.info(`  - permissionMode: ${permissionMode}`);
-        this.logService.info(`  - resume: ${resume}`);
-        this.logService.info(`  - maxThinkingTokens: ${maxThinkingTokens ?? 'undefined'}`);
+        this.logService.info(`[AISdkService] query: model=${model ?? 'default'}, cwd=${cwd}, permissionMode=${permissionMode}`);
 
-        // 参数转换
         const modelParam = model === null ? "default" : model;
         const permissionModeParam = permissionMode as PermissionMode;
         const cwdParam = cwd;
 
-        this.logService.info(`🔄 参数转换:`);
-        this.logService.info(`  - modelParam: ${modelParam}`);
-        this.logService.info(`  - permissionModeParam: ${permissionModeParam}`);
-        this.logService.info(`  - cwdParam: ${cwdParam}`);
-
-        // 获取 CLI 路径（避免 TypeScript 类型推断问题）
         const cliPath = await this.getAIExecutablePath();
-
-        // 获取环境变量
         const env = await this.getMergedEnvironmentVariables();
 
-        // 记录环境变量
-        this.logService.info(`🌍 环境变量 (env):`);
-        if (env && Object.keys(env).length > 0) {
-            for (const [key, value] of Object.entries(env)) {
-                this.logService.info(`  - ${key}: ${value}`);
-            }
-        } else {
-            this.logService.info(`  (empty)`);
-        }
-
-        // 记录 CLI 路径
-        const ywcoderPath = path.join(os.homedir(), '.claude', 'ywcoder.json');
-        this.logService.info(`📂 CLI 可执行文件与配置:`);
-        this.logService.info(`  - CLI Path: ${cliPath}`);
-        this.logService.info(`  - Settings Path: ${ywcoderPath}`);
-
-        // 检查 CLI 是否存在
         if (!(await this.fileSystemService.pathExists(cliPath))) {
-          this.logService.error(`❌ AI引擎 CLI not found at: ${cliPath}`);
+          this.logService.error(`[AISdkService] CLI not found: ${cliPath}`);
           throw new Error(`AI引擎 CLI not found at: ${cliPath}`);
-        }
-        this.logService.info(`  ✓ CLI 文件存在`);
-
-        // 检查文件权限
-        try {
-          const stats = await this.fileSystemService.stat(vscode.Uri.file(cliPath));
-          const isExec = await this.fileSystemService.isExecutable(cliPath);
-          this.logService.info(`  - File size: ${stats.size} bytes`);
-          this.logService.info(`  - Is executable: ${isExec}`);
-        } catch (e) {
-          this.logService.warn(`  ⚠ 无法检查文件状态: ${e}`);
         }
 
         // 构建 SDK Options
@@ -222,6 +177,11 @@ export class AISdkService implements IAISdkService {
 
                 for (const line of lines) {
                     if (!line.trim()) continue;
+
+                    // 过滤无害的 rg 扫描错误（commands/agents/plugins 等目录不存在）
+                    if (line.includes('rg error') && (line.includes('系统找不到指定的') || line.includes('No such file or directory') || line.includes('os error'))) {
+                        continue;
+                    }
 
                     // 检测错误级别
                     const lowerLine = line.toLowerCase();
@@ -322,40 +282,15 @@ export class AISdkService implements IAISdkService {
             includePartialMessages: true
         };
 
-        // 调用 SDK
-        this.logService.info('');
-        this.logService.info('🚀 准备调用 AI Agent SDK');
-        this.logService.info('----------------------------------------');
-
         // 设置入口点环境变量
         process.env.CLAUDE_CODE_ENTRYPOINT = 'ywcoder-vscode';
-        this.logService.info(`🔧 环境变量:`);
-        this.logService.info(`  - YWCODE_ENTRYPOINT: ${process.env.CLAUDE_CODE_ENTRYPOINT}`);
-        const customEnvVars = await this.configService.getEnvironmentVariables();
-        for (const [key, value] of Object.entries(customEnvVars)) {
-            this.logService.info(`  - ${key}: ${value}`);
-        }
-
-        this.logService.info('');
-        this.logService.info('📦 导入 SDK...');
 
         try {
-            // 调用 SDK query() 函数
             const { query } = await import('@anthropic-ai/claude-agent-sdk');
-
-            this.logService.info(`  - Options: [已配置参数 ${Object.keys(options).join(', ')}]`);
-
-            const result = query({ prompt: inputStream, options });
-            return result;
+            return query({ prompt: inputStream, options });
         } catch (error) {
-            this.logService.error('');
-            this.logService.error('❌❌❌ SDK 调用失败 ❌❌❌');
-            this.logService.error(`Error: ${error}`);
-            if (error instanceof Error) {
-                this.logService.error(`Message: ${error.message}`);
-                this.logService.error(`Stack: ${error.stack}`);
-            }
-            this.logService.error('========================================');
+            const msg = error instanceof Error ? error.message : String(error);
+            this.logService.error(`[AISdkService] SDK query failed: ${msg}`);
             throw error;
         }
     }
@@ -424,25 +359,16 @@ export class AISdkService implements IAISdkService {
             }
         }
 
-        // 如果探测了 supportedModels，额外从外部 OpenAI 兼容 API 获取并合并
-        if (capabilities.includes('supportedModels')) {
-            try {
-                const externalModels = await this.fetchOpenAIModels();
-                const sdkModels = Array.isArray(data.supportedModels) ? data.supportedModels : [];
-                const seen = new Set(sdkModels.map((m: any) => m.value || m.id));
-                const merged = [...sdkModels];
-                for (const em of externalModels) {
-                    if (!seen.has(em.value)) {
-                        merged.push(em);
-                        seen.add(em.value);
-                    }
-                }
-                data.supportedModels = merged;
-            } catch (e) {
-                // 外部模型获取失败不影响 SDK 模型
-                this.logService.warn(`[AISdkService] 合并外部模型失败: ${e}`);
-            }
-        }
+        // 仅使用 CLI 返回的 supportedModels，不合并外部 OpenAI 兼容 API 模型
+        // （如需恢复外部模型合并，取消下方注释即可）
+        // if (capabilities.includes('supportedModels')) {
+        //     try {
+        //         const externalModels = await this.fetchOpenAIModels();
+        //         ...
+        //     } catch (e) {
+        //         this.logService.warn(`[AISdkService] 合并外部模型失败: ${e}`);
+        //     }
+        // }
 
         // 打印探测结果
         // this.logService.info(`[Probe] 结果: ${JSON.stringify(data, null, 2)}`);
@@ -520,9 +446,8 @@ export class AISdkService implements IAISdkService {
      */
     async fetchOpenAIModels(): Promise<Array<{ value: string; displayName: string; description: string }>> {
         try {
-            const extensionConfig = await this.configService.getExtensionConfig();
-            const baseUrl = (extensionConfig.defaultEnvVars?.OPENAI_BASE_URL || 'http://76.13.61.16:8015/v1').replace(/\/$/, '');
-            const apiKey = extensionConfig.defaultEnvVars?.OPENAI_API_KEY || 'glm';
+            const baseUrl = (process.env.OPENAI_BASE_URL || 'http://76.13.61.16:8015/v1').replace(/\/$/, '');
+            const apiKey = process.env.OPENAI_API_KEY || 'glm';
 
             const url = `${baseUrl}/models`;
             this.logService.info(`[AISdkService] 获取外部模型列表: ${url}`);
@@ -582,48 +507,27 @@ export class AISdkService implements IAISdkService {
     }
 
     /**
-     * 获取合并后的环境变量 (process.env + custom + config defaults)
-     * 优先级: process.env > custom > config defaults
+     * 获取合并后的环境变量 (process.env + custom)
+     * 优先级: custom > process.env
      */
     private async getMergedEnvironmentVariables(): Promise<Record<string, string>> {
         const customVars = await this.configService.getEnvironmentVariables();
-        const extensionConfig = await this.configService.getExtensionConfig();
-
-        // 从配置获取默认环境变量
-        const configDefaults = extensionConfig.defaultEnvVars || {
-            CLAUDE_CODE_USE_OPENAI: '1',
-            OPENAI_API_KEY: 'glm',
-            OPENAI_BASE_URL: 'http://76.13.61.16:8015/v1',
-            OPENAI_MODEL: 'GLM5'
-        };
 
         // 安全合并 process.env (过滤 undefined)
         const env: Record<string, string> = {};
 
-        // 1. 首先应用配置中的默认值（最低优先级）
-        for (const [key, value] of Object.entries(configDefaults)) {
-            env[key] = value;
-        }
-
-        // 2. 合并 process.env
+        // 1. 合并 process.env
         Object.entries(process.env).forEach(([key, value]) => {
             if (value !== undefined) {
                 env[key] = value;
             }
         });
 
-        // 3. 应用自定义环境变量（最高优先级）
+        // 2. 应用自定义环境变量（最高优先级）
         for (const [key, value] of Object.entries(customVars)) {
             env[key] = value;
         }
 
-        // 记录环境变量来源
-        this.logService.info(`[AISdkService] 环境变量合并完成:`);
-        this.logService.info(`  - 配置默认值: CLAUDE_CODE_USE_OPENAI=${configDefaults['CLAUDE_CODE_USE_OPENAI']}`);
-        this.logService.info(`  - OPENAI_BASE_URL=${configDefaults['OPENAI_BASE_URL']}`);
-        this.logService.info(`  - 实际值: CLAUDE_CODE_USE_OPENAI=${env['CLAUDE_CODE_USE_OPENAI']}`);
-
-        // OpenAI 代理功能已禁用 - 由内置 CLI 处理
         return env;
     }
 

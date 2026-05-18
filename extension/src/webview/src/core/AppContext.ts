@@ -95,6 +95,7 @@ export class AppContext {
   readonly assetUris = signal<Record<string, { light: string; dark: string }> | undefined>(
     undefined
   );
+  readonly isReady = signal(false);
 
   constructor(private readonly connectionManager: ConnectionManager) {}
 

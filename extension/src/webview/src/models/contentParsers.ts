@@ -17,8 +17,8 @@ import type {
 } from './ContentBlock';
 
 const INTERRUPT_MESSAGES: Record<string, string> = {
-  '[Request interrupted by user]': 'Interrupted',
-  '[Request interrupted by user for tool use]': 'Tool interrupted',
+  '[Request interrupted by user]': '已中断',
+  '[Request interrupted by user for tool use]': '工具调用已中断',
 };
 
 const TOOL_REJECTION_MARKER =

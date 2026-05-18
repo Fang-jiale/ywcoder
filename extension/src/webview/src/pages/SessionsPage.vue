@@ -5,7 +5,7 @@
         <button class="back-btn" @click="$emit('switchToChat')">
           <span class="codicon codicon-arrow-left"></span>
         </button>
-        <h2 class="page-title">Sessions</h2>
+        <h2 class="page-title">会话</h2>
       </div>
       <div class="header-center">
       </div>
@@ -32,7 +32,7 @@
         ref="searchInput"
         v-model="searchQuery"
         type="text"
-        placeholder="Search Agent/Chat Threads"
+        placeholder="搜索智能体/会话"
         class="search-input"
         @keydown.escape="hideSearch"
       >

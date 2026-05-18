@@ -26,7 +26,7 @@
         />
 
         <!-- Thinking Toggle Button -->
-        <Tooltip :content="isThinkingOn ? 'Thinking on' : 'Thinking off'">
+        <Tooltip :content="isThinkingOn ? '思考开启' : '思考关闭'">
           <button
             class="action-button think-button"
             :class="{ 'thinking-active': isThinkingOn }"
@@ -37,7 +37,7 @@
         </Tooltip>
 
         <!-- Sparkle Button -->
-        <Tooltip content="Sparkle">
+        <Tooltip content="魔法效果">
           <button
             class="action-button"
             @click="handleSparkleClick"

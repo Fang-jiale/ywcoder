@@ -23,11 +23,7 @@ export function activate(context: vscode.ExtensionContext) {
 	// 4. Log activation
 	instantiationService.invokeFunction(accessor => {
 		const logService = accessor.get(ILogService);
-		logService.info('');
-		logService.info('╔════════════════════════════════════════╗');
-		logService.info('║         YwCoder 扩展已激活              ║');
-		logService.info('╚════════════════════════════════════════╝');
-		logService.info('');
+		logService.info('[YwCoder] Extension activated');
 	});
 
 	// 5. Connect services
@@ -78,9 +74,7 @@ export function activate(context: vscode.ExtensionContext) {
 			})
 		);
 
-		logService.info('✓ AI Agent Service 已连接 Transport');
-		logService.info('✓ WebView Service 已注册为 View Provider');
-		logService.info('✓ Settings 命令已注册');
+		logService.info('[YwCoder] Services connected');
 	});
 
 	// 6. Register commands
@@ -93,8 +87,7 @@ export function activate(context: vscode.ExtensionContext) {
 	// 7. Log completion
 	instantiationService.invokeFunction(accessor => {
 		const logService = accessor.get(ILogService);
-		logService.info('✓ YwCoder 视图已注册');
-		logService.info('');
+		logService.info('[YwCoder] View registered');
 	});
 
 	// 8. Focus YwCoder view on startup (open secondary sidebar)

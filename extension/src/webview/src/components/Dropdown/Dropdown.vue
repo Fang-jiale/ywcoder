@@ -86,7 +86,7 @@ const props = withDefaults(defineProps<Props>(), {
   popoverStyle: () => ({}),
   contentStyle: () => ({}),
   showSearch: false,
-  searchPlaceholder: 'Search...',
+  searchPlaceholder: '搜索...',
   shouldAutoFocus: true,
   closeOnClickOutside: true,
   closeSelectors: () => [],

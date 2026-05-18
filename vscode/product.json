@@ -23,6 +23,10 @@
 	"win32arm64UserAppId": "{{2F7528D2-9A43-4A72-AC45-208B8EF49596}",
 	"win32AppUserModelId": "YwCoder",
 	"win32ShellNameShort": "YwCoder",
+	"win32ContextMenu": {
+		"x64": { "clsid": "{47E2A534-E1FA-4EC3-B83B-A22EB8A65EF5}" },
+		"arm64": { "clsid": "{594B0DE5-689C-481C-B63C-5516D008E73A}" }
+	},
 	"win32TunnelServiceMutex": "ywcoder-tunnelservice",
 	"win32TunnelMutex": "ywcoder-tunnel",
 	"darwinBundleIdentifier": "com.ywcoder.app",
@@ -141,5 +145,8 @@
 			"type": "hcLight"
 		}
 	],
-	"builtInExtensionsEnabledWithAutoUpdates": []
+	"builtInExtensionsEnabledWithAutoUpdates": [],
+	"updateUrl": "https://your-internal-server/ywcoder",
+	"quality": "ywcoder",
+	"commit": "5c36ee73"
 }

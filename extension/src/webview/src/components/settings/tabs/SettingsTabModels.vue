@@ -354,7 +354,7 @@ const allDropdownOptions = computed(() => {
     .map((cm) => ({
       label: cm.name || cm.id,
       value: cm.id,
-      description: cm.name ? cm.id : 'Custom model',
+      description: cm.name ? cm.id : '自定义模型',
     }))
 
   return [...builtinOpts, ...customOpts]

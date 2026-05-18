@@ -20,6 +20,7 @@
         :item="{
           id: 'default',
           label: '默认',
+          detail: '/default',
           icon: 'codicon-chat text-[14px]!',
           checked: permissionMode === 'default',
           type: 'default-mode'
@@ -32,6 +33,7 @@
         :item="{
           id: 'acceptEdits',
           label: '代理',
+          detail: '/agent',
           icon: 'codicon-infinity text-[14px]!',
           checked: permissionMode === 'acceptEdits',
           type: 'agent-mode'
@@ -44,6 +46,7 @@
         :item="{
           id: 'plan',
           label: '规划',
+          detail: '/plan',
           icon: 'codicon-todos text-[14px]!',
           checked: permissionMode === 'plan',
           type: 'plan-mode'
@@ -81,7 +84,7 @@ const selectedModeLabel = computed(() => {
     case 'acceptEdits':
       return '代理'
     case 'plan':
-      return '规划'
+      return '规划 (/plan)'
     case 'default':
       return '默认'
     default:

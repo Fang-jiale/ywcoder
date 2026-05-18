@@ -59,14 +59,6 @@ export interface ExtensionConfig {
 
   // Local Claude CLI path (if set, use local installed CLI instead of bundled)
   localClaudeCliPath: string | null;
-
-  // Default environment variables for CLI
-  defaultEnvVars: {
-    CLAUDE_CODE_USE_OPENAI: string;
-    OPENAI_API_KEY: string;
-    OPENAI_BASE_URL: string;
-    OPENAI_MODEL: string;
-  };
 }
 
 export interface IConfigurationService {
@@ -167,13 +159,7 @@ export class ConfigurationService implements IConfigurationService {
     completionSound: true,
     customModels: [],
     disabledModels: [],
-    localClaudeCliPath: null,
-    defaultEnvVars: {
-      CLAUDE_CODE_USE_OPENAI: '1',
-      OPENAI_API_KEY: 'glm',
-      OPENAI_BASE_URL: 'http://76.13.61.16:8015/v1',
-      OPENAI_MODEL: 'GLM5'
-    }
+    localClaudeCliPath: null
   };
 
   constructor(@IFileSystemService private readonly fileSystemService: IFileSystemService) {
@@ -729,18 +715,11 @@ export class ConfigurationService implements IConfigurationService {
       localClaudeCliPath = process.env.YWCODER_CLI_PATH;
     }
 
-    // 合并 defaultEnvVars（确保所有默认键都存在）
-    const mergedDefaultEnvVars = {
-      ...this._extensionConfigDefaults.defaultEnvVars,
-      ...stored.defaultEnvVars
-    };
-
     // Merge with defaults to ensure all keys exist
     return {
       ...this._extensionConfigDefaults,
       ...stored,
-      localClaudeCliPath,
-      defaultEnvVars: mergedDefaultEnvVars
+      localClaudeCliPath
     };
   }
 

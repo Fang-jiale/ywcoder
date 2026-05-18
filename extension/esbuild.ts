@@ -52,6 +52,19 @@ const copyYwcoderCliPlugin = {
                     console.log(`[build] Copied YwCoder CLI -> ${path.relative(process.cwd(), cliDst)}`);
                 }
 
+                // copy node_modules (dependencies needed by cli.mjs at runtime)
+                const nodeModulesSrc = path.join(pkgDir, 'node_modules');
+                try {
+                    const st = await fs.stat(nodeModulesSrc);
+                    if (st.isDirectory()) {
+                        const nodeModulesDst = path.join(outDir, 'node_modules');
+                        await copyDir(nodeModulesSrc, nodeModulesDst);
+                        console.log('[build] Copied YwCoder node_modules/ directory');
+                    }
+                } catch {
+                    console.warn('[build] node_modules/ not found, runtime dependencies may fail');
+                }
+
                 // copy vendor directory (contains ripgrep binaries needed at runtime)
                 const vendorSrc = path.join(pkgDir, 'dist', 'vendor');
                 try {

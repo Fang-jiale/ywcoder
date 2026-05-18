@@ -280,6 +280,11 @@ const KNOWN_ENV_VARS: EnvSuggestion[] = [
   // 端点配置（用于 OpenAI 兼容的内部大模型）
   { key: 'ANTHROPIC_BASE_URL', description: 'API 基础 URL（用于内部 OpenAI 兼容端点，如 http://localhost:1234/v1）' },
   { key: 'ANTHROPIC_AUTH_TOKEN', description: 'API 认证令牌（用于内部 OpenAI 兼容端点）' },
+  // 通用设置 — OpenAI 兼容模式
+  { key: 'CLAUDE_CODE_USE_OPENAI', description: '启用 OpenAI 兼容模式（设为 1 开启）' },
+  { key: 'OPENAI_API_KEY', description: 'OpenAI API 密钥' },
+  { key: 'OPENAI_BASE_URL', description: 'OpenAI 基础 URL' },
+  { key: 'OPENAI_MODEL', description: 'OpenAI 模型名称' },
   // 认证
   { key: 'ANTHROPIC_API_KEY', description: 'API 密钥，用于认证服务' },
   { key: 'ANTHROPIC_CUSTOM_HEADERS', description: 'API 请求的自定义 HTTP 头' },

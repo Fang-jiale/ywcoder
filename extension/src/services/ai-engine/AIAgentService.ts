@@ -351,34 +351,16 @@ export class AIAgentService implements IAIAgentService {
         // 计算 maxThinkingTokens
         const maxThinkingTokens = this.getMaxThinkingTokens(this.thinkingLevel);
 
-        this.logService.info('');
-        this.logService.info('╔════════════════════════════════════════╗');
-        this.logService.info('║  启动 AI引擎 会话                       ║');
-        this.logService.info('╚════════════════════════════════════════╝');
-        this.logService.info(`  Channel ID: ${channelId}`);
-        this.logService.info(`  Resume: ${resume || 'null'}`);
-        this.logService.info(`  CWD: ${cwd}`);
-        this.logService.info(`  Model: ${model || 'null'}`);
-        this.logService.info(`  Permission: ${permissionMode}`);
-        this.logService.info(`  Thinking Level: ${this.thinkingLevel}`);
-        this.logService.info(`  Max Thinking Tokens: ${maxThinkingTokens}`);
-        this.logService.info('');
+        this.logService.info(`[AIAgentService] spawnClaude: channel=${channelId}, cwd=${cwd}, model=${model || 'default'}, permission=${permissionMode}`);
 
         // 检查是否已存在
         if (this.channels.has(channelId)) {
-            this.logService.error(`❌ Channel 已存在: ${channelId}`);
+            this.logService.error(`[AIAgentService] Channel already exists: ${channelId}`);
             throw new Error(`Channel already exists: ${channelId}`);
         }
 
         try {
-            // 1. 创建输入流
-            this.logService.info('📝 步骤 1: 创建输入流');
             const inputStream = new AsyncStream<SDKUserMessage>();
-            this.logService.info('  ✓ 输入流创建完成');
-
-            // 2. 调用 spawnAIEngine
-            this.logService.info('');
-            this.logService.info('📝 步骤 2: 调用 spawnClaude()');
 
             // stderr 致命错误去重（同一 channel 3s 内不重复推送）
             let lastStderrErrorTime = 0;
@@ -417,29 +399,20 @@ export class AIAgentService implements IAIAgentService {
                     });
                 }
             );
-            this.logService.info('  ✓ spawnClaude() 完成，Query 对象已创建');
 
             // 3. 存储到 channels Map
-            this.logService.info('');
-            this.logService.info('📝 步骤 3: 注册 Channel');
             this.channels.set(channelId, {
                 in: inputStream,
                 query: query
             });
-            this.logService.info(`  ✓ Channel 已注册，当前 ${this.channels.size} 个活跃会话`);
+            this.logService.info(`[AIAgentService] Channel registered: ${channelId}, active=${this.channels.size}`);
 
-            // 4. 启动监听任务：将 SDK 输出转发给客户端
-            this.logService.info('');
-            this.logService.info('📝 步骤 4: 启动消息转发循环');
+            // 启动监听任务：将 SDK 输出转发给客户端
             (async () => {
                 try {
-                    this.logService.info(`  → 开始监听 Query 输出...`);
                     let messageCount = 0;
-
                     for await (const message of query) {
                         messageCount++;
-                        this.logService.info(`  ← 收到消息 #${messageCount}: ${message.type}`);
-
                         this.transport!.send({
                             type: "io_message",
                             channelId,
@@ -447,34 +420,17 @@ export class AIAgentService implements IAIAgentService {
                             done: false
                         });
                     }
-
-                    // 正常结束
-                    this.logService.info(`  ✓ Query 输出完成，共 ${messageCount} 条消息`);
+                    this.logService.info(`[AIAgentService] Channel ${channelId} completed, ${messageCount} messages`);
                     this.closeChannel(channelId, true);
                 } catch (error) {
-                    // 出错
-                    this.logService.error(`  ❌ Query 输出错误: ${error}`);
-                    if (error instanceof Error) {
-                        this.logService.error(`     Stack: ${error.stack}`);
-                    }
+                    this.logService.error(`[AIAgentService] Channel ${channelId} error: ${error}`);
                     this.closeChannel(channelId, true, String(error));
                 }
             })();
 
-            this.logService.info('');
-            this.logService.info('✓ AI 会话启动成功');
-            this.logService.info('════════════════════════════════════════');
-            this.logService.info('');
+            this.logService.info(`[AIAgentService] Session started: ${channelId}`);
         } catch (error) {
-            this.logService.error('');
-            this.logService.error('❌❌❌ AI 会话启动失败 ❌❌❌');
-            this.logService.error(`Channel: ${channelId}`);
-            this.logService.error(`Error: ${error}`);
-            if (error instanceof Error) {
-                this.logService.error(`Stack: ${error.stack}`);
-            }
-            this.logService.error('════════════════════════════════════════');
-            this.logService.error('');
+            this.logService.error(`[AIAgentService] Failed to start session ${channelId}: ${error}`);
 
             this.closeChannel(channelId, true, String(error));
             throw error;

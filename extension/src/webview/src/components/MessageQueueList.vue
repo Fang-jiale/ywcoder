@@ -50,7 +50,7 @@
         <!-- 操作按钮 -->
         <div class="queue-item-actions">
           <!-- 删除按钮 -->
-          <Tooltip content="Remove from queue">
+          <Tooltip content="从队列移除">
             <div
               class="anysphere-icon-button"
               @click="$emit('remove', message.id)"
@@ -59,7 +59,7 @@
             </div>
           </Tooltip>
           <!-- 立即发送按钮 -->
-          <Tooltip content="Send immediately">
+          <Tooltip content="立即发送">
             <div
               class="anysphere-icon-button"
               @click="$emit('sendNow', message.id)"

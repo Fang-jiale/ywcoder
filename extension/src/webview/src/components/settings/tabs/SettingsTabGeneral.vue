@@ -287,65 +287,6 @@
       </SettingsSubSection>
     </SettingsSection>
 
-    <!-- 默认环境变量 -->
-    <SettingsSection title="默认环境变量">
-      <SettingsSubSection caption="启动 CLI 时自动注入的环境变量">
-        <SettingsCell
-          label="CLAUDE_CODE_USE_OPENAI"
-          description="启用 OpenAI 兼容模式"
-        >
-          <template #trailing>
-            <TextInput
-              :model-value="defaultEnvVars.CLAUDE_CODE_USE_OPENAI"
-              @change="updateDefaultEnvVar('CLAUDE_CODE_USE_OPENAI', $event)"
-              placeholder="1"
-              class="general-input"
-            />
-          </template>
-        </SettingsCell>
-        <SettingsCell
-          label="OPENAI_API_KEY"
-          description="OpenAI API 密钥"
-        >
-          <template #trailing>
-            <TextInput
-              :model-value="defaultEnvVars.OPENAI_API_KEY"
-              @change="updateDefaultEnvVar('OPENAI_API_KEY', $event)"
-              placeholder="glm"
-              class="general-input"
-            />
-          </template>
-        </SettingsCell>
-        <SettingsCell
-          label="OPENAI_BASE_URL"
-          description="OpenAI 基础 URL"
-        >
-          <template #trailing>
-            <TextInput
-              :model-value="defaultEnvVars.OPENAI_BASE_URL"
-              @change="updateDefaultEnvVar('OPENAI_BASE_URL', $event)"
-              placeholder="http://76.13.61.16:8015/v1"
-              class="general-input-wide"
-            />
-          </template>
-        </SettingsCell>
-        <SettingsCell
-          label="OPENAI_MODEL"
-          description="OpenAI 模型名称"
-          :divider="true"
-        >
-          <template #trailing>
-            <TextInput
-              :model-value="defaultEnvVars.OPENAI_MODEL"
-              @change="updateDefaultEnvVar('OPENAI_MODEL', $event)"
-              placeholder="GLM5"
-              class="general-input"
-            />
-          </template>
-        </SettingsCell>
-      </SettingsSubSection>
-    </SettingsSection>
-
     <!-- 高级 -->
     <SettingsSection title="高级">
       <SettingsSubSection>
@@ -453,12 +394,6 @@ const updateCleanupPeriod = (value: number) => {
 const defaultPermissionMode = ref('default');
 const defaultThinkingLevel = ref('default_on');
 const localClaudeCliPath = ref('');
-const defaultEnvVars = ref({
-  CLAUDE_CODE_USE_OPENAI: '1',
-  OPENAI_API_KEY: 'glm',
-  OPENAI_BASE_URL: 'http://76.13.61.16:8015/v1',
-  OPENAI_MODEL: 'GLM5'
-});
 
 onMounted(async () => {
   try {
@@ -467,12 +402,6 @@ onMounted(async () => {
       defaultPermissionMode.value = response.config.defaultPermissionMode || 'default';
       defaultThinkingLevel.value = response.config.defaultThinkingLevel || 'default_on';
       localClaudeCliPath.value = response.config.localClaudeCliPath || '';
-      if (response.config.defaultEnvVars) {
-        defaultEnvVars.value = {
-          ...defaultEnvVars.value,
-          ...response.config.defaultEnvVars
-        };
-      }
     }
   } catch (e) {
     console.error('Failed to load extension config:', e);
@@ -495,19 +424,6 @@ async function updateExtensionSetting(key: string, value: any) {
     }
   } catch (e) {
     console.error('Failed to update extension config:', e);
-  }
-}
-
-async function updateDefaultEnvVar(key: keyof typeof defaultEnvVars.value, value: string) {
-  try {
-    const updated = {
-      ...defaultEnvVars.value,
-      [key]: value
-    };
-    await transport.updateExtensionConfig('defaultEnvVars', updated);
-    defaultEnvVars.value = updated;
-  } catch (e) {
-    console.error('Failed to update default env var:', e);
   }
 }
 
@@ -541,8 +457,5 @@ const loginMethodOptions = [
 <style scoped>
 .general-input {
   width: 200px;
-}
-.general-input-wide {
-  width: 320px;
 }
 </style>

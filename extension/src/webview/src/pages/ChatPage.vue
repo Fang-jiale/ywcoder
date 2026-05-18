@@ -59,23 +59,31 @@
             :on-resolve="handleResolvePermission"
             data-permission-panel="1"
           />
-          <ChatInputBox
-            :show-progress="true"
-            :progress-percentage="progressPercentage"
-            :context-tooltip="contextTooltip"
-            :conversation-working="isBusy"
-            :attachments="attachments"
-            :thinking-level="session?.thinkingLevel.value"
-            :permission-mode="session?.permissionMode.value"
-            :selected-model="session?.modelSelection.value"
-            @submit="handleSubmit"
-            @stop="handleStop"
-            @add-attachment="handleAddAttachment"
-            @remove-attachment="handleRemoveAttachment"
-            @thinking-toggle="handleToggleThinking"
-            @mode-select="handleModeSelect"
-            @model-select="handleModelSelect"
-          />
+          <div class="input-wrapper" :class="{ disabled: !isReady }">
+            <ChatInputBox
+              :show-progress="true"
+              :progress-percentage="progressPercentage"
+              :context-tooltip="contextTooltip"
+              :conversation-working="isBusy"
+              :attachments="attachments"
+              :thinking-level="session?.thinkingLevel.value"
+              :permission-mode="session?.permissionMode.value"
+              :selected-model="session?.modelSelection.value"
+              :readonly="!isReady"
+              :placeholder="isReady ? undefined : 'YwCoder 正在初始化中，请稍候...'"
+              @submit="handleSubmit"
+              @stop="handleStop"
+              @add-attachment="handleAddAttachment"
+              @remove-attachment="handleRemoveAttachment"
+              @thinking-toggle="handleToggleThinking"
+              @mode-select="handleModeSelect"
+              @model-select="handleModelSelect"
+            />
+            <div v-if="!isReady" class="init-overlay">
+              <Spinner :size="14" />
+              <span class="init-text">YwCoder 正在初始化中...</span>
+            </div>
+          </div>
         </div>
       <!-- </div> -->
     </div>
@@ -143,6 +151,7 @@
   const permissionRequestsLen = computed(() => permissionRequests.value.length);
   const pendingPermission = computed(() => permissionRequests.value[0] as any);
   const platform = computed(() => runtime.appContext.platform);
+  const isReady = useSignal(runtime.appContext.isReady);
 
   // 注册命令：permissionMode.toggle（在下方定义函数后再注册）
 
@@ -236,6 +245,7 @@
 
   onUnmounted(() => {
     try { unregisterToggle?.(); } catch {}
+    try { unregisterModel?.(); } catch {}
   });
 
   async function createNew(): Promise<void> {
@@ -323,6 +333,24 @@
     priority: 100,
   });
 
+  // 注册 /model slash command（确保无论 CLI 是否返回都可用）
+  const unregisterModel = runtime.appContext.commandRegistry.registerAction(
+    {
+      id: 'slash-command-model',
+      label: '/model',
+      description: '切换模型'
+    },
+    'Slash Commands',
+    () => {
+      const activeSession = runtime.sessionStore.activeSession();
+      if (activeSession) {
+        void activeSession.send('/model', [], false);
+      } else {
+        console.warn('[ChatPage] No active session to execute /model');
+      }
+    }
+  );
+
   async function handleModelSelect(modelId: string) {
     const s = session.value;
     if (!s) return;
@@ -364,7 +392,7 @@
       if (allow) {
         request.accept(request.inputs);
       } else {
-        request.reject('User denied', true);
+        request.reject('用户已拒绝', true);
       }
     } catch (e) {
       console.error('[ChatPage] permission resolve failed', e);
@@ -536,6 +564,32 @@
     max-width: 1200px;
     width: 100%;
     align-self: center;
+  }
+
+  .input-wrapper {
+    position: relative;
+  }
+
+  .input-wrapper.disabled {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  .init-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: rgba(var(--vscode-sideBar-background), 0.8);
+    border-radius: 6px;
+    z-index: 10;
+  }
+
+  .init-text {
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
   }
 
   /* 空状态样式 */

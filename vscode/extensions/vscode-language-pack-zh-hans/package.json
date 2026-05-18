@@ -1,8 +1,8 @@
 {
 	"name": "vscode-language-pack-zh-hans",
-	"displayName": "Chinese (Simplified) (简体中文) Language Pack for Visual Studio Code",
+	"displayName": "Chinese (Simplified) (简体中文) Language Pack for YwCoder",
 	"description": "Language pack extension for Chinese (Simplified)",
-	"version": "1.110.0",
+	"version": "1.118.2",
 	"publisher": "MS-CEINTL",
 	"repository": {
 		"type": "git",
@@ -10,7 +10,7 @@
 	},
 	"license": "SEE MIT LICENSE IN LICENSE.md",
 	"engines": {
-		"vscode": "^1.110.0"
+		"vscode": "^1.118.1"
 	},
 	"icon": "languagepack.png",
 	"categories": [
@@ -325,6 +325,10 @@
 					{
 						"id": "vscode.terminal-suggest",
 						"path": "./translations/extensions/vscode.terminal-suggest.i18n.json"
+					},
+					{
+						"id": "vscode.theme-2026",
+						"path": "./translations/extensions/vscode.theme-2026.i18n.json"
 					},
 					{
 						"id": "vscode.theme-abyss",
