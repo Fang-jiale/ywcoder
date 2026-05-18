@@ -97,7 +97,8 @@ export class ChatSetupContribution extends Disposable implements IWorkbenchContr
 		this.registerSetupAgents(context, controller);
 		this.registerGrowthSession(chatEntitlementService);
 		this.registerActions(context, requests, controller);
-		this.registerSignInTitleBarEntry(actionViewItemService);
+		// [YwCoder] Removed built-in chat sign-in title bar entry
+		// this.registerSignInTitleBarEntry(actionViewItemService);
 		this.registerUrlLinkHandler();
 		this.checkExtensionInstallation(context);
 	}
@@ -379,18 +380,19 @@ export class ChatSetupContribution extends Disposable implements IWorkbenchContr
 					id: ChatSetupSignInTitleBarAction.ID,
 					title: localize('signInIndicatorTitleBarAction', 'Sign In'),
 					f1: false,
-					menu: [{
-						id: MenuId.TitleBarAdjacentCenter,
-						order: 0, // same position as the update button
-						when: ContextKeyExpr.and(
-							IsWebContext.negate(),
-							ContextKeyExpr.has(`config.${ChatConfiguration.SignInTitleBarEnabled}`),
-							ChatContextKeys.Entitlement.signedOut,
-							ChatContextKeys.Setup.hidden.negate(),
-							ChatContextKeys.Setup.disabledInWorkspace.negate(),
-							ContextKeyExpr.has('updateTitleBar').negate()
-						),
-					}]
+					// [YwCoder] Removed built-in chat sign-in from title bar
+					// menu: [{
+					// 	id: MenuId.TitleBarAdjacentCenter,
+					// 	order: 0, // same position as the update button
+					// 	when: ContextKeyExpr.and(
+					// 		IsWebContext.negate(),
+					// 		ContextKeyExpr.has(`config.${ChatConfiguration.SignInTitleBarEnabled}`),
+					// 		ChatContextKeys.Entitlement.signedOut,
+					// 		ChatContextKeys.Setup.hidden.negate(),
+					// 		ChatContextKeys.Setup.disabledInWorkspace.negate(),
+					// 		ContextKeyExpr.has('updateTitleBar').negate()
+					// 	),
+					// }]
 				});
 			}
 

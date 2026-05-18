@@ -246,37 +246,39 @@ registerAction2(ToggleUnifiedAgentsBarAction);
 registerSingleton(IAgentSessionProjectionService, AgentSessionProjectionService, InstantiationType.Delayed);
 registerSingleton(IAgentTitleBarStatusService, AgentTitleBarStatusService, InstantiationType.Delayed);
 
-registerWorkbenchContribution2(AgentTitleBarStatusRendering.ID, AgentTitleBarStatusRendering, WorkbenchPhase.AfterRestored);
+// [YwCoder] Removed built-in chat title bar status widget
+// registerWorkbenchContribution2(AgentTitleBarStatusRendering.ID, AgentTitleBarStatusRendering, WorkbenchPhase.AfterRestored);
 registerWorkbenchContribution2(AgentSessionReadyContribution.ID, AgentSessionReadyContribution, WorkbenchPhase.AfterRestored);
 
+// [YwCoder] Removed built-in chat entries from CommandCenter and TitleBar
 // Register Agent Status as a menu item in the command center (alongside the search box, not replacing it)
-MenuRegistry.appendMenuItem(MenuId.CommandCenter, {
-	submenu: MenuId.AgentsTitleBarControlMenu,
-	title: localize('agentsControl', "Agents"),
-	icon: Codicon.chatSparkle,
-	when: ContextKeyExpr.and(
-		ChatContextKeys.enabled,
-		ContextKeyExpr.notEquals(`config.${ChatConfiguration.AgentStatusEnabled}`, 'hidden'),
-		ContextKeyExpr.notEquals(`config.${ChatConfiguration.AgentStatusEnabled}`, false)
-	),
-	order: 10002 // to the right of the chat button
-});
+// MenuRegistry.appendMenuItem(MenuId.CommandCenter, {
+// 	submenu: MenuId.AgentsTitleBarControlMenu,
+// 	title: localize('agentsControl', "Agents"),
+// 	icon: Codicon.chatSparkle,
+// 	when: ContextKeyExpr.and(
+// 		ChatContextKeys.enabled,
+// 		ContextKeyExpr.notEquals(`config.${ChatConfiguration.AgentStatusEnabled}`, 'hidden'),
+// 		ContextKeyExpr.notEquals(`config.${ChatConfiguration.AgentStatusEnabled}`, false)
+// 	),
+// 	order: 10002 // to the right of the chat button
+// });
 
 // Add to the global title bar if command center is disabled
-MenuRegistry.appendMenuItem(MenuId.TitleBar, {
-	submenu: MenuId.ChatTitleBarMenu,
-	title: localize('title4', "Chat"),
-	group: 'navigation',
-	icon: Codicon.chatSparkle,
-	when: ContextKeyExpr.and(
-		ChatContextKeys.supported,
-		ContextKeyExpr.and(
-			ChatContextKeys.Setup.hidden.negate(),
-		),
-		ContextKeyExpr.has('config.window.commandCenter').negate(),
-	),
-	order: 1
-});
+// MenuRegistry.appendMenuItem(MenuId.TitleBar, {
+// 	submenu: MenuId.ChatTitleBarMenu,
+// 	title: localize('title4', "Chat"),
+// 	group: 'navigation',
+// 	icon: Codicon.chatSparkle,
+// 	when: ContextKeyExpr.and(
+// 		ChatContextKeys.supported,
+// 		ContextKeyExpr.and(
+// 			ChatContextKeys.Setup.hidden.negate(),
+// 		),
+// 		ContextKeyExpr.has('config.window.commandCenter').negate(),
+// 	),
+// 	order: 1
+// });
 
 // Register a placeholder action to the submenu so it appears (required for submenus)
 MenuRegistry.appendMenuItem(MenuId.AgentsTitleBarControlMenu, {

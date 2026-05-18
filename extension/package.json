@@ -52,7 +52,7 @@
       }
     },
     "viewsContainers": {
-      "activitybar": [
+      "secondarySidebar": [
         {
           "id": "ywcoder-chat-sidebar",
           "title": "YwCoder",

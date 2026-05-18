@@ -97,6 +97,11 @@ export function activate(context: vscode.ExtensionContext) {
 		logService.info('');
 	});
 
+	// 8. Focus YwCoder view on startup (open secondary sidebar)
+	setTimeout(() => {
+		vscode.commands.executeCommand('workbench.action.focusAuxiliaryBar');
+	}, 1000);
+
 	// Return extension API (if needed to expose to other extensions)
 	return {
 		getInstantiationService: () => instantiationService

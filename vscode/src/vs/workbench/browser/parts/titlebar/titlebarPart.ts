@@ -708,7 +708,8 @@ export class BrowserTitlebarPart extends Part implements ITitlebarPart {
 					actions.primary.push(ACCOUNTS_ACTIVITY_TILE_ACTION);
 				}
 
-				actions.primary.push(GLOBAL_ACTIVITY_TITLE_ACTION);
+				// [YwCoder] Removed built-in settings/manage gear button from title bar
+				// actions.primary.push(GLOBAL_ACTIVITY_TITLE_ACTION);
 			}
 
 			this.actionToolBar.setActions(prepareActions(actions.primary), prepareActions(actions.secondary));
