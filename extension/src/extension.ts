@@ -15,9 +15,9 @@ export function activate(context: vscode.ExtensionContext) {
 	const APPEARANCE_CONFIG_KEY = 'ywcoder.appearanceConfigForced';
 	if (!context.globalState.get<boolean>(APPEARANCE_CONFIG_KEY)) {
 		const config = vscode.workspace.getConfiguration();
-		config.update('workbench.colorTheme', 'Default High Contrast Light', true);
+		config.update('workbench.colorTheme', 'Light 2026', true);
 		config.update('workbench.activityBar.location', 'top', true);
-		config.update('window.menuBarVisibility', 'hidden', true);
+		config.update('window.menuBarVisibility', 'toggle', true);
 		context.globalState.update(APPEARANCE_CONFIG_KEY, true);
 	}
 
