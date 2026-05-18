@@ -9,7 +9,16 @@ VSCode-win32-arm64/
 *.vsix
 YwCoderSetup-*.exe
 YwCoder*.zip
+VSCode-win32-x64.zip
+vscode/VSCode-win32-x64-node.zip
 .build/
+
+# Release archives
+release/
+release*.zip
+
+# Bundled runtimes
+node22/
 
 # Dependencies
 node_modules/
