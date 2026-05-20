@@ -12,7 +12,7 @@ import { VSCodeTransport } from './services/ai-engine/transport/VSCodeTransport'
  */
 export function activate(context: vscode.ExtensionContext) {
 	// 0. Force default appearance config for existing users
-	const APPEARANCE_CONFIG_KEY = 'ywcoder.appearanceConfigForced';
+	const APPEARANCE_CONFIG_KEY = 'ywcoder.appearanceConfigForcedV2';
 	if (!context.globalState.get<boolean>(APPEARANCE_CONFIG_KEY)) {
 		const config = vscode.workspace.getConfiguration();
 		config.update('workbench.colorTheme', 'Light 2026', true);
