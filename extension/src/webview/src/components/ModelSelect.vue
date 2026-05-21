@@ -73,7 +73,7 @@ onMounted(async () => {
     // Load extension config and SDK models in parallel
     const [configRes, sdkRes] = await Promise.all([
       transport.getExtensionConfig(),
-      transport.sdkProbe(['supportedModels'], 10000).catch(() => null),
+      transport.sdkProbe(['supportedModels'], 30000).catch(() => null),
     ])
 
     if (configRes?.config) {

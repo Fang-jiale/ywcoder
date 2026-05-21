@@ -228,7 +228,7 @@ export class ConfigurationService implements IConfigurationService {
     }
 
     const filename = `settings.${name}.json`;
-    const filepath = path.join(os.homedir(), '.claude', filename);
+    const filepath = path.join(this.getConfigDir(), filename);
 
     if (await this.fileSystemService.pathExists(filepath)) {
       throw new Error(`Profile '${name}' already exists.`);
@@ -242,7 +242,7 @@ export class ConfigurationService implements IConfigurationService {
     if (!name) {return;}
 
     const filename = `settings.${name}.json`;
-    const filepath = path.join(os.homedir(), '.claude', filename);
+    const filepath = path.join(this.getConfigDir(), filename);
 
     if (await this.fileSystemService.pathExists(filepath)) {
       // Check if active, switch to default if so
@@ -256,6 +256,24 @@ export class ConfigurationService implements IConfigurationService {
   // --- Path Helpers ---
 
   /**
+   * Get CLI config directory, matching CLI logic exactly:
+   * 1. YWCODER_CONFIG_DIR env
+   * 2. CLAUDE_CONFIG_DIR env
+   * 3. ~/.ywcoder if exists
+   * 4. ~/.claude if exists (legacy compat)
+   * 5. Default ~/.ywcoder
+   */
+  private getConfigDir(): string {
+    const envDir = process.env.YWCODER_CONFIG_DIR ?? process.env.CLAUDE_CONFIG_DIR;
+    if (envDir) { return envDir; }
+    const ywcoderDir = path.join(os.homedir(), '.ywcoder');
+    const claudeDir = path.join(os.homedir(), '.claude');
+    if (fs.existsSync(ywcoderDir)) { return ywcoderDir; }
+    if (fs.existsSync(claudeDir)) { return claudeDir; }
+    return ywcoderDir;
+  }
+
+  /**
    * Extension-specific config path: ~/.ywcoder.json
    * Independent of CLI configuration
    */
@@ -264,21 +282,21 @@ export class ConfigurationService implements IConfigurationService {
   }
 
   /**
-   * CLI config path: ~/.claude/ywcoder.json
+   * CLI config path: <configDir>/ywcoder.json
    * Synced with active Profile
    */
   private getYWCoderConfigPath(): string {
-    return path.join(os.homedir(), '.claude', 'ywcoder.json');
+    return path.join(this.getConfigDir(), 'ywcoder.json');
   }
 
   // Mock implementation for Managed Settings path
   private getManagedSettingsPath(): string {
-    return path.join(os.homedir(), '.claude', 'managed-settings.json');
+    return path.join(this.getConfigDir(), 'managed-settings.json');
   }
 
   private getGlobalSettingsPath(profile: string | null): string {
     const filename = profile ? `settings.${profile}.json` : 'settings.json';
-    return path.join(os.homedir(), '.claude', filename);
+    return path.join(this.getConfigDir(), filename);
   }
 
   get hasWorkspace(): boolean {
@@ -486,7 +504,7 @@ export class ConfigurationService implements IConfigurationService {
   }
 
   async getProfiles(): Promise<string[]> {
-    const claudeDir = path.join(os.homedir(), '.claude');
+    const claudeDir = this.getConfigDir();
     if (!(await this.fileSystemService.pathExists(claudeDir))) {return [];}
 
     try {

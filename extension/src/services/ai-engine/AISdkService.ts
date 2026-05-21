@@ -15,6 +15,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as os from 'os';
+import * as fs from 'fs';
 import * as http from 'http';
 import * as cp from 'child_process';
 import { createDecorator } from '../../di/instantiation';
@@ -139,12 +140,30 @@ export class AISdkService implements IAISdkService {
     }
 
     /**
+     * Get CLI config directory, matching CLI logic exactly:
+     * 1. YWCODER_CONFIG_DIR env
+     * 2. CLAUDE_CONFIG_DIR env
+     * 3. ~/.ywcoder if exists
+     * 4. ~/.claude if exists (legacy compat)
+     * 5. Default ~/.ywcoder
+     */
+    private getConfigDir(): string {
+        const envDir = process.env.YWCODER_CONFIG_DIR ?? process.env.CLAUDE_CONFIG_DIR;
+        if (envDir) { return envDir; }
+        const ywcoderDir = path.join(os.homedir(), '.ywcoder');
+        const claudeDir = path.join(os.homedir(), '.claude');
+        if (fs.existsSync(ywcoderDir)) { return ywcoderDir; }
+        if (fs.existsSync(claudeDir)) { return claudeDir; }
+        return ywcoderDir;
+    }
+
+    /**
      * 调用 AI SDK 进行查询
      */
     async query(params: SdkQueryParams): Promise<Query> {
         const { inputStream, resume, canUseTool, model, cwd, permissionMode, maxThinkingTokens, onStderrError } = params;
 
-        this.logService.info(`[AISdkService] query: model=${model ?? 'default'}, cwd=${cwd}, permissionMode=${permissionMode}`);
+        // query 日志已清理以减少输出噪音
 
         const modelParam = model === null ? "default" : model;
         const permissionModeParam = permissionMode as PermissionMode;
@@ -183,7 +202,7 @@ export class AISdkService implements IAISdkService {
                         continue;
                     }
 
-                    // 检测错误级别
+                    // 检测错误级别（仅记录 ERROR/WARN/EXIT，避免 INFO 刷屏）
                     const lowerLine = line.toLowerCase();
                     let level = 'INFO';
 
@@ -195,7 +214,9 @@ export class AISdkService implements IAISdkService {
                         level = 'EXIT';
                     }
 
-                    this.logService.info(`[${timestamp}] [SDK ${level}] ${line}`);
+                    if (level !== 'INFO') {
+                        this.logService.info(`[${timestamp}] [SDK ${level}] ${line}`);
+                    }
 
                     // 检测流式请求回退错误：
                     // "Error streaming, falling back to non-streaming mode: {statusCode} {json}"
@@ -241,9 +262,7 @@ export class AISdkService implements IAISdkService {
                 PreToolUse: [{
                     matcher: "Edit|Write|MultiEdit",
                     hooks: [async (input, toolUseID, options) => {
-                        if ('tool_name' in input) {
-                            this.logService.info(`[Hook] PreToolUse: ${input.tool_name}`);
-                        }
+                        // Hook 日志已清理以减少输出噪音
                         return { continue: true };
                     }]
                 }] as HookCallbackMatcher[],
@@ -251,9 +270,7 @@ export class AISdkService implements IAISdkService {
                 PostToolUse: [{
                     matcher: "Edit|Write|MultiEdit",
                     hooks: [async (input, toolUseID, options) => {
-                        if ('tool_name' in input) {
-                            this.logService.info(`[Hook] PostToolUse: ${input.tool_name}`);
-                        }
+                        // Hook 日志已清理以减少输出噪音
                         return { continue: true };
                     }]
                 }] as HookCallbackMatcher[]
@@ -269,7 +286,7 @@ export class AISdkService implements IAISdkService {
               'debug': null,
               'debug-to-stderr': null,
               // 'enable-auth-status': null,
-              'settings': path.join(os.homedir(), '.claude', 'ywcoder.json'),
+              'settings': path.join(this.getConfigDir(), 'ywcoder.json'),
             } as Record<string, string | null>,
 
             // 设置源 (控制 CLAUDE.md 和 settings.json 的加载)
@@ -304,7 +321,7 @@ export class AISdkService implements IAISdkService {
             return { data: {} };
         }
 
-        const timeoutMs = Math.max(1000, params.timeoutMs ?? 10000);
+        const timeoutMs = Math.max(1000, params.timeoutMs ?? 60000);
         const data: Record<string, any> = {};
         const errors: Record<string, string> = {};
 
@@ -314,7 +331,6 @@ export class AISdkService implements IAISdkService {
         try {
             await Promise.race([
                 (async () => {
-                    // 使用轻量级查询
                     query = await this.queryLite(params.cwd);
 
                     for (const capability of capabilities) {
@@ -386,10 +402,13 @@ export class AISdkService implements IAISdkService {
     private async queryLite(cwd: string): Promise<Query> {
         const inputStream = new AsyncStream<SDKUserMessage>();
 
-        // 立即关闭输入流（probe 不需要发送消息）
+        // 立即关闭输入流（probe 不需要发送消息，但需要通知 SDK 输入已结束）
         inputStream.done();
 
         const cliPath = await this.getAIExecutablePath();
+
+        // 传递环境变量，确保 CLI 探测时能读取到认证和模型相关配置
+        const env = await this.getMergedEnvironmentVariables();
 
         const options: Options = {
             // 最小化配置
@@ -415,8 +434,11 @@ export class AISdkService implements IAISdkService {
 
             // 保留 settings 参数，使 CLI 能读取 ywcoder.json 中的模型配置
             extraArgs: {
-                'settings': path.join(os.homedir(), '.claude', 'ywcoder.json'),
+                'settings': path.join(this.getConfigDir(), 'ywcoder.json'),
             },
+
+            // 环境变量（认证、模型配置等）
+            env,
 
             // 不包含 partial messages
             includePartialMessages: false,
