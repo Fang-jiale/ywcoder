@@ -404,8 +404,8 @@ export class AISdkService implements IAISdkService {
                 message: 'SDK probe only'
             }),
 
-            // 不加载任何设置源
-            settingSources: [],
+            // 加载设置源，确保 supportedModels 等能力探测能读取到用户配置
+            settingSources: ['user', 'project', 'local'],
 
             // 不输出 stderr
             stderr: () => {},
@@ -413,8 +413,10 @@ export class AISdkService implements IAISdkService {
             // CLI 路径
             pathToClaudeCodeExecutable: cliPath,
 
-            // 最小化额外参数（移除 debug 标志）
-            extraArgs: {},
+            // 保留 settings 参数，使 CLI 能读取 ywcoder.json 中的模型配置
+            extraArgs: {
+                'settings': path.join(os.homedir(), '.claude', 'ywcoder.json'),
+            },
 
             // 不包含 partial messages
             includePartialMessages: false,
