@@ -6,6 +6,7 @@ import type { PermissionResult, PermissionMode } from "@anthropic-ai/claude-agen
 import type {
   ExtensionRequestResponse,
   ExtensionToWebViewMessage,
+  ExternalActionRequest,
   GetYwCoderStateResponse,
   InitResponse,
   RequestMessage,
@@ -48,6 +49,9 @@ export abstract class BaseTransport {
 
   readonly extensionConfigChanged: EventEmitter<{ key: string; value: any }> =
     new EventEmitter<{ key: string; value: any }>();
+
+  readonly externalActionEvents: EventEmitter<ExternalActionRequest> =
+    new EventEmitter<ExternalActionRequest>();
 
   protected readonly fromHost = new AsyncQueue<ExtensionToWebViewMessage>();
   protected readonly streams = new Map<string, AsyncQueue<any>>();
@@ -449,6 +453,10 @@ export abstract class BaseTransport {
       }
       case "extension_config_changed": {
         this.extensionConfigChanged.emit({ key: req.key, value: req.value });
+        break;
+      }
+      case "external_action": {
+        this.externalActionEvents.emit(req as ExternalActionRequest);
         break;
       }
       default:

@@ -5,6 +5,7 @@ import { EventEmitter } from '../utils/events';
 // 每个 Webview 进程各自拥有一份实例，但在同一宿主中只创建一次
 export const atMentionEvents = new EventEmitter<string>();
 export const selectionEvents = new EventEmitter<any>();
+export const externalActionEvents = new EventEmitter<any>();
 
 export const transport = new VSCodeTransport(atMentionEvents, selectionEvents);
 

@@ -745,6 +745,45 @@ defineExpose({
   /** 聚焦到输入框 */
   focus() {
     nextTick(() => textareaRef.value?.focus())
+  },
+  /** 在光标位置插入文本 */
+  insertText(text: string) {
+    const el = textareaRef.value
+    if (!el) return
+
+    const selection = window.getSelection()
+    if (!selection || selection.rangeCount === 0) {
+      // 无有效选区，追加到末尾
+      const updated = content.value + text
+      content.value = updated
+      el.textContent = updated
+      placeCaretAtEnd(el)
+    } else {
+      const range = selection.getRangeAt(0)
+      if (!el.contains(range.startContainer)) {
+        // 选区不在输入框内，追加到末尾
+        const updated = content.value + text
+        content.value = updated
+        el.textContent = updated
+        placeCaretAtEnd(el)
+      } else {
+        // 在光标位置插入文本
+        range.deleteContents()
+        const textNode = document.createTextNode(text)
+        range.insertNode(textNode)
+        range.setStartAfter(textNode)
+        range.collapse(true)
+        selection.removeAllRanges()
+        selection.addRange(range)
+
+        // 同步内部状态
+        content.value = el.textContent || ''
+      }
+    }
+
+    emit('input', content.value)
+    autoResizeTextarea()
+    nextTick(() => el.focus())
   }
 })
 

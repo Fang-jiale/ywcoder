@@ -95,11 +95,12 @@ export async function handleInit(
     // 获取默认工作目录
     const defaultCwd = workspaceService.getDefaultWorkspaceFolder()?.uri.fsPath || process.cwd();
 
-    // TODO: 从配置获取 openNewInTab
-    const openNewInTab = false;
+    // 获取扩展配置
+    const extConfig = await configService.getExtensionConfig();
+    const openNewInTab = extConfig.openNewInTab ?? false;
 
-    // 获取 thinking level (默认值)
-    const thinkingLevel = 'default_on';
+    // 获取 thinking level
+    const thinkingLevel = (await configService.getSetting<string>('thinkingLevel')) || 'default_on';
 
     return {
         type: "init_response",
@@ -1023,8 +1024,8 @@ function getAssetUris(context: HandlerContext): Record<string, { light: string; 
         }
     } as const;
 
-    // TODO: 获取 extensionPath
-    const extensionPath = process.cwd();
+    const ext = vscode.extensions.getExtension('dc-ops-support.ywcoder');
+    const extensionPath = ext?.extensionUri.fsPath || process.cwd();
 
     const toWebviewUri = (relativePath: string) =>
         webview.asWebviewUri(

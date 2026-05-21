@@ -61,6 +61,7 @@
           />
           <div class="input-wrapper" :class="{ disabled: !isReady }">
             <ChatInputBox
+              ref="chatInputRef"
               :show-progress="true"
               :progress-percentage="progressPercentage"
               :context-tooltip="contextTooltip"
@@ -185,6 +186,7 @@
   // DOM refs
   const containerEl = ref<HTMLDivElement | null>(null);
   const endEl = ref<HTMLDivElement | null>(null);
+  const chatInputRef = ref<any>(null);
 
   // 附件状态管理
   const attachments = ref<AttachmentItem[]>([]);
@@ -237,15 +239,50 @@
     scrollToBottom();
   });
 
+  // 处理来自 Extension 的 external action
+  function handleExternalAction(req: any) {
+    switch (req.action) {
+      case 'insert_text': {
+        chatInputRef.value?.insertText?.(req.payload || '');
+        break;
+      }
+      case 'new_chat': {
+        void createNew();
+        break;
+      }
+      case 'stop_generation': {
+        handleStop();
+        break;
+      }
+      case 'send_message': {
+        const text = req.payload || '';
+        if (text.trim()) {
+          void handleSubmit(text);
+        }
+        break;
+      }
+      default:
+        console.warn('[ChatPage] Unknown external action:', req.action);
+    }
+  }
+
+  let unsubscribeExternalAction: (() => void) | undefined;
+
   onMounted(async () => {
     prevCount = messages.value.length;
     await nextTick();
     scrollToBottom();
+
+    // 订阅 Extension 下发的主动操作
+    if (runtime.externalActionEvents) {
+      unsubscribeExternalAction = runtime.externalActionEvents.add(handleExternalAction);
+    }
   });
 
   onUnmounted(() => {
     try { unregisterToggle?.(); } catch {}
     try { unregisterModel?.(); } catch {}
+    unsubscribeExternalAction?.();
   });
 
   async function createNew(): Promise<void> {
@@ -275,7 +312,7 @@
 
     try {
       // 传递附件给 send 方法
-      await s.send(trimmed || ' ', attachments.value);
+      await s.send(trimmed, attachments.value);
 
       // 发送成功后清空附件
       attachments.value = [];

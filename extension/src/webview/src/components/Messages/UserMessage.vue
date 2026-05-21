@@ -27,6 +27,17 @@
               </button>
             </Tooltip>
           </div>
+          <!-- 附件预览 -->
+          <div v-if="messageAttachments.length > 0" class="message-attachments">
+            <div
+              v-for="att in messageAttachments"
+              :key="att.id"
+              class="message-attachment-item"
+            >
+              <FileIcon :file-name="att.fileName" :size="14" />
+              <span class="attachment-label">{{ att.fileName }}</span>
+            </div>
+          </div>
         </div>
 
         <!-- 编辑模式 -->
@@ -126,6 +137,9 @@ function extractAttachments(): AttachmentItem[] {
 
   return extracted;
 }
+
+// 普通显示模式下展示的附件列表
+const messageAttachments = computed(() => extractAttachments());
 
 async function startEditing() {
   isEditing.value = true;
@@ -318,6 +332,37 @@ onUnmounted(() => {
 .restore-button .codicon {
   font-size: 12px;
   color: var(--vscode-foreground);
+}
+
+/* 消息附件预览 */
+.message-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+  padding-right: 8px;
+  padding-bottom: 4px;
+  justify-content: flex-end;
+}
+
+.message-attachment-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background-color: color-mix(in srgb, var(--vscode-input-background) 50%, transparent);
+  border: 1px solid var(--vscode-editorWidget-border);
+  font-size: 11px;
+  color: var(--vscode-foreground);
+  opacity: 0.8;
+}
+
+.attachment-label {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* 编辑模式 */

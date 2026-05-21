@@ -5,7 +5,7 @@ import { AppContext } from '../core/AppContext';
 import { SessionStore } from '../core/SessionStore';
 import type { SelectionRange } from '../core/Session';
 import { EventEmitter } from '../utils/events';
-import { transport, atMentionEvents, selectionEvents } from '../core/runtimeTransport';
+import { transport, atMentionEvents, selectionEvents, externalActionEvents } from '../core/runtimeTransport';
 
 export interface RuntimeInstance {
   connectionManager: ConnectionManager;
@@ -13,6 +13,7 @@ export interface RuntimeInstance {
   sessionStore: SessionStore;
   atMentionEvents: EventEmitter<string>;
   selectionEvents: EventEmitter<any>;
+  externalActionEvents: EventEmitter<any>;
 }
 
 export function useRuntime(): RuntimeInstance {
@@ -127,6 +128,6 @@ export function useRuntime(): RuntimeInstance {
     });
   });
 
-  return { connectionManager, appContext, sessionStore, atMentionEvents, selectionEvents };
+  return { connectionManager, appContext, sessionStore, atMentionEvents, selectionEvents, externalActionEvents };
 }
 

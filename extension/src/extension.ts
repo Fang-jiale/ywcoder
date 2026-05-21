@@ -92,7 +92,63 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.executeCommand('ywcoder.chatView.focus');
 	});
 
-	context.subscriptions.push(showChatCommand);
+	const newChatCommand = vscode.commands.registerCommand('ywcoder.newChat', () => {
+		instantiationService.invokeFunction(accessor => {
+			const webViewService = accessor.get(IWebViewService);
+			webViewService.postMessage({
+				type: 'request',
+				requestId: `ext-newchat-${Date.now()}`,
+				request: { type: 'external_action', action: 'new_chat' }
+			});
+		});
+	});
+
+	const stopGenerationCommand = vscode.commands.registerCommand('ywcoder.stopGeneration', () => {
+		instantiationService.invokeFunction(accessor => {
+			const webViewService = accessor.get(IWebViewService);
+			webViewService.postMessage({
+				type: 'request',
+				requestId: `ext-stop-${Date.now()}`,
+				request: { type: 'external_action', action: 'stop_generation' }
+			});
+		});
+	});
+
+	const askSelectionCommand = vscode.commands.registerCommand('ywcoder.askSelection', () => {
+		const editor = vscode.window.activeTextEditor;
+		const selection = editor?.selection;
+		const text = selection && !selection.isEmpty
+			? editor.document.getText(selection)
+			: '';
+
+		instantiationService.invokeFunction(accessor => {
+			const webViewService = accessor.get(IWebViewService);
+			webViewService.postMessage({
+				type: 'request',
+				requestId: `ext-ask-${Date.now()}`,
+				request: { type: 'external_action', action: 'insert_text', payload: text }
+			});
+			// 聚焦到 YwCoder 视图
+			vscode.commands.executeCommand('ywcoder.chatView.focus');
+		});
+	});
+
+	const sendFileToChatCommand = vscode.commands.registerCommand('ywcoder.sendFileToChat', (uri: vscode.Uri) => {
+		const filePath = uri?.fsPath || '';
+		if (!filePath) return;
+
+		instantiationService.invokeFunction(accessor => {
+			const webViewService = accessor.get(IWebViewService);
+			webViewService.postMessage({
+				type: 'request',
+				requestId: `ext-file-${Date.now()}`,
+				request: { type: 'external_action', action: 'insert_text', payload: `@${filePath} ` }
+			});
+			vscode.commands.executeCommand('ywcoder.chatView.focus');
+		});
+	});
+
+	context.subscriptions.push(showChatCommand, newChatCommand, stopGenerationCommand, askSelectionCommand, sendFileToChatCommand);
 
 	// 7. Log completion
 	instantiationService.invokeFunction(accessor => {

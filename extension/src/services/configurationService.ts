@@ -50,6 +50,7 @@ export interface ExtensionConfig {
   defaultThinkingLevel: 'off' | 'default_on';
 
   // UI preferences
+  openNewInTab: boolean;
   systemNotifications: boolean;
   completionSound: boolean;
 
@@ -155,6 +156,7 @@ export class ConfigurationService implements IConfigurationService {
     defaultPermissionMode: 'default',
     defaultModel: 'default',
     defaultThinkingLevel: 'default_on',
+    openNewInTab: false,
     systemNotifications: false,
     completionSound: true,
     customModels: [],
@@ -453,7 +455,7 @@ export class ConfigurationService implements IConfigurationService {
           value !== null && typeof value === 'object' && !Array.isArray(value) &&
           merged[key] !== null && typeof merged[key] === 'object' && !Array.isArray(merged[key])
         ) {
-          merged[key] = { ...merged[key], ...value };
+          merged[key] = this.deepMerge(merged[key], value);
         } else {
           merged[key] = value;
         }
@@ -743,6 +745,27 @@ export class ConfigurationService implements IConfigurationService {
   }
 
   // --- Utilities ---
+
+  private deepMerge(target: any, source: any): any {
+    if (source === null || source === undefined) {return target;}
+    if (target === null || target === undefined) {return source;}
+    if (typeof target !== 'object' || typeof source !== 'object') {return source;}
+    if (Array.isArray(target) !== Array.isArray(source)) {return source;}
+    if (Array.isArray(target)) {return source;}
+
+    const result = { ...target };
+    for (const [key, value] of Object.entries(source)) {
+      if (
+        value !== null && typeof value === 'object' && !Array.isArray(value) &&
+        result[key] !== null && typeof result[key] === 'object' && !Array.isArray(result[key])
+      ) {
+        result[key] = this.deepMerge(result[key], value);
+      } else {
+        result[key] = value;
+      }
+    }
+    return result;
+  }
 
   private deepEqual(a: any, b: any): boolean {
     if (a === b) {return true;}

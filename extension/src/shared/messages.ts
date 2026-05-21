@@ -871,6 +871,16 @@ export type WebViewRequestResponse =
     | UpdateExtensionConfigResponse;
 
 /**
+ * Extension → WebView 的主动操作请求
+ * 用于命令前端执行特定交互（如插入文本、新建对话等）
+ */
+export interface ExternalActionRequest {
+    type: "external_action";
+    action: "insert_text" | "new_chat" | "stop_generation" | "send_message";
+    payload?: string;
+}
+
+/**
  * Extension → WebView 的所有请求类型
  */
 export type ExtensionRequest =
@@ -878,7 +888,8 @@ export type ExtensionRequest =
     | InsertAtMentionRequest
     | SelectionChangedRequest
     | UpdateStateRequest
-    | VisibilityChangedRequest;
+    | VisibilityChangedRequest
+    | ExternalActionRequest;
     // | AuthURLRequest;
 
 /**

@@ -73,12 +73,34 @@
     "commands": [
       {
         "command": "ywcoder.showChat",
-        "title": "显示 YwCoder"
+        "title": "显示 YwCoder",
+        "category": "YwCoder"
       },
       {
         "command": "ywcoder.openSettings",
-        "title": "YwCoder: 打开设置",
-        "icon": "$(gear)"
+        "title": "打开设置",
+        "icon": "$(gear)",
+        "category": "YwCoder"
+      },
+      {
+        "command": "ywcoder.askSelection",
+        "title": "询问 YwCoder",
+        "category": "YwCoder"
+      },
+      {
+        "command": "ywcoder.sendFileToChat",
+        "title": "发送到 YwCoder",
+        "category": "YwCoder"
+      },
+      {
+        "command": "ywcoder.newChat",
+        "title": "新建对话",
+        "category": "YwCoder"
+      },
+      {
+        "command": "ywcoder.stopGeneration",
+        "title": "停止生成",
+        "category": "YwCoder"
       }
     ],
     "menus": {
@@ -87,6 +109,20 @@
           "command": "ywcoder.openSettings",
           "when": "view == ywcoder.chatView",
           "group": "navigation"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "ywcoder.askSelection",
+          "when": "editorHasSelection",
+          "group": "2_ywcoder@1"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "ywcoder.sendFileToChat",
+          "when": "explorerResourceIsFile",
+          "group": "2_ywcoder@1"
         }
       ]
     }
