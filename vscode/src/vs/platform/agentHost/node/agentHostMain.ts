@@ -16,7 +16,6 @@ import * as os from 'os';
 import { AgentHostIpcChannels, IAgentHostSocketInfo, IConnectionTrackerService } from '../common/agentService.js';
 import { AgentService } from './agentService.js';
 import { IAgentHostTerminalManager } from './agentHostTerminalManager.js';
-import { CopilotAgent } from './copilot/copilotAgent.js';
 import { ProtocolServerHandler } from './protocolServerHandler.js';
 import { WebSocketProtocolServer } from './webSocketTransport.js';
 import { INativeEnvironmentService } from '../../environment/common/environment.js';
@@ -45,7 +44,7 @@ import { AGENT_CLIENT_SCHEME } from '../common/agentClientUri.js';
 import { IAgentPluginManager } from '../common/agentPluginManager.js';
 import { AgentPluginManager } from './agentPluginManager.js';
 import { AgentHostGitService, IAgentHostGitService } from './agentHostGitService.js';
-import { registerPendingEditContentProvider } from './copilot/pendingEditContentStore.js';
+import { registerPendingEditContentProvider } from './pendingEditContentStore.js';
 import { join } from '../../../base/common/path.js';
 
 // Entry point for the agent host utility process.
@@ -102,7 +101,7 @@ function startAgentHost(): void {
 		diServices.set(IAgentHostTerminalManager, agentService.terminalManager);
 		const instantiationService = new InstantiationService(diServices);
 		diServices.set(IAgentHostGitService, instantiationService.createInstance(AgentHostGitService));
-		agentService.registerProvider(instantiationService.createInstance(CopilotAgent));
+		// Copilot agent removed — no built-in agent provider registered
 	} catch (err) {
 		logService.error('Failed to create AgentService', err);
 		throw err;

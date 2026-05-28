@@ -21,7 +21,7 @@ import { ResponsePartKind, SessionStatus, ToolCallConfirmationReason, ToolCallSt
 import { IProductService } from '../../product/common/productService.js';
 import { AgentSideEffects } from './agentSideEffects.js';
 import { AgentHostTerminalManager, type IAgentHostTerminalManager } from './agentHostTerminalManager.js';
-import { ISessionDbUriFields, parseSessionDbUri } from './copilot/fileEditTracker.js';
+import { ISessionDbUriFields, parseSessionDbUri } from '../common/sessionDbUri.js';
 import { AgentHostStateManager } from './agentHostStateManager.js';
 
 /**

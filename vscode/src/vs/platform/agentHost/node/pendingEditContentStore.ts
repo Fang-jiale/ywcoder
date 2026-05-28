@@ -3,11 +3,11 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { encodeHex, VSBuffer } from '../../../../base/common/buffer.js';
-import { IDisposable } from '../../../../base/common/lifecycle.js';
-import { URI } from '../../../../base/common/uri.js';
-import { IFileService } from '../../../files/common/files.js';
-import { InMemoryFileSystemProvider } from '../../../files/common/inMemoryFilesystemProvider.js';
+import { encodeHex, VSBuffer } from '../../../base/common/buffer.js';
+import { IDisposable } from '../../../base/common/lifecycle.js';
+import { URI } from '../../../base/common/uri.js';
+import { IFileService } from '../../files/common/files.js';
+import { InMemoryFileSystemProvider } from '../../files/common/inMemoryFilesystemProvider.js';
 
 /**
  * URI scheme for transient file content backing tool-call write-permission
@@ -45,4 +45,3 @@ export function registerPendingEditContentProvider(fileService: IFileService): I
 		},
 	};
 }
-
