@@ -5,10 +5,7 @@
 import path from 'path';
 import fs from 'fs';
 
-/**
- * Returns the sha1 commit version of a repository or undefined in case of failure.
- */
-export function getVersion(repo: string): string | undefined {
+function _getVersion(repo: string): string | undefined {
 	const git = path.join(repo, '.git');
 	const headPath = path.join(git, 'HEAD');
 	let head: string;
@@ -56,4 +53,24 @@ export function getVersion(repo: string): string | undefined {
 	}
 
 	return refs[ref];
+}
+
+/**
+ * Returns the sha1 commit version of a repository or undefined in case of failure.
+ * Walks up the directory tree until a .git folder is found.
+ */
+export function getVersion(repo: string): string | undefined {
+	let current = path.resolve(repo);
+	while (true) {
+		const version = _getVersion(current);
+		if (version) {
+			return version;
+		}
+		const parent = path.dirname(current);
+		if (parent === current) {
+			break;
+		}
+		current = parent;
+	}
+	return undefined;
 }
