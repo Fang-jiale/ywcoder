@@ -39,7 +39,7 @@
             <!-- <div class="msg-list"> -->
               <MessageRenderer
                 v-for="(m, i) in messages"
-                :key="m?.id ?? i"
+                :key="m.id"
                 :message="m"
                 :context="toolContext"
               />
@@ -92,7 +92,7 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, computed, inject, onMounted, onUnmounted, nextTick, watch } from 'vue';
+  import { ref, computed, inject, onMounted, onUnmounted, nextTick, watch, shallowRef } from 'vue';
   import { RuntimeKey } from '../composables/runtimeContext';
   import { useSession } from '../composables/useSession';
   import type { Session } from '../core/Session';
@@ -133,14 +133,18 @@
     runtime.sessionStore.activeSession
   );
 
-  // 使用 useSession 将 alien-signals 转换为 Vue Refs
-  const session = computed(() => {
-    const raw = activeSessionRaw.value;
-    return raw ? useSession(raw) : null;
-  });
+  // 缓存 useSession 结果，避免 computed 每次读取都重建 signal 订阅
+  const session = shallowRef<ReturnType<typeof useSession> | null>(null);
+  watch(
+    activeSessionRaw,
+    (raw) => {
+      session.value = raw ? useSession(raw) : null;
+    },
+    { immediate: true }
+  );
 
   // 现在所有访问都使用 Vue Ref（.value）
-  const title = computed(() => session.value?.summary.value || 'New Conversation');
+  const title = computed(() => session.value?.summary.value || '新会话');
   const messages = computed<any[]>(() => session.value?.messages.value ?? []);
   const isBusy = computed(() => session.value?.busy.value ?? false);
   const permissionMode = computed(
@@ -193,14 +197,6 @@
 
   // 记录上次消息数量，用于判断是否需要滚动
   let prevCount = 0;
-
-  function stringify(m: any): string {
-    try {
-      return JSON.stringify(m ?? {}, null, 2);
-    } catch {
-      return String(m);
-    }
-  }
 
   function scrollToBottom(): void {
     const end = endEl.value;

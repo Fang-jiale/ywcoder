@@ -1,8 +1,6 @@
 <template>
   <div class="spinner" :data-permission-mode="permissionMode">
-    <span class="icon" :style="{ fontSize: size + 'px' }">
-      {{ currentIcon }}
-    </span>
+    <span class="codicon codicon-loading icon" :style="{ fontSize: size + 'px' }"></span>
     <span class="text">{{ animatedText }}</span>
   </div>
 </template>
@@ -22,18 +20,12 @@
     permissionMode: undefined,
   });
 
-  const SPINNER_ICONS = ['·', '✢', '*', '✶', '✻', '✽'];
-  const ANIMATION_ICONS = [...SPINNER_ICONS, ...[...SPINNER_ICONS].reverse()];
-
   // Get localized verbs
   const VERBS = getVerbs();
   const MAX_VERB_LENGTH = Math.max(...VERBS.map(v => v.length));
 
-  const iconIndex = ref(0);
   const verb = ref(randomVerb());
-  const currentIcon = computed(() => ANIMATION_ICONS[iconIndex.value]);
 
-  let iconTimer: any;
   let verbTimer: any;
   let rafId: number | null = null;
 
@@ -47,10 +39,6 @@
   const stepMs = 40;
 
   onMounted(() => {
-    iconTimer = setInterval(() => {
-      iconIndex.value = (iconIndex.value + 1) % ANIMATION_ICONS.length;
-    }, 120);
-
     // 依次 2s/3s/5s，之后固定 5s 变更
     const intervals = [2000, 3000, 5000];
     let count = 0;
@@ -66,7 +54,6 @@
   });
 
   onBeforeUnmount(() => {
-    if (iconTimer) clearInterval(iconTimer);
     if (verbTimer) clearTimeout(verbTimer);
     stopTextAnimation();
   });
@@ -181,10 +168,14 @@
   }
   .icon {
     color: var(--app-spinner-foreground, var(--vscode-descriptionForeground));
-    font-family: monospace;
     display: inline-block;
     width: 1.5em;
     text-align: center;
+    animation: spin 1.2s linear infinite;
+  }
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
   }
   .spinner[data-permission-mode='acceptEdits'] .icon {
     color: var(--app-primary-foreground, var(--vscode-foreground));

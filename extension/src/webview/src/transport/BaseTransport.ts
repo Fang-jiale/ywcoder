@@ -94,6 +94,8 @@ export abstract class BaseTransport {
         modelSetting: initResponse.state.modelSetting,
         platform: initResponse.state.platform,
         thinkingLevel: initResponse.state.thinkingLevel,
+        defaultPermissionMode: initResponse.state.defaultPermissionMode,
+        defaultThinkingLevel: initResponse.state.defaultThinkingLevel,
       } as InitResponse["state"]);
 
       const ywcoderState = await this.sendRequest<GetYwCoderStateResponse>({
@@ -315,7 +317,11 @@ export abstract class BaseTransport {
   }
 
   close(): void {
-    /* no-op */
+    /* 拒绝所有未完成的请求，防止内存泄漏 */
+    for (const [requestId, handler] of this.outstandingRequests) {
+      handler.reject(new Error('Transport closed'));
+    }
+    this.outstandingRequests.clear();
   }
 
   protected async sendRequest<TResponse = any>(
@@ -323,7 +329,7 @@ export abstract class BaseTransport {
     channelId?: string,
     abortSignal?: AbortSignal
   ): Promise<TResponse> {
-    const requestId = Math.random().toString(36).slice(2);
+    const requestId = Date.now().toString(36) + Math.random().toString(36).slice(2);
     const abortHandler = () => {
       this.cancelRequest(requestId);
     };
@@ -447,6 +453,8 @@ export abstract class BaseTransport {
           modelSetting: req.state.modelSetting,
           platform: req.state.platform,
           thinkingLevel: req.state.thinkingLevel,
+          defaultPermissionMode: req.state.defaultPermissionMode,
+          defaultThinkingLevel: req.state.defaultThinkingLevel,
         } as InitResponse["state"]);
         this.ywcoderConfig(req.config);
         break;

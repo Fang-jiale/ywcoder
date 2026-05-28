@@ -45,7 +45,7 @@ export function useRuntime(): RuntimeInstance {
     openURL: appContext.openURL.bind(appContext)
   });
 
-  selectionEvents.add((selection) => {
+  const unsubSelection = selectionEvents.add((selection) => {
     appContext.currentSelection(selection);
   });
 
@@ -123,6 +123,7 @@ export function useRuntime(): RuntimeInstance {
       // 清理命令注册
       slashCommandDisposers.forEach(dispose => dispose());
       cleanupSlashCommands();
+      unsubSelection();
 
       connectionManager.close();
     });

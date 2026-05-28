@@ -55,7 +55,7 @@ interface Emits {
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: '',
-  placeholder: 'Plan, search, build anything',
+  placeholder: '规划、搜索、构建任何内容',
   readonly: false
 })
 

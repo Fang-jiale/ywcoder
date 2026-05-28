@@ -33,11 +33,20 @@ marked.setOptions({
   breaks: true,
 });
 
+/**
+ * 基础 HTML 安全清理（临时替代 DOMPurify）
+ * 移除事件处理器和危险伪协议
+ */
+function sanitizeHtml(html: string): string {
+  return html
+    .replace(/\s+on\w+\s*=\s*["'][^"']*["']/gi, '')
+    .replace(/javascript:/gi, '');
+}
+
 // 渲染 Markdown
 const renderedMarkdown = computed(() => {
   const rawHtml = marked.parse(props.block.text) as string;
-  // TODO: 使用 DOMPurify.sanitize(rawHtml) 进行安全清理
-  return rawHtml;
+  return sanitizeHtml(rawHtml);
 });
 </script>
 

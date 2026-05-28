@@ -41,10 +41,10 @@ export interface UseSessionReturn {
   messages: Ref<any[]>;
   messageCount: Ref<number>;
   cwd: Ref<string | undefined>;
-  permissionMode: Ref<PermissionMode>;
+  permissionMode: Ref<PermissionMode | undefined>;
   summary: Ref<string | undefined>;
   modelSelection: Ref<string | undefined>;
-  thinkingLevel: Ref<string>;
+  thinkingLevel: Ref<string | undefined>;
   todos: Ref<any[]>;
   worktree: Ref<{ name: string; path: string } | undefined>;
   selection: Ref<SelectionRange | undefined>;

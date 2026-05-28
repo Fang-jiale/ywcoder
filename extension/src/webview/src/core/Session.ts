@@ -31,6 +31,7 @@ export interface AttachmentPayload {
 }
 
 const IMAGE_MEDIA_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'] as const;
+const HAS_ATOB = typeof globalThis.atob === 'function';
 
 export interface SessionOptions {
   isExplicit?: boolean;
@@ -77,10 +78,10 @@ export class Session {
   readonly messages = signal<Message[]>([]);
   readonly messageCount = signal<number>(0);
   readonly cwd = signal<string | undefined>(undefined);
-  readonly permissionMode = signal<PermissionMode>('default');
+  readonly permissionMode = signal<PermissionMode | undefined>(undefined);
   readonly summary = signal<string | undefined>(undefined);
   readonly modelSelection = signal<string | undefined>(undefined);
-  readonly thinkingLevel = signal<string>('default_on');
+  readonly thinkingLevel = signal<string | undefined>(undefined);
   readonly todos = signal<any[]>([]);
   readonly worktree = signal<{ name: string; path: string } | undefined>(undefined);
   readonly selection = signal<SelectionRange | undefined>(undefined);
@@ -128,7 +129,7 @@ export class Session {
   ) {
     this.isExplicit(options.isExplicit ?? true);
 
-    effect(() => {
+    this.effectCleanup = effect(() => {
       this.selection(this.context.currentSelection());
     });
   }
@@ -280,8 +281,18 @@ export class Session {
         this.modelSelection(connection.config()?.modelSetting);
       }
 
+      if (!this.permissionMode()) {
+        this.permissionMode(
+          (connection.config()?.defaultPermissionMode as PermissionMode) || 'default'
+        );
+      }
+
       if (!this.thinkingLevel()) {
-        this.thinkingLevel(connection.config()?.thinkingLevel || 'default_on');
+        this.thinkingLevel(
+          connection.config()?.defaultThinkingLevel ||
+          connection.config()?.thinkingLevel ||
+          'default_on'
+        );
       }
 
       const stream = connection.launchYwCoder(
@@ -289,8 +300,8 @@ export class Session {
         this.sessionId() ?? undefined,
         this.cwd() ?? undefined,
         this.modelSelection() ?? undefined,
-        this.permissionMode(),
-        this.thinkingLevel()
+        this.permissionMode() || 'default',
+        this.thinkingLevel() || 'default_on'
       );
 
       void this.readMessages(stream);
@@ -449,7 +460,7 @@ export class Session {
             content: [{ type: 'llm_error', message: event.error }],
           },
         };
-        const currentMessages = [...this.messages()] as Message[];
+        const currentMessages = [...this.messages()];
         processAndAttachMessage(currentMessages, syntheticEvent);
         this.messages(currentMessages);
         this.busy(false);
@@ -463,7 +474,7 @@ export class Session {
     // 🔥 使用完整的消息处理流程
 
     // 1. 获取当前消息数组（转为可变数组）
-    const currentMessages = [...this.messages()] as Message[];
+    const currentMessages = [...this.messages()];
 
     // 2. 处理特殊消息（TodoWrite, usage 等）
     this.processMessage(event);
@@ -473,11 +484,7 @@ export class Session {
     //    - 将原始事件转换为 Message 并添加到数组
     processAndAttachMessage(currentMessages, event);
 
-    // 4. 合并连续 Read 消息为 ReadCoalesced（已禁用，保留作为参考）
-    // const merged = mergeConsecutiveReadMessages(currentMessages);
-
-    // 5. 更新 messages signal
-    // this.messages(merged);
+    // 4. 更新 messages signal
     this.messages(currentMessages);
 
     // 6. 更新其他状态
@@ -578,7 +585,7 @@ This may or may not be related to the current task.</ide_selection>`
 
       if (normalizedType === 'text/plain') {
         try {
-          const decoded = typeof globalThis.atob === 'function' ? globalThis.atob(data) : '';
+          const decoded = HAS_ATOB ? globalThis.atob(data) : '';
           content.push({
             type: 'document',
             source: {

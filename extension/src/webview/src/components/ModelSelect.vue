@@ -109,7 +109,7 @@ onUnmounted(() => {
 // ── Static aliases ──
 
 const MODEL_ALIASES: Array<{ id: string; label: string }> = [
-  { id: 'default', label: 'Default' },
+  { id: 'default', label: '默认' },
 ]
 
 // ── Available models: aliases + SDK + custom, minus disabled ──

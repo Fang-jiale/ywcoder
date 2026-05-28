@@ -129,7 +129,7 @@
               </DropdownItem>
             </template>
           </template>
-          <div v-else class="px-2 py-1 text-xs opacity-60">No matches</div>
+          <div v-else class="px-2 py-1 text-xs opacity-60">无匹配项</div>
         </div>
       </template>
     </Dropdown>
@@ -179,7 +179,7 @@ const props = withDefaults(defineProps<Props>(), {
   showProgress: true,
   progressPercentage: 48.7,
   contextTooltip: '',
-  placeholder: 'Plan, @ for context, / for commands...',
+  placeholder: '输入消息，@ 引用文件，/ 查看命令...',
   readonly: false,
   showSearch: false,
   selectedModel: 'default',
@@ -198,7 +198,8 @@ const isLoading = ref(false)
 const textareaRef = ref<HTMLDivElement | null>(null)
 
 const isSubmitDisabled = computed(() => {
-  return !content.value.trim() || isLoading.value
+  const hasContent = !!content.value.trim() || (props.attachments?.length ?? 0) > 0
+  return !hasContent || isLoading.value
 })
 
 // === 使用新的 Completion Dropdown Composable ===

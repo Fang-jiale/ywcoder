@@ -12,7 +12,7 @@
           style="color: var(--vscode-foreground); opacity: 0.6; font-size: 12px;"
         />
         <div style="font-size: 12px; color: var(--vscode-input-placeholderForeground); opacity: 0.8;">
-          <span>{{ queuedMessages.length }} Queued</span>
+          <span>{{ queuedMessages.length }} 条排队</span>
         </div>
       </div>
     </div>

@@ -11,7 +11,7 @@
               style="color: var(--vscode-foreground); opacity: 0.6; font-size: 12px;"
             />
             <div style="font-size: 12px; color: var(--vscode-input-placeholderForeground); opacity: 0.8;">
-              <span>{{ filesEdited.length }} Files Edited</span>
+              <span>{{ filesEdited.length }} 个文件已编辑</span>
               <span style="margin-left: 8px;">
                 <span style="color: var(--vscode-gitDecoration-addedResourceForeground);">+{{ totalAdditions }}</span>
                 <span style="color: var(--vscode-gitDecoration-deletedResourceForeground); margin-left: 6px;">-{{ totalDeletions }}</span>

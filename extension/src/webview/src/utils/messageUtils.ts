@@ -223,7 +223,7 @@ function buildReadCoalescedMessage(group: Message[]): Message {
         return block?.input ?? {};
     });
 
-    const id = 'coalesced_' + Math.random().toString(36).slice(2);
+    const id = 'coalesced_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2);
     const toolUse: ToolUseContentBlock = {
         type: 'tool_use',
         id,

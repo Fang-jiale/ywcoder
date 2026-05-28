@@ -146,6 +146,8 @@ export interface InitResponse {
         modelSetting: string;
         platform: string;
         thinkingLevel?: string;        // Thinking 等级（off | default_on）
+        defaultPermissionMode?: string; // 默认权限模式（来自 extension config）
+        defaultThinkingLevel?: string;  // 默认思考等级（来自 extension config）
     };
 }
 

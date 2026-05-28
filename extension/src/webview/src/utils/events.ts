@@ -6,6 +6,7 @@
  */
 export class EventEmitter<T = any> {
     private callbacks: Array<(data: T) => void> = [];
+    private static readonly MAX_LISTENERS = 100;
 
     /**
      * 添加事件监听器
@@ -13,10 +14,16 @@ export class EventEmitter<T = any> {
      * @returns 取消订阅函数
      */
     add(callback: (data: T) => void): () => void {
+        if (this.callbacks.length >= EventEmitter.MAX_LISTENERS) {
+            console.warn('[EventEmitter] Max listeners exceeded, potential memory leak');
+        }
         this.callbacks.push(callback);
 
-        // 返回取消订阅函数
+        // 返回取消订阅函数（幂等）
+        let removed = false;
         return () => {
+            if (removed) return;
+            removed = true;
             const index = this.callbacks.indexOf(callback);
             if (index !== -1) {
                 this.callbacks.splice(index, 1);

@@ -95,7 +95,8 @@ export class SessionStore {
         }
 
         if (changed) {
-          this.sessions([...deduped].sort((a, b) => b.lastModifiedTime() - a.lastModifiedTime()));
+          deduped.sort((a, b) => b.lastModifiedTime() - a.lastModifiedTime());
+          this.sessions(deduped);
         }
       })
     );

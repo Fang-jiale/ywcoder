@@ -31,7 +31,11 @@ export interface MessageData {
  * - user/assistant 消息：content 是 ContentBlockWrapper[]
  * - system/result 消息：content 是 string
  */
+let messageIdCounter = 0;
+
 export class Message {
+  /** 唯一标识，用于 Vue key */
+  readonly id: string;
   type: MessageRole;
   message: MessageData;
   timestamp: number;
@@ -51,6 +55,7 @@ export class Message {
       is_error?: boolean;
     }
   ) {
+    this.id = `${Date.now().toString(36)}_${++messageIdCounter}`;
     this.type = type;
     this.message = message;
     this.timestamp = timestamp;

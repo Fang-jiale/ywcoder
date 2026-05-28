@@ -99,7 +99,7 @@ export async function handleInit(
     const extConfig = await configService.getExtensionConfig();
     const openNewInTab = extConfig.openNewInTab ?? false;
 
-    // 获取 thinking level
+    // 获取 thinking level（CLI settings 层）
     const thinkingLevel = (await configService.getSetting<string>('thinkingLevel')) || 'default_on';
 
     return {
@@ -110,7 +110,9 @@ export async function handleInit(
             // authStatus,
             modelSetting,
             platform: process.platform,
-            thinkingLevel
+            thinkingLevel,
+            defaultPermissionMode: extConfig.defaultPermissionMode,
+            defaultThinkingLevel: extConfig.defaultThinkingLevel
         }
     };
 }
