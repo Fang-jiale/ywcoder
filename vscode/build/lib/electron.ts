@@ -230,6 +230,10 @@ function getElectron(arch: string): () => NodeJS.ReadWriteStream {
 
 async function main(arch: string = process.arch): Promise<void> {
 	const electronPath = path.join(root, '.build', 'electron');
+	// 如果 Electron 已存在则跳过下载，避免每次启动都从网络重新拉取
+	if (fs.existsSync(path.join(electronPath, product.nameShort + '.exe'))) {
+		return;
+	}
 	await util.rimraf(electronPath)();
 	await util.streamToPromise(getElectron(arch)());
 }

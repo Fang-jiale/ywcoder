@@ -111,10 +111,10 @@ export class NativeMenubarControl extends MenubarControl {
 				menuToPopulate.items.push({ id: 'vscode.menubar.separator' });
 			} else if (menuItem instanceof MenuItemAction || menuItem instanceof SubmenuItemAction) {
 
-				// use mnemonicTitle whenever possible
+				// prefer hardcoded value for Chinese localization
 				const title = typeof menuItem.item.title === 'string'
 					? menuItem.item.title
-					: menuItem.item.title.mnemonicTitle ?? menuItem.item.title.value;
+					: menuItem.item.title.value ?? menuItem.item.title.mnemonicTitle;
 
 				if (menuItem instanceof SubmenuItemAction) {
 					const submenu = { items: [] };
@@ -142,7 +142,7 @@ export class NativeMenubarControl extends MenubarControl {
 					};
 
 					if (isICommandActionToggleInfo(menuItem.item.toggled)) {
-						menubarMenuItem.label = menuItem.item.toggled.mnemonicTitle ?? menuItem.item.toggled.title ?? title;
+						menubarMenuItem.label = menuItem.item.toggled.title ?? menuItem.item.toggled.mnemonicTitle ?? title;
 					}
 
 					if (menuItem.checked) {

@@ -22,7 +22,6 @@ import { Action2, MenuId, MenuRegistry, registerAction2 } from '../../../../../p
 import { CommandsRegistry, ICommandService } from '../../../../../platform/commands/common/commands.js';
 import { ConfigurationTarget, IConfigurationService } from '../../../../../platform/configuration/common/configuration.js';
 import { ContextKeyExpr, IContextKeyService } from '../../../../../platform/contextkey/common/contextkey.js';
-import { IsWebContext } from '../../../../../platform/contextkey/common/contextkeys.js';
 import { IDialogService } from '../../../../../platform/dialogs/common/dialogs.js';
 import { IEnvironmentService } from '../../../../../platform/environment/common/environment.js';
 import { ExtensionIdentifier } from '../../../../../platform/extensions/common/extensions.js';
@@ -604,13 +603,13 @@ export class ChatSetupContribution extends Disposable implements IWorkbenchContr
 
 	}
 
-	private registerSignInTitleBarEntry(actionViewItemService: IActionViewItemService): void {
-		this._register(actionViewItemService.register(
-			MenuId.TitleBarAdjacentCenter,
-			SIGN_IN_TITLE_BAR_ACTION_ID,
-			(action, options) => new SignInTitleBarEntry(action, options)
-		));
-	}
+	// private registerSignInTitleBarEntry(actionViewItemService: IActionViewItemService): void {
+	// 	this._register(actionViewItemService.register(
+	// 		MenuId.TitleBarAdjacentCenter,
+	// 		SIGN_IN_TITLE_BAR_ACTION_ID,
+	// 		(action, options) => new SignInTitleBarEntry(action, options)
+	// 	));
+	// }
 
 	private registerUrlLinkHandler(): void {
 		this._register(ExtensionUrlHandlerOverrideRegistry.registerHandler(this.instantiationService.createInstance(ChatSetupExtensionUrlHandler)));
@@ -836,44 +835,8 @@ export function refreshTokens(commandService: ICommandService): void {
 	commandService.executeCommand(defaultChat.chatRefreshTokenCommand);
 }
 
-/**
- * Custom action view item that renders a "Sign In" button
- * in the title bar with prominent button styling.
- */
+/*
 class SignInTitleBarEntry extends BaseActionViewItem {
-
-	private label: HTMLElement | undefined;
-
-	constructor(
-		action: IAction,
-		options: IBaseActionViewItemOptions,
-	) {
-		super(undefined, action, options);
-	}
-
-	public override render(container: HTMLElement) {
-		super.render(container);
-
-		container.setAttribute('role', 'button');
-		container.setAttribute('aria-label', this.action.label);
-
-		const content = dom.append(container, dom.$('.update-indicator.prominent'));
-		this.label = dom.append(content, dom.$('.indicator-label'));
-		this.label.textContent = this.action.label;
-	}
-
-	protected override updateLabel(): void {
-		if (this.label) {
-			this.label.textContent = this.action.label;
-		}
-		if (this.element) {
-			this.element.setAttribute('aria-label', this.action.label);
-		}
-	}
-
-	protected override updateEnabled(): void {
-		if (this.element) {
-			this.element.classList.toggle('disabled', !this.action.enabled);
-		}
-	}
+	...
 }
+*/

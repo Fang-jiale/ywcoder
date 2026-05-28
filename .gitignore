@@ -46,3 +46,9 @@ test-results.xml
 
 # TypeScript
 *.tsbuildinfo
+
+# Temporary archives
+dcywzc-ywcoder-*.tgz
+
+# Generated docs
+docs/configuration-system-manual.md

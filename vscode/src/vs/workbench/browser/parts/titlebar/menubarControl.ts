@@ -133,7 +133,7 @@ export abstract class MenubarControl extends Disposable {
 		for (const mainMenuAction of mainMenuActions) {
 			if (mainMenuAction instanceof SubmenuItemAction && typeof mainMenuAction.item.title !== 'string') {
 				this.menus[mainMenuAction.item.title.original] = this.mainMenuDisposables.add(this.menuService.createMenu(mainMenuAction.item.submenu, this.contextKeyService, { emitEventsForSubmenuChanges: true }));
-				this.topLevelTitles[mainMenuAction.item.title.original] = mainMenuAction.item.title.mnemonicTitle ?? mainMenuAction.item.title.value;
+				this.topLevelTitles[mainMenuAction.item.title.original] = mainMenuAction.item.title.value ?? mainMenuAction.item.title.mnemonicTitle;
 			}
 		}
 	}
@@ -558,10 +558,10 @@ export class CustomMenubarControl extends MenubarControl {
 				if (menuItem instanceof Separator) {
 					target.push(menuItem);
 				} else if (menuItem instanceof SubmenuItemAction || menuItem instanceof MenuItemAction) {
-					// use mnemonicTitle whenever possible
+					// prefer hardcoded value for Chinese localization
 					let title = typeof menuItem.item.title === 'string'
 						? menuItem.item.title
-						: menuItem.item.title.mnemonicTitle ?? menuItem.item.title.value;
+						: menuItem.item.title.value ?? menuItem.item.title.mnemonicTitle;
 
 					if (menuItem instanceof SubmenuItemAction) {
 						const submenuActions: SubmenuAction[] = [];
@@ -572,7 +572,7 @@ export class CustomMenubarControl extends MenubarControl {
 						}
 					} else {
 						if (isICommandActionToggleInfo(menuItem.item.toggled)) {
-							title = menuItem.item.toggled.mnemonicTitle ?? menuItem.item.toggled.title ?? title;
+							title = menuItem.item.toggled.title ?? menuItem.item.toggled.mnemonicTitle ?? title;
 						}
 
 						const newAction = store.add(new Action(menuItem.id, mnemonicMenuLabel(title), menuItem.class, menuItem.enabled, () => this.commandService.executeCommand(menuItem.id)));
@@ -648,7 +648,7 @@ export class CustomMenubarControl extends MenubarControl {
 				if (action instanceof MenuItemAction) {
 					const title = typeof action.item.title === 'string'
 						? action.item.title
-						: action.item.title.mnemonicTitle ?? action.item.title.value;
+						: action.item.title.value ?? action.item.title.mnemonicTitle;
 					webNavigationActions.push(toAction({
 						id: action.id, label: mnemonicMenuLabel(title), class: action.class, enabled: action.enabled, run: async (event?: unknown) => {
 							this.commandService.executeCommand(action.id, event);
