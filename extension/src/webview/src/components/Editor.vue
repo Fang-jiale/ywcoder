@@ -38,6 +38,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, type CSSProperties } from 'vue'
+import { t } from '../locales'
 
 interface Props {
   modelValue: string
@@ -55,7 +56,7 @@ interface Emits {
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: '',
-  placeholder: 'Plan, search, build anything',
+  placeholder: t('chat.inputPlaceholder'),
   readonly: false
 })
 

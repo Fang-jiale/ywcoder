@@ -129,7 +129,7 @@
               </DropdownItem>
             </template>
           </template>
-          <div v-else class="px-2 py-1 text-xs opacity-60">No matches</div>
+          <div v-else class="px-2 py-1 text-xs opacity-60">{{ t('common.noMatches') }}</div>
         </div>
       </template>
     </Dropdown>
@@ -147,6 +147,7 @@ import { RuntimeKey } from '../composables/runtimeContext'
 import { useCompletionDropdown } from '../composables/useCompletionDropdown'
 import { getSlashCommands, commandToDropdownItem } from '../providers/slashCommandProvider'
 import { getFileReferences, fileToDropdownItem } from '../providers/fileReferenceProvider'
+import { t } from '../locales'
 
 interface Props {
   showProgress?: boolean
@@ -179,7 +180,7 @@ const props = withDefaults(defineProps<Props>(), {
   showProgress: true,
   progressPercentage: 48.7,
   contextTooltip: '',
-  placeholder: 'Plan, @ for context, / for commands...',
+  placeholder: t('chat.inputPlaceholder'),
   readonly: false,
   showSearch: false,
   selectedModel: 'default',

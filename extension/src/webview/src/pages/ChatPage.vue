@@ -109,6 +109,7 @@
   import { useKeybinding } from '../utils/useKeybinding';
   import { useSignal } from '@gn8/alien-signals-vue';
   import type { PermissionMode } from '@anthropic-ai/claude-agent-sdk';
+  import { t } from '../locales';
 
   const runtime = inject(RuntimeKey);
   if (!runtime) throw new Error('[ChatPage] runtime not provided');
@@ -140,7 +141,7 @@
   });
 
   // 现在所有访问都使用 Vue Ref（.value）
-  const title = computed(() => session.value?.summary.value || 'New Conversation');
+  const title = computed(() => session.value?.summary.value || t('chat.newConversation'));
   const messages = computed<any[]>(() => session.value?.messages.value ?? []);
   const isBusy = computed(() => session.value?.busy.value ?? false);
   const permissionMode = computed(
