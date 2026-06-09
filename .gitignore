@@ -14,10 +14,16 @@ YwCoder*.zip
 VSCode-win32-x64.zip
 vscode/VSCode-win32-x64-node.zip
 .build/
+YwCoder-linux-arm64
+YwCoder-linux-arm64-portable.tar.gz
+ywcoder-linux-arm64.tar.gz
 
 # Release archives
 release/
 release*.zip
+ywcoder-pubkey.asc
+ywcoder_*_arm64-*.deb
+dcywzc-ywcoder-*.tgz
 
 # Bundled runtimes
 node22/

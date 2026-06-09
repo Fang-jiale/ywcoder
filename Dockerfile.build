@@ -1,0 +1,19 @@
+FROM --platform=linux/arm64 node:22-bookworm
+
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    make \
+    g++ \
+    gcc \
+    git \
+    curl \
+    fakeroot \
+    dpkg-dev \
+    libx11-dev \
+    libxkbfile-dev \
+    libsecret-1-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /workspace
+CMD ["/bin/bash"]

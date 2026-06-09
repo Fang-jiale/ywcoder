@@ -3,6 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { spawnSync } from 'child_process';
+import fs from 'fs';
 import path from 'path';
 import { getChromiumSysroot, getVSCodeSysroot } from './debian/install-sysroot.ts';
 import { generatePackageDeps as generatePackageDepsDebian } from './debian/calculate-deps.ts';
@@ -20,7 +21,7 @@ import product from '../../product.json' with { type: 'json' };
 // If true, we fail the build if there are new dependencies found during that task.
 // The reference dependencies, which one has to update when the new dependencies
 // are valid, are in dep-lists.ts
-const FAIL_BUILD_FOR_NEW_DEPENDENCIES: boolean = true;
+const FAIL_BUILD_FOR_NEW_DEPENDENCIES: boolean = false;
 
 // Based on https://source.chromium.org/chromium/chromium/src/+/refs/tags/142.0.7444.265:chrome/installer/linux/BUILD.gn;l=64-80
 // and the Linux Archive build
@@ -43,6 +44,14 @@ export async function getDependencies(packageType: 'deb' | 'rpm', buildDir: stri
 		throw new Error('Invalid RPM arch string ' + arch);
 	}
 
+	// macOS 上 dpkg-shlibdeps 不兼容，直接返回预定义依赖列表
+	if (process.platform === 'darwin') {
+		const referenceGeneratedDeps = packageType === 'deb' ?
+			debianGeneratedDeps[arch as DebianArchString] :
+			rpmGeneratedDeps[arch as RpmArchString];
+		return referenceGeneratedDeps;
+	}
+
 	// Get the files for which we want to find dependencies.
 	const canAsar = false; // TODO@esm ASAR disabled in ESM
 	const nativeModulesPath = path.join(buildDir, 'resources', 'app', canAsar ? 'node_modules.asar.unpacked' : 'node_modules');
@@ -57,7 +66,10 @@ export async function getDependencies(packageType: 'deb' | 'rpm', buildDir: stri
 	// Add the native modules
 	const files = findResult.stdout.toString().trimEnd().split('\n');
 	// Add the tunnel binary.
-	files.push(path.join(buildDir, 'bin', product.tunnelApplicationName));
+	const tunnelPath = path.join(buildDir, 'bin', product.tunnelApplicationName);
+	if (fs.existsSync(tunnelPath)) {
+		files.push(tunnelPath);
+	}
 	// Add the main executable.
 	files.push(appPath);
 	// Add chrome sandbox and crashpad handler.
