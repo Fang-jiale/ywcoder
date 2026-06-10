@@ -452,8 +452,7 @@ function packageTask(platform: string, arch: string, sourceFolderName: string, d
 				'**/*.wasm',
 				'**/@vscode/vsce-sign/bin/*',
 			], [
-				'**/*.mk',
-				'!node_modules/vsda/**' // stay compatible with extensions that depend on us shipping `vsda` into ASAR
+				'**/*.mk'
 			], [
 				'node_modules/vsda/**' // retain copy of `vsda` in node_modules for internal use
 			], 'node_modules.asar'));
