@@ -7,13 +7,14 @@
       class="image-content"
       @error="handleError"
     />
-    <div v-else class="image-placeholder">Image failed to load</div>
+    <div v-else class="image-placeholder">{{ t('common.imageLoadFailed') }}</div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import type { ImageBlock as ImageBlockType } from '../../../models/ContentBlock';
+import { t } from '../../../locales';
 
 interface Props {
   block: ImageBlockType;
@@ -30,7 +31,7 @@ const imageSrc = computed(() => {
   return `data:${source.media_type};base64,${source.data}`;
 });
 
-const imageAlt = computed(() => 'Image');
+const imageAlt = computed(() => t('common.image'));
 
 function handleError() {
   loadError.value = true;
