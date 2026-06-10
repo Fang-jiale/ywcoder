@@ -47,6 +47,8 @@ const options = {
 	nls: process.argv.includes('--nls'),
 	manglePrivates: process.argv.includes('--mangle-privates'),
 	excludeTests: process.argv.includes('--exclude-tests'),
+	noClean: process.argv.includes('--no-clean'),
+	webOnly: process.argv.includes('--web-only'),
 	out: getArgValue('--out'),
 	target: getArgValue('--target') ?? 'desktop', // 'desktop' | 'server' | 'server-web' | 'web'
 	sourceMapBaseUrl: getArgValue('--source-map-base-url'),
@@ -768,8 +770,10 @@ async function transpile(outDir: string, excludeTests: boolean): Promise<void> {
 // Bundle (Goal 2: JS → bundled JS)
 // ============================================================================
 
-async function bundle(outDir: string, doMinify: boolean, doNls: boolean, doManglePrivates: boolean, target: BuildTarget, sourceMapBaseUrl?: string): Promise<void> {
-	await cleanDir(outDir);
+async function bundle(outDir: string, doMinify: boolean, doNls: boolean, doManglePrivates: boolean, target: BuildTarget, sourceMapBaseUrl?: string, noClean?: boolean, webOnly?: boolean): Promise<void> {
+	if (!noClean) {
+		await cleanDir(outDir);
+	}
 
 	// Write build date file (used by packaging to embed in product.json).
 	// Reuse the date from out-build/date if it exists (written by the gulp
@@ -826,6 +830,12 @@ ${tslib}`,
 
 	// Bundle each entry point directly from TypeScript source
 	await Promise.all(allEntryPoints.map(async (entryPoint) => {
+		// Skip server entry points when bundling web-only
+		const isServerEntryPoint = serverEntryPoints.includes(entryPoint);
+		if (webOnly && isServerEntryPoint) {
+			return;
+		}
+
 		const entryPath = path.join(REPO_ROOT, SRC_DIR, `${entryPoint}.ts`);
 		const outPath = path.join(REPO_ROOT, outDir, `${entryPoint}.js`);
 
@@ -833,7 +843,8 @@ ${tslib}`,
 		const plugins: esbuild.Plugin[] = bundleCssEntryPoints.has(entryPoint) ? [] : [cssExternalPlugin()];
 		// Add content mapper plugin to inject product config and builtin extensions
 		plugins.push(contentMapperPlugin);
-		if (doNls) {
+		// Skip NLS for server entry points - server code runs in Node.js and doesn't load NLS messages
+		if (doNls && !isServerEntryPoint) {
 			plugins.unshift(nlsPlugin({
 				baseDir: path.join(REPO_ROOT, SRC_DIR),
 				collector: nlsCollector,
@@ -884,6 +895,12 @@ ${tslib}`,
 
 	// Bundle bootstrap files (with minimist inlined) directly from TypeScript source
 	for (const entry of bootstrapEntryPoints) {
+		// Skip server bootstrap files when bundling web-only
+		const isServerBootstrap = target === 'server' || target === 'server-web' ? bootstrapEntryPointsServer.includes(entry) : false;
+		if (webOnly && isServerBootstrap) {
+			continue;
+		}
+
 		const entryPath = path.join(REPO_ROOT, SRC_DIR, `${entry}.ts`);
 		if (!fs.existsSync(entryPath)) {
 			console.log(`[bundle] Skipping ${entry} (not found)`);
@@ -893,7 +910,8 @@ ${tslib}`,
 		const outPath = path.join(REPO_ROOT, outDir, `${entry}.js`);
 
 		const bootstrapPlugins: esbuild.Plugin[] = [inlineMinimistPlugin(), contentMapperPlugin];
-		if (doNls) {
+		// Skip NLS for server bootstrap files - server code runs in Node.js and doesn't load NLS messages
+		if (doNls && !isServerBootstrap) {
 			bootstrapPlugins.unshift(nlsPlugin({
 				baseDir: path.join(REPO_ROOT, SRC_DIR),
 				collector: nlsCollector,
@@ -1244,7 +1262,7 @@ async function main(): Promise<void> {
 				break;
 
 			case 'bundle':
-				await bundle(options.out ?? OUT_VSCODE_DIR, options.minify, options.nls, options.manglePrivates, options.target as BuildTarget, options.sourceMapBaseUrl);
+				await bundle(options.out ?? OUT_VSCODE_DIR, options.minify, options.nls, options.manglePrivates, options.target as BuildTarget, options.sourceMapBaseUrl, options.noClean, options.webOnly);
 				break;
 
 			default:

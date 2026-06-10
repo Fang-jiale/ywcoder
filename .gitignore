@@ -58,3 +58,6 @@ dcywzc-ywcoder-*.tgz
 
 # Generated docs
 docs/configuration-system-manual.md
+
+# Web extension build output
+vscode/extensions/ywcoder/extension/
