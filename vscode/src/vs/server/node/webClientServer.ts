@@ -387,16 +387,25 @@ export class WebClientServer {
 			folderUri: resolveWorkspaceURI(this._environmentService.args['default-folder']),
 			workspaceUri: resolveWorkspaceURI(this._environmentService.args['default-workspace']),
 			productConfiguration,
-			callbackRoute: callbackRoute
+			callbackRoute: callbackRoute,
+			webviewEndpoint: `${staticRoute}/out/vs/workbench/contrib/webview/browser/pre/`,
+			configurationDefaults: {
+				'workbench.locale': 'zh-cn'
+			}
 		};
 
 		const cookies = cookie.parse(req.headers.cookie || '');
-		const locale = cookies['vscode.nls.locale'] || req.headers['accept-language']?.split(',')[0]?.toLowerCase() || 'en';
+		// [YwCoder] Force zh-cn locale for web build
+		const locale = cookies['ywcoder.nls.locale'] || 'zh-cn';
 		let WORKBENCH_NLS_BASE_URL: string | undefined;
 		let WORKBENCH_NLS_URL: string;
-		if (!locale.startsWith('en') && this._productService.nlsCoreBaseUrl) {
+		// [YwCoder] Cache-busting version for NLS files
+		const nlsVersion = 'v2';
+		if (locale.startsWith('zh')) {
+			WORKBENCH_NLS_URL = `${staticRoute}/out/nls.messages.zh-cn.js?${nlsVersion}`;
+		} else if (!locale.startsWith('en') && this._productService.nlsCoreBaseUrl) {
 			WORKBENCH_NLS_BASE_URL = this._productService.nlsCoreBaseUrl;
-			WORKBENCH_NLS_URL = `${WORKBENCH_NLS_BASE_URL}${this._productService.commit}/${this._productService.version}/${locale}/nls.messages.js`;
+			WORKBENCH_NLS_URL = `${WORKBENCH_NLS_BASE_URL}${this._productService.commit}/${this._productService.version}/${locale}/nls.messages.js?${nlsVersion}`;
 		} else {
 			WORKBENCH_NLS_URL = ''; // fallback will apply
 		}
@@ -406,7 +415,7 @@ export class WebClientServer {
 			WORKBENCH_AUTH_SESSION: authSessionInfo ? asJSON(authSessionInfo) : '',
 			WORKBENCH_WEB_BASE_URL: staticRoute,
 			WORKBENCH_NLS_URL,
-			WORKBENCH_NLS_FALLBACK_URL: `${staticRoute}/out/nls.messages.js`
+			WORKBENCH_NLS_FALLBACK_URL: `${staticRoute}/out/nls.messages.zh-cn.js?${nlsVersion}`
 		};
 
 		// DEV ---------------------------------------------------------------------------------------
