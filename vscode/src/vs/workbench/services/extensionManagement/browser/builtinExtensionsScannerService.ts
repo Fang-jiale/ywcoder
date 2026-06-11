@@ -54,9 +54,10 @@ export class BuiltinExtensionsScannerService implements IBuiltinExtensionsScanne
 				if (environmentService.isBuilt) {
 					// Built time configuration (do NOT modify)
 					bundledExtensions = [/*BUILD->INSERT_BUILTIN_EXTENSIONS*/];
-				} else {
-					// Find builtin extensions by checking for DOM
-					// eslint-disable-next-line no-restricted-syntax
+				}
+				// Fallback: find builtin extensions by checking for DOM
+				// eslint-disable-next-line no-restricted-syntax
+				if (!bundledExtensions.length) {
 					const builtinExtensionsElement = mainWindow.document.getElementById('vscode-workbench-builtin-extensions');
 					const builtinExtensionsElementAttribute = builtinExtensionsElement ? builtinExtensionsElement.getAttribute('data-settings') : undefined;
 					if (builtinExtensionsElementAttribute) {

@@ -18,6 +18,7 @@ coverage/
 test_data/
 test-results/
 test-results.xml
+node22.exe
 vscode.lsif
 vscode.db
 /.profile-oss

@@ -67,6 +67,8 @@ else {
 			applicationName: 'ywcoder',
 			dataFolderName: '.ywcoder',
 			urlProtocol: 'ywcoder',
+			quality: 'ywcoder',
+			commit: '5c36ee73',
 			reportIssueUrl: 'https://github.com/yourcompany/ywcoder/issues/new',
 			licenseName: 'AGPL-3.0',
 			licenseUrl: 'https://github.com/yourcompany/ywcoder/blob/main/LICENSE',
@@ -78,6 +80,10 @@ else {
 					default: {
 						id: 'ywcoder',
 						name: 'YwCoder',
+					},
+					enterprise: {
+						id: 'ywcoder-enterprise',
+						name: 'YwCoder Enterprise',
 					}
 				},
 				providerScopes: []

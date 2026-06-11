@@ -141,6 +141,11 @@ class RemoteExtensionHostAgentServer extends Disposable implements IServerAPI {
 			return void res.end('OK');
 		}
 
+		// Allow static resources without connection token (needed for webview iframes on subdomains)
+		if (pathname.startsWith('/static/') && this._webClientServer) {
+			return this._webClientServer.handle(req, res, parsedUrl, pathname);
+		}
+
 		if (!httpRequestHasValidConnectionToken(this._connectionToken, req, parsedUrl)) {
 			// invalid connection token
 			return serveError(req, res, 403, `Forbidden.`);

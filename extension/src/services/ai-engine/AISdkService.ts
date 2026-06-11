@@ -579,7 +579,7 @@ export class AISdkService implements IAISdkService {
             }
         }
 
-        // 2. 优先查找系统全局 npm 安装的 @dcywzc/ywcoder
+        // 2. 查找系统全局 npm 安装的 @dcywzc/ywcoder（优先使用最新版）
         const systemCliPath = await this.findSystemYwcoderPath();
         if (systemCliPath) {
             return systemCliPath;
@@ -613,9 +613,15 @@ export class AISdkService implements IAISdkService {
     private async findSystemYwcoderPath(): Promise<string | undefined> {
         const candidates: string[] = [];
 
-        // 通过 npm 获取全局根目录
+        // 通过 npm 获取全局根目录（异步 + 超时，避免阻塞扩展主机）
         try {
-            const globalRoot = cp.execSync('npm root -g', { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
+            const globalRoot = await new Promise<string>((resolve, reject) => {
+                const child = cp.exec('npm root -g', { encoding: 'utf8', timeout: 3000 }, (err, stdout) => {
+                    if (err) reject(err);
+                    else resolve(stdout.trim());
+                });
+                child.stderr?.resume();
+            });
             candidates.push(path.join(globalRoot, '@dcywzc', 'ywcoder', 'dist', 'cli.mjs'));
         } catch {
             // ignore
