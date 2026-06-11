@@ -174,7 +174,23 @@ export class WebClientServer {
 		// Strip the this._staticRoute from the path
 		const normalizedPathname = decodeURIComponent(resourcePath); // support paths that are uri-encoded (e.g. spaces => %20)
 
-		const filePath = join(APP_ROOT, normalizedPathname); // join also normalizes the path
+		let filePath = join(APP_ROOT, normalizedPathname); // join also normalizes the path
+
+		// YwCoder: fallback to out-vscode-web for bundled web assets
+		try {
+			await promises.access(filePath);
+		} catch {
+			if (normalizedPathname.startsWith('/out/')) {
+				const fallbackPath = join(APP_ROOT, normalizedPathname.replace(/^\/out\//, '/out-vscode-web/'));
+				try {
+					await promises.access(fallbackPath);
+					filePath = fallbackPath;
+				} catch {
+					// fallback not available, keep original filePath
+				}
+			}
+		}
+
 		if (!isEqualOrParent(filePath, APP_ROOT, !isLinux)) {
 			return serveError(req, res, 400, `Bad request.`);
 		}
