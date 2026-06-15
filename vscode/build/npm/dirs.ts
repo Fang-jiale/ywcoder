@@ -15,14 +15,12 @@ export const dirs = [
 	'build/vite',
 	'extensions',
 	'extensions/configuration-editing',
-	'extensions/copilot',
 	'extensions/css-language-features',
 	'extensions/css-language-features/server',
 	'extensions/debug-auto-launch',
 	'extensions/debug-server-ready',
 	'extensions/emmet',
 	'extensions/extension-editing',
-	'extensions/git',
 	'extensions/git-base',
 	'extensions/github',
 	'extensions/github-authentication',
@@ -62,7 +60,7 @@ export const dirs = [
 	'.vscode/extensions/vscode-selfhost-import-aid',
 	'.vscode/extensions/vscode-selfhost-test-provider',
 	'.vscode/extensions/vscode-extras',
-];
+].filter(d => d === '' || existsSync(`${import.meta.dirname}/../../${d}`));
 
 if (existsSync(`${import.meta.dirname}/../../.build/distro/npm`)) {
 	dirs.push('.build/distro/npm');
