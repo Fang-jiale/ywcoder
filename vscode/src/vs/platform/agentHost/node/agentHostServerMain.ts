@@ -183,15 +183,8 @@ async function main(): Promise<void> {
 		// Copilot agent removed — no built-in agent provider registered
 	}
 
-	if (options.enableMockAgent) {
-		// Dynamic import to avoid bundling test code in production
-		import('../test/node/mockAgent.js').then(({ ScriptedMockAgent }) => {
-			const mockAgent = disposables.add(new ScriptedMockAgent());
-			agentService.registerProvider(mockAgent);
-		}).catch(err => {
-			logService.error('[AgentHostServer] Failed to load mock agent', err);
-		});
-	}
+	// Mock agent disabled: test directory removed due to broken/missing dependencies
+	// if (options.enableMockAgent) { ... }
 
 	// WebSocket server
 	const wsServer = disposables.add(await WebSocketProtocolServer.create({
