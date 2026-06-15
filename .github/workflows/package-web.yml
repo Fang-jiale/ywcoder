@@ -7,17 +7,8 @@ on:
       - 'v*'
 
 jobs:
-  package-linux:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - arch: x64
-            runner: ubuntu-latest
-          - arch: arm64
-            runner: ubuntu-24.04-arm
-
-    runs-on: ${{ matrix.runner }}
+  package-linux-x64:
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: vscode
@@ -48,24 +39,24 @@ jobs:
         run: npm run compile
 
       - name: Package deployment bundle
-        run: node scripts/package-web-deployment.mjs --platform linux --arch ${{ matrix.arch }} --download-node
+        run: node scripts/package-web-deployment.mjs --platform linux --arch x64 --download-node
 
       - name: Create distribution archive
-        run: node scripts/archive-web-deployment.mjs --platform linux --arch ${{ matrix.arch }}
+        run: node scripts/archive-web-deployment.mjs --platform linux --arch x64
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ywcoder-web-linux-${{ matrix.arch }}
-          path: vscode/dist/ywcoder-web-linux-${{ matrix.arch }}.tar.gz
+          name: ywcoder-web-linux-x64
+          path: vscode/dist/ywcoder-web-linux-x64.tar.gz
           if-no-files-found: error
 
       - name: Upload build logs on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: build-logs-linux-${{ matrix.arch }}
+          name: build-logs-linux-x64
           path: |
-            vscode/dist/ywcoder-web-linux-${{ matrix.arch }}/server.log
+            vscode/dist/ywcoder-web-linux-x64/server.log
             vscode/npm-debug.log
           if-no-files-found: ignore
