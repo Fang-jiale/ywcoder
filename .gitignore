@@ -24,6 +24,10 @@ release*.zip
 ywcoder-pubkey.asc
 ywcoder_*_arm64-*.deb
 dcywzc-ywcoder-*.tgz
+ywcoder-web-*.tar.gz
+
+# Web server build output
+vscode-reh-web-*/
 
 # Bundled runtimes
 node22/

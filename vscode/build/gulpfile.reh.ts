@@ -469,6 +469,10 @@ function prepareCopilotRipgrepShimTaskREH(platform: string, arch: string, destin
 		const nodeModulesDir = path.join(outputDir, 'node_modules');
 
 		const builtInCopilotExtensionDir = path.join(outputDir, 'extensions', 'copilot');
+		if (!fs.existsSync(builtInCopilotExtensionDir)) {
+			console.log(`[prepareCopilotRipgrepShimTaskREH] Built-in Copilot extension not found at ${builtInCopilotExtensionDir}, skipping ripgrep shim preparation.`);
+			return;
+		}
 		prepareBuiltInCopilotRipgrepShim(platform, arch, builtInCopilotExtensionDir, nodeModulesDir);
 	};
 }
