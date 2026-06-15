@@ -203,6 +203,10 @@ export class Client implements IChannelClient, IDisposable {
 
 			removeDangerousEnvVariables(forkOpts.env);
 
+			if (process.platform === 'win32') {
+				forkOpts.windowsHide = true;
+			}
+
 			this.child = fork(this.modulePath, args, forkOpts);
 
 			const onMessageEmitter = new Emitter<VSBuffer>();

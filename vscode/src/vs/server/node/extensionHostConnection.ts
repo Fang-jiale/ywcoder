@@ -272,7 +272,8 @@ export class ExtensionHostConnection extends Disposable {
 			const opts = {
 				env,
 				execArgv,
-				silent: true
+				silent: true,
+				windowsHide: process.platform === 'win32'
 			};
 
 			// Refs https://github.com/microsoft/vscode/issues/189805
