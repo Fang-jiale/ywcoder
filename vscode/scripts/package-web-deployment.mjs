@@ -33,6 +33,7 @@ function parseArgs() {
 		arch: process.arch,
 		downloadNode: false,
 		skipBuild: false,
+		skipExtensionBuild: false,
 		outDir: join(repoRoot, 'dist')
 	};
 
@@ -46,6 +47,8 @@ function parseArgs() {
 			options.downloadNode = true;
 		} else if (arg === '--skip-build') {
 			options.skipBuild = true;
+		} else if (arg === '--skip-extension-build') {
+			options.skipExtensionBuild = true;
 		} else if (arg === '--out-dir' && i + 1 < args.length) {
 			options.outDir = args[++i];
 		}
@@ -165,6 +168,36 @@ async function buildWebBundle() {
 
 	console.log('[package] Generating Chinese NLS...');
 	await run(process.execPath, ['scripts/generate-nls-zh-cn.mjs'], repoRoot);
+}
+
+async function buildYwcoderExtension() {
+	if (options.skipExtensionBuild) {
+		console.log('[package] Skipping YwCoder extension build (--skip-extension-build)');
+		return;
+	}
+
+	const extensionDir = join(repoRoot, '..', 'extension');
+	if (!existsSync(extensionDir)) {
+		console.log('[package] YwCoder extension source not found, skipping extension build');
+		return;
+	}
+
+	console.log('[package] Building YwCoder extension from source...');
+	if (!existsSync(join(extensionDir, 'node_modules'))) {
+		console.log('[package] Installing extension dependencies...');
+		await run('npm', ['ci'], extensionDir);
+	}
+
+	await run('npm', ['run', 'build'], extensionDir);
+
+	const sourceDist = join(extensionDir, 'dist');
+	const targetDist = join(repoRoot, 'extensions', 'ywcoder', 'dist');
+	console.log(`[package] Copying extension dist to ${targetDist}...`);
+	if (existsSync(targetDist)) {
+		rmSync(targetDist, { recursive: true, force: true });
+	}
+	ensureDir(targetDist);
+	cpSync(sourceDist, targetDist, { recursive: true, dereference: true });
 }
 
 function verifyArtifacts() {
@@ -602,6 +635,7 @@ Then re-run this packaging script.
 
 async function main() {
 	try {
+		await buildYwcoderExtension();
 		await buildWebBundle();
 		verifyArtifacts();
 

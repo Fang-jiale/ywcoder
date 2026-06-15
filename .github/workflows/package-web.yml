@@ -35,6 +35,10 @@ jobs:
       - name: Install server dependencies
         run: npm ci --prefix remote --omit=dev
 
+      - name: Install ywcoder extension dependencies
+        working-directory: extension
+        run: npm ci
+
       - name: Compile server and extensions
         run: npm run compile
 

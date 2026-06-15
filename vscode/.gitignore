@@ -34,9 +34,6 @@ test-output.json
 test/componentFixtures/.screenshots/*
 !test/componentFixtures/.screenshots/baseline/
 dist
-!extensions/ywcoder/dist/
-!extensions/ywcoder/dist/extension.cjs
-!extensions/ywcoder/dist/extension.cjs.map
 .playwright-cli
 .playwright-mcp
 .claude/
