@@ -409,4 +409,4 @@ export class WebClientServer {
 
 		const cookies = cookie.parse(req.headers.cookie || '');
 		// [YwCoder] Force zh-cn locale for web build
-		const locale = cookies['ywcoder.nls.locale'] || 'zh-cn';
+		const locale = cookies['vscode.nls.locale'] || 'zh-cn';
