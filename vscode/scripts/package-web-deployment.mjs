@@ -85,6 +85,9 @@ function syncNativeBinaries(sourceRoot, destRoot) {
 	function walk(dir) {
 		for (const entry of readdirSync(dir, { withFileTypes: true })) {
 			const srcPath = join(dir, entry.name);
+			if (entry.isSymbolicLink()) {
+				continue;
+			}
 			if (entry.isDirectory()) {
 				walk(srcPath);
 			} else if (nativeExts.some(ext => entry.name.toLowerCase().endsWith(ext))) {
@@ -110,6 +113,22 @@ function fileSize(path) {
 	} catch {
 		return 'unknown';
 	}
+}
+
+function makeCopyFilter(sourceRoot, { skipTests = false, skipBin = true } = {}) {
+	return src => {
+		const relative = src.slice(sourceRoot.length + 1).replace(/\\/g, '/');
+		if (relative.endsWith('.map')) { return false; }
+		if (skipTests && (relative.includes('/test/') || relative.includes('/tests/'))) { return false; }
+		if (skipBin && (relative.includes('/.bin/') || relative.startsWith('.bin/'))) { return false; }
+		try {
+			statSync(src);
+		} catch {
+			console.log(`[package] Skipping broken symlink: ${src}`);
+			return false;
+		}
+		return true;
+	};
 }
 
 function run(command, args, cwd) {
@@ -224,19 +243,21 @@ async function packageForPlatform(platform, arch) {
 	ensureDir(destDir);
 
 	// Server code
+	const outSource = join(repoRoot, 'out');
 	console.log('[package] Copying server code (out/)...');
-	cpSync(join(repoRoot, 'out'), join(destDir, 'out'), {
+	cpSync(outSource, join(destDir, 'out'), {
 		recursive: true,
 		dereference: true,
-		filter: src => !src.endsWith('.map')
+		filter: makeCopyFilter(outSource)
 	});
 
 	// Web bundle
+	const outVscodeWebSource = join(repoRoot, 'out-vscode-web');
 	console.log('[package] Copying web bundle (out-vscode-web/)...');
-	cpSync(join(repoRoot, 'out-vscode-web'), join(destDir, 'out-vscode-web'), {
+	cpSync(outVscodeWebSource, join(destDir, 'out-vscode-web'), {
 		recursive: true,
 		dereference: true,
-		filter: src => !src.endsWith('.map')
+		filter: makeCopyFilter(outVscodeWebSource)
 	});
 
 	// Builtin extensions: prefer bundled .build/extensions if available
@@ -247,22 +268,7 @@ async function packageForPlatform(platform, arch) {
 	cpSync(extensionsSource, join(destDir, 'extensions'), {
 		recursive: true,
 		dereference: true,
-		filter: src => {
-			const relative = src.slice(extensionsSource.length + 1).replace(/\\/g, '/');
-			// Skip source maps and test files
-			if (relative.endsWith('.map')) { return false; }
-			if (relative.includes('/test/') || relative.includes('/tests/')) { return false; }
-			// Skip .bin symlinks which may be broken and are not needed at runtime
-			if (relative.includes('/node_modules/.bin/')) { return false; }
-			// Skip broken symlinks to avoid cpSync ENOENT errors
-			try {
-				statSync(src);
-			} catch {
-				console.log(`[package] Skipping broken symlink: ${src}`);
-				return false;
-			}
-			return true;
-		}
+		filter: makeCopyFilter(extensionsSource, { skipTests: true })
 	});
 
 	// Product and package metadata
@@ -276,9 +282,14 @@ async function packageForPlatform(platform, arch) {
 
 	// Node modules
 	const isHostMatch = process.platform === platform && process.arch === arch;
-	if (isHostMatch && existsSync(join(repoRoot, 'remote', 'node_modules'))) {
+	const remoteNodeModulesSource = join(repoRoot, 'remote', 'node_modules');
+	if (isHostMatch && existsSync(remoteNodeModulesSource)) {
 		console.log('[package] Copying production node_modules (remote/node_modules)...');
-		cpSync(join(repoRoot, 'remote', 'node_modules'), join(destDir, 'node_modules'), { recursive: true, dereference: true });
+		cpSync(remoteNodeModulesSource, join(destDir, 'node_modules'), {
+			recursive: true,
+			dereference: true,
+			filter: makeCopyFilter(remoteNodeModulesSource)
+		});
 
 		// remote/node_modules may be missing prebuilt native binaries; fill gaps from root node_modules
 		if (existsSync(join(repoRoot, 'node_modules'))) {
