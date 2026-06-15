@@ -26,6 +26,7 @@ function parseArgs() {
 	const args = process.argv.slice(2);
 	const options = {
 		platform: 'all',
+		arch: 'x64',
 		outDir: join(repoRoot, 'dist')
 	};
 
@@ -33,6 +34,8 @@ function parseArgs() {
 		const arg = args[i];
 		if (arg === '--platform' && i + 1 < args.length) {
 			options.platform = args[++i];
+		} else if (arg === '--arch' && i + 1 < args.length) {
+			options.arch = args[++i];
 		} else if (arg === '--out-dir' && i + 1 < args.length) {
 			options.outDir = args[++i];
 		}
@@ -43,6 +46,7 @@ function parseArgs() {
 
 const options = parseArgs();
 const platforms = options.platform === 'all' ? ['win32', 'linux'] : [options.platform];
+const arch = options.arch;
 
 function run(command, args, cwd) {
 	return new Promise((resolve, reject) => {
@@ -70,9 +74,9 @@ function canRun(command) {
 }
 
 async function archiveWin32() {
-	const sourceDir = join(options.outDir, 'ywcoder-web-win32-x64');
-	const zipPath = join(options.outDir, 'ywcoder-web-win32-x64.zip');
-	const tarPath = join(options.outDir, 'ywcoder-web-win32-x64.tar.gz');
+	const sourceDir = join(options.outDir, `ywcoder-web-win32-${arch}`);
+	const zipPath = join(options.outDir, `ywcoder-web-win32-${arch}.zip`);
+	const tarPath = join(options.outDir, `ywcoder-web-win32-${arch}.tar.gz`);
 
 	if (!existsSync(sourceDir)) {
 		throw new Error(`Source directory not found: ${sourceDir}`);
@@ -125,8 +129,8 @@ print('Created', output)
 }
 
 async function archiveLinux() {
-	const sourceDir = join(options.outDir, 'ywcoder-web-linux-x64');
-	const tarPath = join(options.outDir, 'ywcoder-web-linux-x64.tar.gz');
+	const sourceDir = join(options.outDir, `ywcoder-web-linux-${arch}`);
+	const tarPath = join(options.outDir, `ywcoder-web-linux-${arch}.tar.gz`);
 
 	if (!existsSync(sourceDir)) {
 		throw new Error(`Source directory not found: ${sourceDir}`);

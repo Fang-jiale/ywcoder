@@ -30,6 +30,7 @@ function parseArgs() {
 	const args = process.argv.slice(2);
 	const options = {
 		platform: process.platform === 'win32' ? 'win32' : 'linux',
+		arch: process.arch,
 		downloadNode: false,
 		skipBuild: false,
 		outDir: join(repoRoot, 'dist')
@@ -39,6 +40,8 @@ function parseArgs() {
 		const arg = args[i];
 		if (arg === '--platform' && i + 1 < args.length) {
 			options.platform = args[++i];
+		} else if (arg === '--arch' && i + 1 < args.length) {
+			options.arch = args[++i];
 		} else if (arg === '--download-node') {
 			options.downloadNode = true;
 		} else if (arg === '--skip-build') {
@@ -52,7 +55,10 @@ function parseArgs() {
 }
 
 const options = parseArgs();
-const platforms = options.platform === 'all' ? ['win32', 'linux'] : [options.platform];
+const platforms = options.platform === 'all'
+	? ['win32', 'linux']
+	: [options.platform];
+const archs = [options.arch];
 
 const NODE_VERSION = '22.22.1';
 const NODE_BASE_URL = 'https://nodejs.org/dist';
@@ -205,8 +211,7 @@ async function downloadNode(platform, arch, destDir) {
 	}
 }
 
-async function packageForPlatform(platform) {
-	const arch = 'x64';
+async function packageForPlatform(platform, arch) {
 	const folderName = `ywcoder-web-${platform}-${arch}`;
 	const destDir = join(options.outDir, folderName);
 
@@ -261,7 +266,7 @@ async function packageForPlatform(platform) {
 	}
 
 	// Node modules
-	const isHostMatch = process.platform === platform;
+	const isHostMatch = process.platform === platform && process.arch === arch;
 	if (isHostMatch && existsSync(join(repoRoot, 'remote', 'node_modules'))) {
 		console.log('[package] Copying production node_modules (remote/node_modules)...');
 		cpSync(join(repoRoot, 'remote', 'node_modules'), join(destDir, 'node_modules'), { recursive: true, dereference: true });
@@ -583,7 +588,9 @@ async function main() {
 		ensureDir(options.outDir);
 
 		for (const platform of platforms) {
-			await packageForPlatform(platform);
+			for (const arch of archs) {
+				await packageForPlatform(platform, arch);
+			}
 		}
 
 		console.log('\n[package] All packages created successfully.');

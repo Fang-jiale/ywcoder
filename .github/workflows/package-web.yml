@@ -1,0 +1,66 @@
+name: Package YwCoder Web
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  package-linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+
+    runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        working-directory: vscode
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.1'
+          cache: 'npm'
+          cache-dependency-path: vscode/package-lock.json
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install server dependencies
+        run: npm ci --prefix remote --omit=dev
+
+      - name: Compile server and extensions
+        run: npm run compile
+
+      - name: Package deployment bundle
+        run: node scripts/package-web-deployment.mjs --platform linux --arch ${{ matrix.arch }} --download-node
+
+      - name: Create distribution archive
+        run: node scripts/archive-web-deployment.mjs --platform linux --arch ${{ matrix.arch }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ywcoder-web-linux-${{ matrix.arch }}
+          path: vscode/dist/ywcoder-web-linux-${{ matrix.arch }}.tar.gz
+          if-no-files-found: error
+
+      - name: Upload build logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-linux-${{ matrix.arch }}
+          path: |
+            vscode/dist/ywcoder-web-linux-${{ matrix.arch }}/server.log
+            vscode/npm-debug.log
+          if-no-files-found: ignore
