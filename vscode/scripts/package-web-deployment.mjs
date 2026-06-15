@@ -252,6 +252,15 @@ async function packageForPlatform(platform, arch) {
 			// Skip source maps and test files
 			if (relative.endsWith('.map')) { return false; }
 			if (relative.includes('/test/') || relative.includes('/tests/')) { return false; }
+			// Skip .bin symlinks which may be broken and are not needed at runtime
+			if (relative.includes('/node_modules/.bin/')) { return false; }
+			// Skip broken symlinks to avoid cpSync ENOENT errors
+			try {
+				statSync(src);
+			} catch {
+				console.log(`[package] Skipping broken symlink: ${src}`);
+				return false;
+			}
 			return true;
 		}
 	});
