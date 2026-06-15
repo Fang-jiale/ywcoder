@@ -92,7 +92,27 @@ export class FileDialogService extends AbstractFileDialogService implements IFil
 			return super.pickFolderAndOpenSimplified(schema, options);
 		}
 
-		throw new Error(localize('pickFolderAndOpen', "Can't open folders, try adding a folder to the workspace instead."));
+		const activeWindow = getActiveWindow();
+		if (!WebFileSystemAccess.supported(activeWindow)) {
+			return this.showUnsupportedBrowserWarning('open');
+		}
+
+		let folderHandle: FileSystemHandle | undefined;
+		const startIn = Iterable.first(this.fileSystemProvider.directories) ?? 'documents';
+
+		try {
+			folderHandle = await activeWindow.showDirectoryPicker({ ...{ startIn } });
+		} catch (error) {
+			return; // `showDirectoryPicker` will throw an error when the user cancels
+		}
+
+		if (!WebFileSystemAccess.isFileSystemDirectoryHandle(folderHandle)) {
+			return;
+		}
+
+		const uri = await this.fileSystemProvider.registerDirectoryHandle(folderHandle);
+
+		return this.hostService.openWindow([{ folderUri: uri }], { forceNewWindow: options.forceNewWindow, remoteAuthority: options.remoteAuthority });
 	}
 
 	async pickWorkspaceAndOpen(options: IPickAndOpenOptions): Promise<void> {
