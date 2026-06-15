@@ -19,16 +19,19 @@ const repoRoot = join(__dirname, '..');
 
 const keysPath = join(repoRoot, 'out-vscode-web', 'nls.keys.json');
 const i18nPath = join(repoRoot, 'extensions', 'vscode-language-pack-zh-hans', 'translations', 'main.i18n.json');
+const enPath = join(repoRoot, 'out-vscode-web', 'nls.messages.json');
 const outPath = join(repoRoot, 'out-vscode-web', 'nls.messages.zh-cn.js');
 
 const keys = JSON.parse(readFileSync(keysPath, 'utf8'));
 const i18n = JSON.parse(readFileSync(i18nPath, 'utf8'));
+const enMessages = JSON.parse(readFileSync(enPath, 'utf8'));
 const contents = i18n.contents || {};
 
 const messages = [];
 let translatedCount = 0;
 let missingCount = 0;
 
+let index = 0;
 for (const [moduleId, moduleKeys] of keys) {
 	const moduleTranslations = contents[moduleId];
 	for (const key of moduleKeys) {
@@ -37,9 +40,10 @@ for (const [moduleId, moduleKeys] of keys) {
 			messages.push(translation);
 			translatedCount++;
 		} else {
-			messages.push(undefined);
+			messages.push(enMessages[index] ?? undefined);
 			missingCount++;
 		}
+		index++;
 	}
 }
 

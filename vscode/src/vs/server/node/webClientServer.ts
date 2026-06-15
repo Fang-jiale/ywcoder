@@ -176,18 +176,14 @@ export class WebClientServer {
 
 		let filePath = join(APP_ROOT, normalizedPathname); // join also normalizes the path
 
-		// YwCoder: fallback to out-vscode-web for bundled web assets
-		try {
-			await promises.access(filePath);
-		} catch {
-			if (normalizedPathname.startsWith('/out/')) {
-				const fallbackPath = join(APP_ROOT, normalizedPathname.replace(/^\/out\//, '/out-vscode-web/'));
-				try {
-					await promises.access(fallbackPath);
-					filePath = fallbackPath;
-				} catch {
-					// fallback not available, keep original filePath
-				}
+		// YwCoder: prefer out-vscode-web bundle for web assets, fallback to out/
+		if (normalizedPathname.startsWith('/out/')) {
+			const bundlePath = join(APP_ROOT, normalizedPathname.replace(/^\/out\//, '/out-vscode-web/'));
+			try {
+				await promises.access(bundlePath);
+				filePath = bundlePath;
+			} catch {
+				// bundle not available, keep original out/ path
 			}
 		}
 
