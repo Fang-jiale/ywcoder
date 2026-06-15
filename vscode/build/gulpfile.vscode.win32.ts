@@ -8,6 +8,7 @@ import * as fs from 'fs';
 import gulp from 'gulp';
 import * as path from 'path';
 import rcedit from 'rcedit';
+import asar from 'asar';
 import vfs from 'vinyl-fs';
 import pkg from '../package.json' with { type: 'json' };
 import product from '../product.json' with { type: 'json' };
@@ -169,3 +170,50 @@ function updateIcon(executablePath: string): task.CallbackTask {
 
 gulp.task(task.define('vscode-win32-x64-inno-updater', task.series(copyInnoUpdater('x64'), updateIcon(path.join(buildPath('x64'), 'tools', 'inno_updater.exe')))));
 gulp.task(task.define('vscode-win32-arm64-inno-updater', task.series(copyInnoUpdater('arm64'), updateIcon(path.join(buildPath('arm64'), 'tools', 'inno_updater.exe')))));
+
+// Workaround: Electron's ESM resolver cannot load packages from node_modules.asar,
+// so extract the archive into a real node_modules folder on Windows.
+function extractNodeModulesAsarTask(destinationFolderName: string): task.Task {
+	return async () => {
+		const cwd = path.join(path.dirname(repoPath), destinationFolderName);
+		const versionedResourcesFolder = util.getVersionedResourcesFolder('win32', commit!);
+		const appResourcesPath = path.join(cwd, versionedResourcesFolder, 'resources', 'app');
+		const asarPath = path.join(appResourcesPath, 'node_modules.asar');
+		const unpackedPath = path.join(appResourcesPath, 'node_modules.asar.unpacked');
+		const nodeModulesPath = path.join(appResourcesPath, 'node_modules');
+
+		if (!fs.existsSync(asarPath)) {
+			console.log(`[extract-node-modules] ${asarPath} not found, skipping`);
+			return;
+		}
+
+		if (fs.existsSync(nodeModulesPath)) {
+			fs.rmSync(nodeModulesPath, { recursive: true, force: true });
+		}
+
+		console.log(`[extract-node-modules] Extracting ${asarPath} ...`);
+		asar.extractAll(asarPath, nodeModulesPath);
+
+		if (fs.existsSync(unpackedPath)) {
+			console.log(`[extract-node-modules] Merging ${unpackedPath} ...`);
+			fs.cpSync(unpackedPath, nodeModulesPath, { recursive: true, force: true, dereference: true });
+			fs.rmSync(unpackedPath, { recursive: true, force: true });
+		}
+
+		fs.rmSync(asarPath, { force: true });
+		console.log(`[extract-node-modules] Done: ${nodeModulesPath}`);
+	};
+}
+
+if (process.platform === 'win32') {
+	const originalVscode = gulp.task('vscode-win32-x64') as task.Task;
+	if (originalVscode) {
+		gulp.task(task.define('vscode', task.series(originalVscode, extractNodeModulesAsarTask('VSCode-win32-x64'))));
+	}
+
+	const originalVscodeMin = gulp.task('vscode-win32-x64-min') as task.Task;
+	if (originalVscodeMin) {
+		gulp.task(task.define('vscode-min', task.series(originalVscodeMin, extractNodeModulesAsarTask('VSCode-win32-x64-min'))));
+	}
+}
+

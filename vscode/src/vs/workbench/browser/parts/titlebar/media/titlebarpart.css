@@ -279,6 +279,19 @@
 	display: none;
 }
 
+/* YwCoder Logo */
+.monaco-workbench .part.titlebar > .titlebar-container > .titlebar-left > .ywcoder-logo {
+	font-size: 14px;
+	font-weight: bold;
+	font-family: 'SimHei', 'Heiti SC', 'Microsoft YaHei', sans-serif;
+	color: #ff007f;
+	margin-left: 8px;
+	order: 2;
+	z-index: 2500;
+	user-select: none;
+	-webkit-user-select: none;
+}
+
 /* App Icon */
 .monaco-workbench .part.titlebar > .titlebar-container > .titlebar-left > .window-appicon {
 	width: 35px;

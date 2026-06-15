@@ -545,15 +545,26 @@ function packageTask(platform: string, arch: string, sourceFolderName: string, d
 			} : {})
 		};
 
-		let result: NodeJS.ReadWriteStream = all
+		const appFiles = all
 			.pipe(util.skipDirectories())
 			.pipe(util.fixWin32DirectoryPermissions())
 			.pipe(filter(['**', '!**/.github/**'], { dot: true })) // https://github.com/microsoft/vscode/issues/116523
-			.pipe(electron(electronConfig))
+			.pipe(rename(function (path) {
+				path.dirname = 'resources/app' + (path.dirname === '.' ? '' : '/' + path.dirname);
+			}));
+
+		// Use a cached local Electron build when available to avoid re-downloading.
+		const cachedElectronPath = path.join(root, '.build', 'electron');
+		const electronFiles = fs.existsSync(cachedElectronPath)
+			? vfs.src(path.join(cachedElectronPath, '**'), { base: cachedElectronPath, dot: true })
+			: appFiles.pipe(electron(electronConfig));
+
+		let result: NodeJS.ReadWriteStream = es.merge(appFiles, electronFiles)
 			.pipe(filter([
 				'**',
 				'!LICENSE',
 				'!version',
+				'!resources/default_app/**',
 				...(platform === 'darwin' && !isInsiderOrExploration ? ['!**/Contents/Applications', '!**/Contents/Applications/**'] : []),
 				...(platform === 'win32' && !isInsiderOrExploration ? ['!**/electron_proxy.exe'] : []),
 			], { dot: true }));

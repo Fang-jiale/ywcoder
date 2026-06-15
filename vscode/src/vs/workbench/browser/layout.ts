@@ -1104,13 +1104,15 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 			// Restoring views could mean that sidebar already
 			// restored, as such we need to test again
 			await restoreDefaultViewsPromise;
-			if (!this.state.initialization.views.containerToRestore.sideBar) {
-				return;
-			}
 
 			mark('code/willRestoreViewlet');
 
-			await this.openViewContainer(ViewContainerLocation.Sidebar, this.state.initialization.views.containerToRestore.sideBar);
+			if (this.state.initialization.views.containerToRestore.sideBar) {
+				await this.openViewContainer(ViewContainerLocation.Sidebar, this.state.initialization.views.containerToRestore.sideBar);
+			} else {
+				// YwCoder: ensure sidebar is visible by default
+				this.setPartHidden(false, Parts.SIDEBAR_PART);
+			}
 
 			mark('code/didRestoreViewlet');
 		})());
@@ -1138,15 +1140,29 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 			// Restoring views could mean that auxbar already
 			// restored, as such we need to test again
 			await restoreDefaultViewsPromise;
-			if (!this.state.initialization.views.containerToRestore.auxiliaryBar) {
-				return;
-			}
 
 			mark('code/willRestoreAuxiliaryBar');
 
-			await this.openViewContainer(ViewContainerLocation.AuxiliaryBar, this.state.initialization.views.containerToRestore.auxiliaryBar);
+			if (this.state.initialization.views.containerToRestore.auxiliaryBar) {
+				await this.openViewContainer(ViewContainerLocation.AuxiliaryBar, this.state.initialization.views.containerToRestore.auxiliaryBar);
+			}
 
 			mark('code/didRestoreAuxiliaryBar');
+		})());
+
+		// YwCoder: open and focus chat view on startup
+		layoutReadyPromises.push((async () => {
+			await restoreDefaultViewsPromise;
+			await this.extensionService.whenInstalledExtensionsRegistered();
+
+			// Ensure auxiliary bar is visible
+			this.setPartHidden(false, Parts.AUXILIARYBAR_PART);
+
+			// Open ywcoder chat view container and focus
+			await this.paneCompositeService.openPaneComposite('ywcoder-chat-sidebar', ViewContainerLocation.AuxiliaryBar, true);
+
+			// YwCoder: make the chat panel wider by default
+			this.setSize(Parts.AUXILIARYBAR_PART, { width: 500, height: this.getSize(Parts.AUXILIARYBAR_PART).height });
 		})());
 
 		// Restore Zen Mode

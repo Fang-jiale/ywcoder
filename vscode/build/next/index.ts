@@ -26,7 +26,7 @@ const globAsync = promisify(glob);
 // ============================================================================
 
 const REPO_ROOT = path.dirname(path.dirname(import.meta.dirname));
-const commit = getVersion(REPO_ROOT);
+const commit = product.commit ?? getVersion(REPO_ROOT);
 const quality = (product as { quality?: string }).quality;
 const version = (quality && quality !== 'stable') ? `${packageJson.version}-${quality}` : packageJson.version;
 
@@ -181,7 +181,8 @@ function getEntryPointsForTarget(target: BuildTarget): string[] {
 			return [
 				...workerEntryPoints,
 				...webOnlyEntryPoints,
-				'vs/workbench/workbench.web.main.internal', // web workbench only (no browser shell)
+				'vs/workbench/workbench.web.main.internal',
+				'vs/code/browser/workbench/workbench', // browser shell
 				...keyboardMapEntryPoints,
 			];
 		default:
@@ -228,6 +229,7 @@ function getCssBundleEntryPointsForTarget(target: BuildTarget): Set<string> {
 		case 'web':
 			return new Set([
 				'vs/workbench/workbench.web.main.internal',
+				'vs/code/browser/workbench/workbench',
 				'vs/sessions/sessions.web.main.internal',
 			]);
 		default:
