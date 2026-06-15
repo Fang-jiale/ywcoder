@@ -21,6 +21,7 @@ export const dirs = [
 	'extensions/debug-server-ready',
 	'extensions/emmet',
 	'extensions/extension-editing',
+	'extensions/git',
 	'extensions/git-base',
 	'extensions/github',
 	'extensions/github-authentication',
