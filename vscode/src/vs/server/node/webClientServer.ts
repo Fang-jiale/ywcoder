@@ -415,9 +415,14 @@ export class WebClientServer {
 		const locale = cookies['ywcoder.nls.locale'] || 'zh-cn';
 		let WORKBENCH_NLS_BASE_URL: string | undefined;
 		let WORKBENCH_NLS_URL: string;
-		if (!locale.startsWith('en') && this._productService.nlsCoreBaseUrl) {
-			WORKBENCH_NLS_BASE_URL = this._productService.nlsCoreBaseUrl;
-			WORKBENCH_NLS_URL = `${WORKBENCH_NLS_BASE_URL}${this._productService.commit}/${this._productService.version}/${locale}/nls.messages.js`;
+		if (!locale.startsWith('en')) {
+			if (this._productService.nlsCoreBaseUrl) {
+				WORKBENCH_NLS_BASE_URL = this._productService.nlsCoreBaseUrl;
+				WORKBENCH_NLS_URL = `${WORKBENCH_NLS_BASE_URL}${this._productService.commit}/${this._productService.version}/${locale}/nls.messages.js`;
+			} else {
+				// [YwCoder] Use local generated NLS file when no CDN is configured
+				WORKBENCH_NLS_URL = `${staticRoute}/out/nls.messages.${locale}.js`;
+			}
 		} else {
 			WORKBENCH_NLS_URL = ''; // fallback will apply
 		}
