@@ -23,7 +23,7 @@ npm run build
 echo "[3/5] 同步 Extension 产物..."
 cd "$PROJECT_ROOT"
 cp extension/package.json vscode/extensions/ywcoder/package.json
-sed -i.bak 's|"file:../dcywzc-ywcoder-1.0.1.tgz"|"file:../../../dcywzc-ywcoder-1.0.1.tgz"|g' vscode/extensions/ywcoder/package.json
+sed -i.bak 's|"file:../dcywzc-ywcoder-1.1.1.tgz"|"file:../../../dcywzc-ywcoder-1.1.1.tgz"|g' vscode/extensions/ywcoder/package.json
 rm -f vscode/extensions/ywcoder/package.json.bak
 sed -i.bak '/"@dcywzc\/ywcoder"/d' vscode/extensions/ywcoder/package.json
 rm -f vscode/extensions/ywcoder/package.json.bak

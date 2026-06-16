@@ -23,7 +23,6 @@ release/
 release*.zip
 ywcoder-pubkey.asc
 ywcoder_*_arm64-*.deb
-dcywzc-ywcoder-*.tgz
 ywcoder-web-*.tar.gz
 
 # Web server build output
@@ -57,9 +56,6 @@ test-results.xml
 
 # TypeScript
 *.tsbuildinfo
-
-# Temporary archives
-dcywzc-ywcoder-*.tgz
 
 # Generated docs
 docs/configuration-system-manual.md

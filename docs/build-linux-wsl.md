@@ -73,7 +73,7 @@ cd /mnt/d/project/ywcoder
 
 # 同步 package.json（修正 tgz 路径，并移除 @dcywzc/ywcoder 避免安装 sharp 等导致 npm list 失败）
 cp extension/package.json vscode/extensions/ywcoder/package.json
-sed -i 's|"file:../dcywzc-ywcoder-1.0.1.tgz"|"file:../../../dcywzc-ywcoder-1.0.1.tgz"|g' vscode/extensions/ywcoder/package.json
+sed -i 's|"file:../dcywzc-ywcoder-1.1.1.tgz"|"file:../../../dcywzc-ywcoder-1.1.1.tgz"|g' vscode/extensions/ywcoder/package.json
 sed -i '/"@dcywzc\/ywcoder"/d' vscode/extensions/ywcoder/package.json
 
 # 同步 resources
@@ -209,7 +209,7 @@ npm run build
 echo "[3/5] 同步 Extension 产物..."
 cd "$PROJECT_ROOT"
 cp extension/package.json vscode/extensions/ywcoder/package.json
-sed -i 's|"file:../dcywzc-ywcoder-1.0.1.tgz"|"file:../../../dcywzc-ywcoder-1.0.1.tgz"|g' vscode/extensions/ywcoder/package.json
+sed -i 's|"file:../dcywzc-ywcoder-1.1.1.tgz"|"file:../../../dcywzc-ywcoder-1.1.1.tgz"|g' vscode/extensions/ywcoder/package.json
 sed -i '/"@dcywzc\/ywcoder"/d' vscode/extensions/ywcoder/package.json
 rm -rf vscode/extensions/ywcoder/resources
 if [ -d extension/resources ]; then
