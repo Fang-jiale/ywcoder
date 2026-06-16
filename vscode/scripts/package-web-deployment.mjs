@@ -486,9 +486,10 @@ set NODE_ENV=production
 set VSCODE_NLS_CONFIG={"locale":"${locale}","availableLanguages":{"*":"${locale}"}}
 
 if not exist "%USERPROFILE%\\.ywcoder-server\\extensions" mkdir "%USERPROFILE%\\.ywcoder-server\\extensions"
+if not exist "%USERPROFILE%\\.ywcoder-server\\workspace" mkdir "%USERPROFILE%\\.ywcoder-server\\workspace"
 
 echo Starting YwCoder Web Server on port ${port}...
-"%NODE_EXE%" out/server-main.js --port ${port} --connection-token ${token} --builtin-extensions-dir extensions --accept-server-license-terms %*
+"%NODE_EXE%" out/server-main.js --port ${port} --connection-token ${token} --default-folder "%USERPROFILE%\\.ywcoder-server\\workspace" --builtin-extensions-dir extensions --accept-server-license-terms %*
 
 endlocal
 `
@@ -513,9 +514,10 @@ set NODE_ENV=production
 set VSCODE_NLS_CONFIG={"locale":"${locale}","availableLanguages":{"*":"${locale}"}}
 
 if not exist "%USERPROFILE%\\.ywcoder-server\\extensions" mkdir "%USERPROFILE%\\.ywcoder-server\\extensions"
+if not exist "%USERPROFILE%\\.ywcoder-server\\workspace" mkdir "%USERPROFILE%\\.ywcoder-server\\workspace"
 
 echo Starting YwCoder Web Server on port ${port}...
-node out/server-main.js --port ${port} --connection-token ${token} --builtin-extensions-dir extensions --accept-server-license-terms %*
+node out/server-main.js --port ${port} --connection-token ${token} --default-folder "%USERPROFILE%\\.ywcoder-server\\workspace" --builtin-extensions-dir extensions --accept-server-license-terms %*
 
 endlocal
 `;
@@ -592,9 +594,10 @@ export NODE_ENV=production
 export VSCODE_NLS_CONFIG='{"locale":"${locale}","availableLanguages":{"*":"${locale}"}}'
 
 mkdir -p ~/.ywcoder-server/extensions
+mkdir -p ~/.ywcoder-server/workspace
 
 echo "Starting YwCoder Web Server on port ${port}..."
-"$NODE_CMD" out/server-main.js --port ${port} --connection-token ${token} --builtin-extensions-dir extensions --accept-server-license-terms "$@"
+"$NODE_CMD" out/server-main.js --port ${port} --connection-token ${token} --default-folder ~/.ywcoder-server/workspace --builtin-extensions-dir extensions --accept-server-license-terms "$@"
 `;
 	const shPath = join(destDir, 'start-server.sh');
 	writeFileSync(shPath, sh, 'utf8');
