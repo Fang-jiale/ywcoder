@@ -389,6 +389,10 @@ export class WebClientServer {
 			} catch (err) {/* Ignore Error */ }
 		}
 
+		const webviewHost = remoteAuthority.startsWith('[') ? 'localhost:8001' : remoteAuthority;
+		const webviewScheme = getFirstHeader('x-forwarded-proto') || 'http';
+		const webviewEndpoint = `${webviewScheme}://{{uuid}}.${webviewHost}${staticRoute}/out/vs/workbench/contrib/webview/browser/pre/`;
+
 		const workbenchWebConfiguration = {
 			remoteAuthority,
 			serverBasePath: basePath,
@@ -400,7 +404,7 @@ export class WebClientServer {
 			workspaceUri: resolveWorkspaceURI(this._environmentService.args['default-workspace']),
 			productConfiguration,
 			callbackRoute: callbackRoute,
-			webviewEndpoint: `${staticRoute}/out/vs/workbench/contrib/webview/browser/pre/`,
+			webviewEndpoint,
 			configurationDefaults: {
 				'workbench.locale': 'zh-cn'
 			}
