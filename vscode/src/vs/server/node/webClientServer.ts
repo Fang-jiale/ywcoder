@@ -133,6 +133,38 @@ export class WebClientServer {
 	}
 
 	/**
+	 * [YwCoder] Persist the last opened workspace folder so the web IDE can restore
+	 * it on the next visit to the root URL, similar to the desktop experience.
+	 */
+	private _getLastWorkspaceStatePath(): string {
+		return join(this._environmentService.userDataPath, 'last-workspace.json');
+	}
+
+	private async _readLastWorkspace(): Promise<{ folder?: string; workspace?: string }> {
+		try {
+			const raw = await promises.readFile(this._getLastWorkspaceStatePath(), 'utf8');
+			const state = JSON.parse(raw);
+			if (state && typeof state === 'object') {
+				return {
+					folder: typeof state.folder === 'string' ? state.folder : undefined,
+					workspace: typeof state.workspace === 'string' ? state.workspace : undefined,
+				};
+			}
+		} catch {
+			// State file missing or corrupt, fall through to empty state.
+		}
+		return {};
+	}
+
+	private async _writeLastWorkspace(state: { folder?: string; workspace?: string }): Promise<void> {
+		try {
+			await promises.writeFile(this._getLastWorkspaceStatePath(), JSON.stringify(state, undefined, '\t'), 'utf8');
+		} catch (err) {
+			this._logService.warn(`[WebClientServer] Failed to persist last workspace state: ${err}`);
+		}
+	}
+
+	/**
 	 * Handle web resources (i.e. only needed by the web client).
 	 * **NOTE**: This method is only invoked when the server has web bits.
 	 * **NOTE**: This method is only invoked after the connection token has been validated.
@@ -306,6 +338,16 @@ export class WebClientServer {
 			return void res.end();
 		}
 
+		// [YwCoder] Remember the last opened folder/workspace from the URL so that
+		// visiting the root URL later restores it like the desktop app does.
+		const folderQuery = parsedUrl.query['folder'];
+		const workspaceQuery = parsedUrl.query['workspace'];
+		if (typeof folderQuery === 'string') {
+			await this._writeLastWorkspace({ folder: folderQuery });
+		} else if (typeof workspaceQuery === 'string') {
+			await this._writeLastWorkspace({ workspace: workspaceQuery });
+		}
+
 		const replacePort = (host: string, port: string) => {
 			const index = host?.indexOf(':');
 			if (index !== -1) {
@@ -404,6 +446,20 @@ export class WebClientServer {
 			? `${webviewScheme}://${webviewHost}${staticRoute}/out/vs/workbench/contrib/webview/browser/pre/`
 			: `${webviewScheme}://{{uuid}}.${webviewHost}${staticRoute}/out/vs/workbench/contrib/webview/browser/pre/`;
 
+		let defaultFolder = this._environmentService.args['default-folder'];
+		let defaultWorkspace = this._environmentService.args['default-workspace'];
+		if (!defaultFolder && !defaultWorkspace) {
+			if (typeof folderQuery === 'string') {
+				defaultFolder = folderQuery;
+			} else if (typeof workspaceQuery === 'string') {
+				defaultWorkspace = workspaceQuery;
+			} else {
+				const lastState = await this._readLastWorkspace();
+				defaultFolder = lastState.folder;
+				defaultWorkspace = lastState.workspace;
+			}
+		}
+
 		const workbenchWebConfiguration = {
 			remoteAuthority,
 			serverBasePath: basePath,
@@ -411,8 +467,8 @@ export class WebClientServer {
 			developmentOptions: { enableSmokeTestDriver: this._environmentService.args['enable-smoke-test-driver'] ? true : undefined, logLevel: this._logService.getLevel() },
 			settingsSyncOptions: !this._environmentService.isBuilt && this._environmentService.args['enable-sync'] ? { enabled: true } : undefined,
 			enableWorkspaceTrust: !this._environmentService.args['disable-workspace-trust'],
-			folderUri: resolveWorkspaceURI(this._environmentService.args['default-folder']),
-			workspaceUri: resolveWorkspaceURI(this._environmentService.args['default-workspace']),
+			folderUri: resolveWorkspaceURI(defaultFolder),
+			workspaceUri: resolveWorkspaceURI(defaultWorkspace),
 			productConfiguration,
 			callbackRoute: callbackRoute,
 			webviewEndpoint,
