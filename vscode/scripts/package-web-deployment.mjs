@@ -293,16 +293,23 @@ async function packageForPlatform(platform, arch) {
 		filter: makeCopyFilter(outVscodeWebSource)
 	});
 
-	// Builtin extensions: prefer bundled .build/extensions if available
-	const extensionsSource = existsSync(join(repoRoot, '.build', 'extensions'))
-		? join(repoRoot, '.build', 'extensions')
-		: join(repoRoot, 'extensions');
-	console.log(`[package] Copying builtin extensions from ${extensionsSource}...`);
-	cpSync(extensionsSource, join(destDir, 'extensions'), {
+	// Builtin extensions: always start from source extensions/, then overlay .build/extensions if present
+	const extensionsBaseSource = join(repoRoot, 'extensions');
+	const extensionsBundledSource = join(repoRoot, '.build', 'extensions');
+	console.log(`[package] Copying builtin extensions from ${extensionsBaseSource}...`);
+	cpSync(extensionsBaseSource, join(destDir, 'extensions'), {
 		recursive: true,
 		dereference: true,
-		filter: makeCopyFilter(extensionsSource, { skipTests: true })
+		filter: makeCopyFilter(extensionsBaseSource, { skipTests: true })
 	});
+	if (existsSync(extensionsBundledSource)) {
+		console.log(`[package] Merging bundled extensions from ${extensionsBundledSource}...`);
+		cpSync(extensionsBundledSource, join(destDir, 'extensions'), {
+			recursive: true,
+			dereference: true,
+			filter: makeCopyFilter(extensionsBundledSource, { skipTests: true })
+		});
+	}
 
 	// Product and package metadata
 	console.log('[package] Copying product.json and package.json...');
