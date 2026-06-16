@@ -245,6 +245,25 @@ function verifyArtifacts() {
 	if (missing.length > 0) {
 		throw new Error(`Missing required artifacts:\n  - ${missing.join('\n  - ')}`);
 	}
+
+	verifyAboutDialogContent();
+}
+
+function verifyAboutDialogContent() {
+	const bundlePath = join(repoRoot, 'out-vscode-web', 'vs', 'code', 'browser', 'workbench', 'workbench.js');
+	if (!existsSync(bundlePath)) {
+		throw new Error('Cannot verify about dialog: bundled workbench.js is missing');
+	}
+
+	const bundle = readFileSync(bundlePath, 'utf8');
+	// The contact line is appended outside localize(), so it appears as a runtime
+	// string literal (possibly Unicode-escaped by the bundler/minifier).
+	const expectedLiteral = '数据中心运维支持部出品，联系人：方家乐，杨偲嘉';
+	const expectedEscaped = expectedLiteral.split('').map(c => `\\u${c.charCodeAt(0).toString(16).toUpperCase().padStart(4, '0')}`).join('');
+	if (!bundle.includes(expectedLiteral) && !bundle.includes(expectedEscaped)) {
+		throw new Error('About dialog contact line is missing from the bundled workbench.js; the NLS translation may have overridden it.');
+	}
+	console.log('[package]   About dialog contact line verified in workbench.js');
 }
 
 function downloadFile(url, dest) {
