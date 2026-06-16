@@ -233,6 +233,18 @@ export class WebClientServer {
 			}
 		}
 
+		// YwCoder: bundled web CSS references images via relative paths that resolve
+		// to /static/media/; serve those from the web bundle's media directory.
+		if (normalizedPathname.startsWith('/media/')) {
+			const bundleMediaPath = join(APP_ROOT, '/out-vscode-web', normalizedPathname);
+			try {
+				await promises.access(bundleMediaPath);
+				filePath = bundleMediaPath;
+			} catch {
+				// keep original APP_ROOT/media/ path
+			}
+		}
+
 		if (!isEqualOrParent(filePath, APP_ROOT, !isLinux)) {
 			return serveError(req, res, 400, `Bad request.`);
 		}

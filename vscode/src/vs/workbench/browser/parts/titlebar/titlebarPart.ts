@@ -470,8 +470,7 @@ export class BrowserTitlebarPart extends Part implements ITitlebarPart {
 
 		// YwCoder Logo (Web + Windows desktop)
 		if (isWeb || isWindows) {
-			const logo = append(this.leftContent, $('span.ywcoder-logo'));
-			logo.textContent = 'YwCoder';
+			append(this.leftContent, $('span.ywcoder-logo'));
 		}
 
 		// Draggable region that we can manipulate for #52522

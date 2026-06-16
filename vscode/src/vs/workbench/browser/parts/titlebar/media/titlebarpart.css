@@ -281,10 +281,12 @@
 
 /* YwCoder Logo */
 .monaco-workbench .part.titlebar > .titlebar-container > .titlebar-left > .ywcoder-logo {
-	font-size: 14px;
-	font-weight: bold;
-	font-family: 'SimHei', 'Heiti SC', 'Microsoft YaHei', sans-serif;
-	color: #ff007f;
+	background-image: url('ywcoder-logo.png');
+	background-repeat: no-repeat;
+	background-position: center center;
+	background-size: contain;
+	width: 70px;
+	height: 24px;
 	margin-left: 8px;
 	order: 2;
 	z-index: 2500;
