@@ -107,10 +107,31 @@ export function useRuntime(): RuntimeInstance {
         if (!disposed) appContext.assetUris(assets.assetUris);
       } catch (e) { /* ignore */ }
 
-      await sessionStore.listSessions();
-      if (!disposed && !sessionStore.activeSession()) {
-        await sessionStore.createSession({ isExplicit: false });
-      }
+      try {
+        await sessionStore.listSessions();
+        if (!disposed) {
+          const urlParams = new URLSearchParams(window.location.search);
+          const sessionIdFromUrl = urlParams.get('session');
+
+          if (sessionIdFromUrl) {
+            const sessionFromUrl = sessionStore.sessions().find(s => s.sessionId() === sessionIdFromUrl);
+            if (sessionFromUrl) {
+              sessionStore.setActiveSession(sessionFromUrl);
+            }
+          }
+
+          if (!sessionStore.activeSession()) {
+            const lastSession = sessionStore.sessionsByLastModified()[0];
+            if (lastSession) {
+              sessionStore.setActiveSession(lastSession);
+            }
+          }
+
+          if (!sessionStore.activeSession()) {
+            await sessionStore.createSession({ isExplicit: false });
+          }
+        }
+      } catch (e) { /* ignore */ }
 
       if (!disposed) {
         appContext.isReady(true);
