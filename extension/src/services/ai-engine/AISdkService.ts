@@ -23,6 +23,7 @@ import { ILogService } from '../logService';
 import { IConfigurationService } from '../configurationService';
 import { IFileSystemService } from '../fileSystemService';
 import { AsyncStream } from './transport';
+import { augmentModelsWithContextWindow } from './modelContextWindow';
 
 // SDK 类型导入
 import type {
@@ -119,7 +120,7 @@ const VS_CODE_APPEND_PROMPT = `
 
 const SDK_PROBE_CAPABILITIES: Record<string, (query: Query) => Promise<any>> = {
     supportedCommands: (query) => query.supportedCommands?.(),
-    supportedModels: (query) => query.supportedModels?.(),
+    supportedModels: async (query) => augmentModelsWithContextWindow(await query.supportedModels?.() || []),
     mcpServerStatus: (query) => query.mcpServerStatus?.(),
     accountInfo: (query) => query.accountInfo?.()
 };
@@ -289,10 +290,10 @@ export class AISdkService implements IAISdkService {
               'settings': path.join(this.getConfigDir(), 'ywcoder.json'),
             } as Record<string, string | null>,
 
-            // 设置源 (控制 CLAUDE.md 和 settings.json 的加载)
-            // 'user': ~/.claude/settings.json, ~/.claude/CLAUDE.md
-            // 'project': .claude/settings.json, .claude/CLAUDE.md
-            // 'local': .claude/settings.local.json, CLAUDE.local.md
+            // 设置源 (控制 YWCODER.md 和 settings.json 的加载)
+            // 'user': ~/.ywcoder/settings.json, ~/.ywcoder/YWCODER.md
+            // 'project': .ywcoder/settings.json, .ywcoder/YWCODER.md
+            // 'local': .ywcoder/settings.local.json, YWCODER.local.md
             // 注意: ywcoder.json 通过 extraArgs.settings 传入，作为 flagSettings 优先级最高
             settingSources: ['user', 'project', 'local'],
 

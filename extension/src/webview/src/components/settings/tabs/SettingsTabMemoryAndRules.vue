@@ -1,7 +1,7 @@
 <template>
   <SettingsTab title="记忆与规则">
-    <!-- CLAUDE.md 文件部分 -->
-    <SettingsSection title="记忆文件 (CLAUDE.md)">
+    <!-- YWCODER.md 文件部分 -->
+    <SettingsSection title="记忆文件 (YWCODER.md)">
       <SettingsSubSection>
         <SettingsCell label="用户记忆" description="为所有项目加载的个人指令">
           <template #trailing>
@@ -12,7 +12,7 @@
           </template>
           <template #bottom>
             <div class="text-xs text-(--cursor-text-tertiary) mt-1">
-              <code>~/.ywcoder/CLAUDE.md</code>
+              <code>~/.ywcoder/YWCODER.md</code>
             </div>
           </template>
         </SettingsCell>
@@ -26,7 +26,7 @@
           </template>
           <template #bottom>
             <div class="text-xs text-(--cursor-text-tertiary) mt-1">
-              <code>.claude/CLAUDE.md</code>（已纳入版本控制）
+              <code>.ywcoder/YWCODER.md</code>（已纳入版本控制）
             </div>
           </template>
         </SettingsCell>
@@ -40,7 +40,7 @@
           </template>
           <template #bottom>
             <div class="text-xs text-(--cursor-text-tertiary) mt-1">
-              <code>.claude/CLAUDE.local.md</code>（被 git 忽略）
+              <code>.ywcoder/YWCODER.local.md</code>（被 git 忽略）
             </div>
           </template>
         </SettingsCell>
@@ -73,7 +73,7 @@
           </template>
           <template #bottom>
             <div class="text-xs text-(--cursor-text-tertiary) mt-1">
-              <code>.claude/agents/</code>
+              <code>.ywcoder/agents/</code>
             </div>
           </template>
         </SettingsCell>

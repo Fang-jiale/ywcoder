@@ -160,14 +160,30 @@
 
   // 注册命令：permissionMode.toggle（在下方定义函数后再注册）
 
-  // 估算 Token 使用占比（基于 usageData）
+  // 根据当前选中模型获取上下文窗口大小
+  const modelContextWindow = computed(() => {
+    const s = session.value;
+    if (!s) return undefined;
+
+    const models = s.ywcoderConfig.value?.models;
+    const selectedModel = s.modelSelection.value;
+    if (Array.isArray(models) && selectedModel) {
+      const model = models.find((m: any) => m.value === selectedModel || m.id === selectedModel);
+      if (model?.contextWindow && typeof model.contextWindow === 'number' && model.contextWindow > 0) {
+        return model.contextWindow;
+      }
+    }
+    return undefined;
+  });
+
+  // 估算 Token 使用占比（基于 usageData，优先使用模型自己的 contextWindow）
   const usageComputed = computed(() => {
     const s = session.value;
     if (!s) return { percentage: 0, totalTokens: 0, contextWindow: 200000 };
 
     const usage = s.usageData.value;
     const total = usage.totalTokens;
-    const windowSize = usage.contextWindow || 200000;
+    const windowSize = modelContextWindow.value || usage.contextWindow || 200000;
     const percentage = (typeof total === 'number' && total > 0)
       ? Math.max(0, Math.min(100, (total / windowSize) * 100))
       : 0;

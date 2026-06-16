@@ -214,6 +214,7 @@ export interface ModelOption {
     label?: string;
     description?: string;
     provider?: string;
+    contextWindow?: number;
 }
 
 /**

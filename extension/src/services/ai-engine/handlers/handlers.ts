@@ -75,6 +75,7 @@ import type {
 import type { HandlerContext } from './types';
 import type { PermissionMode, SDKUserMessage } from '@anthropic-ai/claude-agent-sdk';
 import { AsyncStream } from '../transport/AsyncStream';
+import { augmentModelsWithContextWindow } from '../modelContextWindow';
 /**
  * 初始化请求
  */
@@ -963,7 +964,7 @@ async function loadConfig(context: HandlerContext): Promise<any> {
 
     const config = {
         slashCommands: await (query as any).supportedCommands?.() || [],
-        models: await (query as any).supportedModels?.() || [],
+        models: augmentModelsWithContextWindow(await (query as any).supportedModels?.() || []),
         accountInfo: await (query as any).accountInfo?.() || null
     };
 
@@ -1205,24 +1206,24 @@ function getConfigFilePath(configType: string): string {
             if (!workspaceRoot) {
                 throw new Error("No workspace folder open");
             }
-            return path.join(workspaceRoot, ".claude", "mcp.json");
+            return path.join(workspaceRoot, ".ywcoder", "mcp.json");
         }
-        // CLAUDE.md memory files
+        // YWCODER.md memory files
         case "user-claude-md":
-            return path.join(userDir, "CLAUDE.md");
+            return path.join(userDir, "YWCODER.md");
         case "project-claude-md": {
             const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
             if (!workspaceRoot) {
                 throw new Error("No workspace folder open");
             }
-            return path.join(workspaceRoot, ".claude", "CLAUDE.md");
+            return path.join(workspaceRoot, ".ywcoder", "YWCODER.md");
         }
         case "local-claude-md": {
             const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
             if (!workspaceRoot) {
                 throw new Error("No workspace folder open");
             }
-            return path.join(workspaceRoot, ".claude", "CLAUDE.local.md");
+            return path.join(workspaceRoot, ".ywcoder", "YWCODER.local.md");
         }
         case "user-agents":
             return path.join(userDir, "agents");
@@ -1231,7 +1232,7 @@ function getConfigFilePath(configType: string): string {
             if (!workspaceRoot) {
                 throw new Error("No workspace folder open");
             }
-            return path.join(workspaceRoot, ".claude", "agents");
+            return path.join(workspaceRoot, ".ywcoder", "agents");
         }
         default:
             return path.join(userDir, `${configType}.json`);

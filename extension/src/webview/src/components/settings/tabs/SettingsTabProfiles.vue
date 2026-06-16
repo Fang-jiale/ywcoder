@@ -96,7 +96,7 @@ const profileList = computed(() => {
   const list = [
     {
       name: 'Default',
-      path: '~/.claude/settings.json',
+      path: '~/.ywcoder/settings.json',
       isActive: !activeProfile.value
     }
   ];
@@ -105,7 +105,7 @@ const profileList = computed(() => {
     profiles.value.forEach((p) => {
       list.push({
         name: p,
-        path: `~/.claude/settings.${p}.json`,
+        path: `~/.ywcoder/settings.${p}.json`,
         isActive: activeProfile.value === p
       });
     });

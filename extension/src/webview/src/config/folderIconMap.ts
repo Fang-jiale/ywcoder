@@ -281,6 +281,7 @@ export const folderNameMap: Record<string, FolderIconConfig> = {
   molecules: { type: 'mdi', icon: 'folder-molecule' },
   organisms: { type: 'mdi', icon: 'folder-organism' },
   '.claude': { type: 'mdi', icon: 'folder-claude' },
+  '.ywcoder': { type: 'mdi', icon: 'folder-claude' },
   '.cursor': { type: 'mdi', icon: 'folder-cursor' },
   input: { type: 'mdi', icon: 'folder-input' },
   simulations: { type: 'mdi', icon: 'folder-simulations' },

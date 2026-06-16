@@ -62,6 +62,7 @@ interface SdkModel {
   value: string
   displayName: string
   description?: string
+  contextWindow?: number
 }
 
 const sdkModels = ref<SdkModel[]>([])

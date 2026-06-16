@@ -145,7 +145,7 @@
             <TextInput
               :model-value="displayValue ?? ''"
               @change="update"
-              placeholder="~/.claude/plans"
+              placeholder="~/.ywcoder/plans"
               monospace
               class="general-input"
             />

@@ -11,6 +11,7 @@ export interface ModelInfo {
   value: string;
   displayName: string;
   description: string;
+  contextWindow?: number;
 }
 
 export interface SlashCommand {
