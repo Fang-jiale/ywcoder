@@ -165,6 +165,20 @@ export class WebClientServer {
 	}
 
 	/**
+	 * [YwCoder] VS Code may pass folder paths as URI-style absolute paths such as
+	 * '/D:/project/tools'. Node's path.resolve() treats the leading slash as the
+	 * root of the current drive and ends up duplicating the drive letter. Strip
+	 * the leading slash from Windows URI-style paths so they resolve correctly.
+	 */
+	private _normalizeLocationPath(location?: string): string | undefined {
+		if (!location) {
+			return undefined;
+		}
+		// Convert '/D:/...' to 'D:/...' on Windows; leave POSIX paths unchanged.
+		return location.replace(/^\/([a-zA-Z]:\/)/, '$1');
+	}
+
+	/**
 	 * Handle web resources (i.e. only needed by the web client).
 	 * **NOTE**: This method is only invoked when the server has web bits.
 	 * **NOTE**: This method is only invoked after the connection token has been validated.
@@ -340,7 +354,7 @@ export class WebClientServer {
 
 		// [YwCoder] Remember the last opened folder/workspace from the URL so that
 		// visiting the root URL later restores it like the desktop app does.
-		const folderQuery = parsedUrl.query['folder'];
+		const folderQuery = this._normalizeLocationPath(parsedUrl.query['folder'] as string | undefined);
 		const workspaceQuery = parsedUrl.query['workspace'];
 		if (typeof folderQuery === 'string') {
 			await this._writeLastWorkspace({ folder: folderQuery });
@@ -455,7 +469,7 @@ export class WebClientServer {
 				defaultWorkspace = workspaceQuery;
 			} else {
 				const lastState = await this._readLastWorkspace();
-				defaultFolder = lastState.folder;
+				defaultFolder = this._normalizeLocationPath(lastState.folder);
 				defaultWorkspace = lastState.workspace;
 			}
 		}
