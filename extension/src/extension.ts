@@ -156,10 +156,10 @@ export function activate(context: vscode.ExtensionContext) {
 		logService.info('[YwCoder] View registered');
 	});
 
-	// 8. Focus YwCoder view on startup (open secondary sidebar)
+	// 8. Focus YwCoder view on startup (open secondary sidebar and switch to chat view)
 	setTimeout(() => {
-		vscode.commands.executeCommand('workbench.action.focusAuxiliaryBar');
-	}, 1000);
+		vscode.commands.executeCommand('ywcoder.chatView.focus');
+	}, 2000);
 
 	// Return extension API (if needed to expose to other extensions)
 	return {

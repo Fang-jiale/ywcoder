@@ -83,6 +83,9 @@ export class WebViewService implements IWebViewService {
 			page: 'chat'
 		});
 
+		// Ensure the YwCoder view is visible once resolved
+		webviewView.show();
+
 		// WebviewView 的销毁由 VSCode 管理，这里仅作日志记录
 		webviewView.onDidDispose(
 			() => {

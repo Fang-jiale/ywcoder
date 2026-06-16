@@ -25,6 +25,9 @@ export function activate(context: vscode.ExtensionContext) {
 			// Generate and set HTML
 			webview.html = getWebviewContent(webview, context.extensionUri);
 
+			// Ensure the view is visible once resolved
+			webviewView.show();
+
 			// Handle messages from webview
 			webview.onDidReceiveMessage(
 				message => handleMessage(message, webview),
@@ -89,7 +92,7 @@ export function activate(context: vscode.ExtensionContext) {
 	// Focus YwCoder view on startup
 	setTimeout(() => {
 		vscode.commands.executeCommand('ywcoder.chatView.focus');
-	}, 1500);
+	}, 2000);
 
 	console.log('[YwCoder] Browser extension view registered');
 }
