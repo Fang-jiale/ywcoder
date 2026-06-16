@@ -48,7 +48,7 @@ export function createWorkbenchDialogOptions(options: Partial<IDialogOptions>, k
 export function createBrowserAboutDialogDetails(productService: IProductService): { title: string; details: string; detailsToCopy: string } {
 	const detailString = (useAgo: boolean): string => {
 		return localize('aboutDetail',
-			"Version: {0}\nCommit: {1}\nDate: {2}\nBrowser: {3}\n\n数据中心运维支持部出品，联系人：方家乐，杨偲嘉",
+			"Version: {0}\nCommit: {1}\nDate: {2}\nBrowser: {3}",
 			productService.version || 'Unknown',
 			productService.commit || 'Unknown',
 			productService.date ? `${productService.date}${useAgo ? ' (' + fromNow(new Date(productService.date), true) + ')' : ''}` : 'Unknown',
@@ -56,8 +56,9 @@ export function createBrowserAboutDialogDetails(productService: IProductService)
 		);
 	};
 
-	const details = detailString(true);
-	const detailsToCopy = detailString(false);
+	const suffix = '\n\n数据中心运维支持部出品，联系人：方家乐，杨偲嘉';
+	const details = detailString(true) + suffix;
+	const detailsToCopy = detailString(false) + suffix;
 
 	return {
 		title: productService.nameLong,
