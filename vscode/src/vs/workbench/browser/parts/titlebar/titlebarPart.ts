@@ -463,8 +463,8 @@ export class BrowserTitlebarPart extends Part implements ITitlebarPart {
 		this.centerContent = append(this.rootContainer, $('.titlebar-center'));
 		this.rightContent = append(this.rootContainer, $('.titlebar-right'));
 
-		// App Icon (Windows, Linux, Web)
-		if ((isWindows || isLinux || isWeb) && !hasNativeTitlebar(this.configurationService, this.titleBarStyle)) {
+		// App Icon (Linux only; YwCoder logo replaces it on Web + Windows desktop)
+		if (isLinux && !hasNativeTitlebar(this.configurationService, this.titleBarStyle)) {
 			this.appIcon = prepend(this.leftContent, $('a.window-appicon'));
 		}
 
