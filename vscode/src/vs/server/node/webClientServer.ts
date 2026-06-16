@@ -14,7 +14,7 @@ import { isLinux } from '../../base/common/platform.js';
 import { ILogService, LogLevel } from '../../platform/log/common/log.js';
 import { IServerEnvironmentService } from './serverEnvironmentService.js';
 import { extname, dirname, join, normalize, posix, resolve } from '../../base/common/path.js';
-import { FileAccess, connectionTokenCookieName, connectionTokenQueryName, Schemas, builtinExtensionsPath } from '../../base/common/network.js';
+import { FileAccess, connectionTokenCookieName, connectionTokenQueryName, Schemas, builtinExtensionsPath, AppResourcePath } from '../../base/common/network.js';
 import { generateUuid } from '../../base/common/uuid.js';
 import { IProductService } from '../../platform/product/common/productService.js';
 import { ServerConnectionToken, ServerConnectionTokenType } from './serverConnectionToken.js';
@@ -429,7 +429,7 @@ export class WebClientServer {
 		// [YwCoder] In dev mode read the HTML template from src/ so NLS script tags and other
 		// template changes are always current, instead of relying on a potentially stale out/ copy.
 		const filePath = this._environmentService.isBuilt
-			? FileAccess.asFileUri(htmlFile).fsPath
+			? FileAccess.asFileUri(htmlFile as AppResourcePath).fsPath
 			: join(APP_ROOT, 'src', htmlFile);
 		const authSessionInfo = !this._environmentService.isBuilt && this._environmentService.args['github-auth'] ? {
 			id: generateUuid(),
