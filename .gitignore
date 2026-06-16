@@ -28,6 +28,7 @@ ywcoder-web-*.tar.gz
 
 # Web server build output
 vscode-reh-web-*/
+.ywcoder-server-dev/
 
 # Bundled runtimes
 node22/
