@@ -171,8 +171,21 @@ async function buildWebBundle() {
 
 	console.log('[package] Generating Chinese NLS...');
 	await run(process.execPath, ['scripts/generate-nls-zh-cn.mjs'], repoRoot);
+}
 
-	syncNLSFilesToOut();
+async function buildServerCode() {
+	if (options.skipBuild) {
+		console.log('[package] Skipping server code build (--skip-build)');
+		return;
+	}
+
+	console.log('[package] Building server code...');
+	await run(process.execPath, [
+		'build/next/index.ts',
+		'transpile',
+		'--out',
+		'out'
+	], repoRoot);
 }
 
 function syncNLSFilesToOut() {
@@ -667,7 +680,9 @@ Then re-run this packaging script.
 async function main() {
 	try {
 		await buildYwcoderExtension();
+		await buildServerCode();
 		await buildWebBundle();
+		syncNLSFilesToOut();
 		verifyArtifacts();
 
 		ensureDir(options.outDir);
