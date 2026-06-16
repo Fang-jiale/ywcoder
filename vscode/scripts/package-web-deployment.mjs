@@ -137,6 +137,9 @@ function makeCopyFilter(sourceRoot, { skipTests = false, skipBin = true } = {}) 
 function run(command, args, cwd) {
 	return new Promise((resolve, reject) => {
 		console.log(`[package] Running: ${command} ${args.join(' ')}`);
+		if (process.platform === 'win32' && command.includes(' ')) {
+			command = `"${command}"`;
+		}
 		const proc = spawn(command, args, { cwd, stdio: 'inherit', shell: process.platform === 'win32' });
 		proc.on('close', code => {
 			if (code === 0) {
@@ -168,6 +171,21 @@ async function buildWebBundle() {
 
 	console.log('[package] Generating Chinese NLS...');
 	await run(process.execPath, ['scripts/generate-nls-zh-cn.mjs'], repoRoot);
+
+	syncNLSFilesToOut();
+}
+
+function syncNLSFilesToOut() {
+	console.log('[package] Syncing NLS metadata to out/ for server-side localization...');
+	const files = ['nls.messages.json', 'nls.keys.json', 'nls.metadata.json'];
+	for (const file of files) {
+		const src = join(repoRoot, 'out-vscode-web', file);
+		const dest = join(repoRoot, 'out', file);
+		if (existsSync(src)) {
+			copyFileSync(src, dest);
+			console.log(`[package]   ${file} -> out/`);
+		}
+	}
 }
 
 async function buildYwcoderExtension() {
@@ -454,8 +472,10 @@ for /f "tokens=1 delims=v" %%a in ('"%NODE_EXE%" --version') do (
 set NODE_ENV=production
 set VSCODE_NLS_CONFIG={"locale":"${locale}","availableLanguages":{"*":"${locale}"}}
 
+if not exist "%USERPROFILE%\\.ywcoder-server\\extensions" mkdir "%USERPROFILE%\\.ywcoder-server\\extensions"
+
 echo Starting YwCoder Web Server on port ${port}...
-"%NODE_EXE%" out/server-main.js --port ${port} --connection-token ${token} --accept-server-license-terms %*
+"%NODE_EXE%" out/server-main.js --port ${port} --connection-token ${token} --builtin-extensions-dir extensions --accept-server-license-terms %*
 
 endlocal
 `
@@ -479,8 +499,10 @@ for /f "tokens=1 delims=v" %%a in ('node --version') do (
 set NODE_ENV=production
 set VSCODE_NLS_CONFIG={"locale":"${locale}","availableLanguages":{"*":"${locale}"}}
 
+if not exist "%USERPROFILE%\\.ywcoder-server\\extensions" mkdir "%USERPROFILE%\\.ywcoder-server\\extensions"
+
 echo Starting YwCoder Web Server on port ${port}...
-node out/server-main.js --port ${port} --connection-token ${token} --accept-server-license-terms %*
+node out/server-main.js --port ${port} --connection-token ${token} --builtin-extensions-dir extensions --accept-server-license-terms %*
 
 endlocal
 `;
@@ -556,8 +578,10 @@ echo "Using Node.js: $NODE_VERSION_ACTUAL"
 export NODE_ENV=production
 export VSCODE_NLS_CONFIG='{"locale":"${locale}","availableLanguages":{"*":"${locale}"}}'
 
+mkdir -p ~/.ywcoder-server/extensions
+
 echo "Starting YwCoder Web Server on port ${port}..."
-"$NODE_CMD" out/server-main.js --port ${port} --connection-token ${token} --accept-server-license-terms "$@"
+"$NODE_CMD" out/server-main.js --port ${port} --connection-token ${token} --builtin-extensions-dir extensions --accept-server-license-terms "$@"
 `;
 	const shPath = join(destDir, 'start-server.sh');
 	writeFileSync(shPath, sh, 'utf8');

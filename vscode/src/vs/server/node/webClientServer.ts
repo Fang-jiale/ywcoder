@@ -356,7 +356,13 @@ export class WebClientServer {
 
 		const resolveWorkspaceURI = (defaultLocation?: string) => defaultLocation && URI.file(resolve(defaultLocation)).with({ scheme: Schemas.vscodeRemote, authority: remoteAuthority });
 
-		const filePath = FileAccess.asFileUri(`vs/code/browser/workbench/workbench${this._environmentService.isBuilt ? '' : '-dev'}.html`).fsPath;
+		const htmlFile = `vs/code/browser/workbench/workbench${this._environmentService.isBuilt ? '' : '-dev'}.html`;
+
+		// [YwCoder] In dev mode read the HTML template from src/ so NLS script tags and other
+		// template changes are always current, instead of relying on a potentially stale out/ copy.
+		const filePath = this._environmentService.isBuilt
+			? FileAccess.asFileUri(htmlFile).fsPath
+			: join(APP_ROOT, 'src', htmlFile);
 		const authSessionInfo = !this._environmentService.isBuilt && this._environmentService.args['github-auth'] ? {
 			id: generateUuid(),
 			providerId: 'github',
@@ -420,8 +426,14 @@ export class WebClientServer {
 				WORKBENCH_NLS_BASE_URL = this._productService.nlsCoreBaseUrl;
 				WORKBENCH_NLS_URL = `${WORKBENCH_NLS_BASE_URL}${this._productService.commit}/${this._productService.version}/${locale}/nls.messages.js`;
 			} else {
-				// [YwCoder] Use local generated NLS file when no CDN is configured
-				WORKBENCH_NLS_URL = `${staticRoute}/out/nls.messages.${locale}.js`;
+				// [YwCoder] Fall back to the locally bundled translated NLS file if it exists.
+				const localNlsPath = join(APP_ROOT, 'out-vscode-web', `nls.messages.${locale}.js`);
+				try {
+					await promises.access(localNlsPath);
+					WORKBENCH_NLS_URL = `${staticRoute}/out/nls.messages.${locale}.js`;
+				} catch {
+					WORKBENCH_NLS_URL = '';
+				}
 			}
 		} else {
 			WORKBENCH_NLS_URL = ''; // fallback will apply
