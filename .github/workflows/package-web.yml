@@ -40,9 +40,24 @@ jobs:
         run: npm ci
 
       - name: Compile server and extensions
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
         run: npm run compile
 
+      - name: Build YwCoder extension
+        working-directory: extension
+        run: npm run build
+
+      - name: Sync YwCoder extension to vscode/extensions/ywcoder
+        run: |
+          rm -rf vscode/extensions/ywcoder/dist
+          cp -r extension/dist vscode/extensions/ywcoder/dist
+          rm -rf vscode/extensions/ywcoder/resources
+          cp -r extension/resources vscode/extensions/ywcoder/resources
+
       - name: Package deployment bundle
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
         run: node scripts/package-web-deployment.mjs --platform linux --arch x64 --download-node
 
       - name: Create distribution archive
