@@ -49,6 +49,7 @@ jobs:
         run: npm run build
 
       - name: Sync YwCoder extension to vscode/extensions/ywcoder
+        working-directory: .
         run: |
           rm -rf vscode/extensions/ywcoder/dist
           cp -r extension/dist vscode/extensions/ywcoder/dist
