@@ -23,7 +23,7 @@ ywcoder-web-{platform}-{arch}/
 ├── out/                    # 服务端代码
 ├── out-vscode-web/         # Web 前端资源（已包含中文 NLS）
 ├── extensions/             # 内置扩展（含简体中文语言包）
-├── node_modules/           # 生产依赖（Windows 包已包含；Linux 包需安装）
+├── node_modules/           # 生产依赖（Windows / Linux CI 同架构包已包含；跨平台本地打包需安装）
 ├── node-runtime/           # 内置 Node.js 运行时（--download-node）
 ├── product.json            # 产品配置
 ├── package.json            # 生产依赖清单
@@ -128,9 +128,11 @@ nvm install 22
 nvm use 22
 ```
 
-### 3. 安装生产依赖
+### 3. 安装生产依赖（按需）
 
-由于跨平台原生模块限制，Linux 包未预置 `node_modules`，需要在目标机器上安装：
+通过 GitHub Actions 在匹配架构上构建的 Linux 包已经包含 `node_modules/`，可直接启动，**跳过本步骤**。
+
+如果 `node_modules/` 不存在（例如在本机 mac/Windows 上交叉打包的 Linux 包），由于跨平台原生模块限制，需要在目标机器上安装：
 
 ```bash
 cd /opt/ywcoder-web
@@ -259,7 +261,7 @@ server {
 ### 启动时报 `Cannot find package '@vscode/...'`
 
 - **Windows**：确认 `node_modules` 已完整复制。
-- **Linux**：运行 `./install-deps.sh` 安装依赖。
+- **Linux**：如果包内没有 `node_modules/`（如交叉打包），运行 `./install-deps.sh` 安装；CI 同架构构建的包已包含，无需运行。
 
 ### 页面显示英文而非中文
 
