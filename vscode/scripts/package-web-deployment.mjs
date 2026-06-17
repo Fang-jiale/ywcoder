@@ -84,6 +84,8 @@ function ensureDir(dir) {
 
 function syncNativeBinaries(sourceRoot, destRoot) {
 	const nativeExts = ['.node', '.dll', '.exe'];
+	// These packages ship Windows/desktop-only binaries that the reh-web server never uses.
+	const skipPackages = ['electron', 'innosetup', 'rcedit'];
 	let copied = 0;
 	function walk(dir) {
 		for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -92,6 +94,10 @@ function syncNativeBinaries(sourceRoot, destRoot) {
 				continue;
 			}
 			if (entry.isDirectory()) {
+				const relative = srcPath.slice(sourceRoot.length + 1).replace(/\\/g, '/');
+				if (skipPackages.some(name => relative === name || relative.startsWith(`${name}/`))) {
+					continue;
+				}
 				walk(srcPath);
 			} else if (nativeExts.some(ext => entry.name.toLowerCase().endsWith(ext))) {
 				const relative = srcPath.slice(sourceRoot.length + 1);
@@ -107,6 +113,19 @@ function syncNativeBinaries(sourceRoot, destRoot) {
 	walk(sourceRoot);
 	if (copied > 0) {
 		console.log(`[package] Synced ${copied} native binaries from root node_modules`);
+	}
+}
+
+function pruneUnusedPackages(nodeModulesDir) {
+	// Remove runtime packages that are referenced by remote/package.json but are not
+	// actually used by the reh-web server (build-time/desktop-only dependencies).
+	const unused = ['@github/copilot', '@github/copilot-win32-x64'];
+	for (const name of unused) {
+		const target = join(nodeModulesDir, name);
+		if (existsSync(target)) {
+			console.log(`[package] Removing unused package: ${name}`);
+			rmSync(target, { recursive: true, force: true });
+		}
 	}
 }
 
@@ -485,6 +504,9 @@ async function packageForPlatform(platform, arch) {
 		if (existsSync(join(repoRoot, 'node_modules'))) {
 			syncNativeBinaries(join(repoRoot, 'node_modules'), join(destDir, 'node_modules'));
 		}
+
+		// Remove production dependencies that are not actually used by the reh-web server.
+		pruneUnusedPackages(join(destDir, 'node_modules'));
 	} else {
 		console.log(`[package] Skipping bundled node_modules for ${platform} (host mismatch or not found).`);
 		console.log('[package] Target system must run `npm ci` using package.json/package-lock.json before first start.');
