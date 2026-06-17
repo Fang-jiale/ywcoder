@@ -687,11 +687,63 @@ call "%~dp0start-server.bat" %*
 endlocal
 `;
 
+		const launcherBat = `@echo off
+setlocal
+
+set "YWCODER_DIR=%~dp0"
+cd /d "%YWCODER_DIR%"
+
+set NODE_EXE=.\\node-runtime\\node.exe
+if not exist "%NODE_EXE%" (
+    echo Error: bundled Node.js not found at %NODE_EXE%.
+    exit /b 1
+)
+
+"%NODE_EXE%" launch-server.cjs %*
+
+endlocal
+`;
+
+		const launcherStopBat = `@echo off
+setlocal
+
+cd /d "%~dp0"
+
+if not exist "server.pid" (
+    echo YwCoder Web Server is not running.
+    exit /b 0
+)
+
+set /p PID=<server.pid
+if "%PID%"=="" (
+    echo YwCoder Web Server is not running.
+    del server.pid
+    exit /b 0
+)
+
+echo Stopping YwCoder Web Server (PID %PID%)...
+taskkill /PID %PID% /T /F >nul 2>&1
+del server.pid
+
+echo Stopped.
+
+endlocal
+`;
+
 		writeFileSync(join(destDir, 'start-server.ps1'), startPs1, 'utf8');
 		writeFileSync(join(destDir, 'stop-server.ps1'), stopPs1, 'utf8');
 		writeFileSync(join(destDir, 'start-server.bat'), startBat, 'utf8');
 		writeFileSync(join(destDir, 'stop-server.bat'), stopBat, 'utf8');
 		writeFileSync(join(destDir, 'restart-server.bat'), restartBat, 'utf8');
+
+		if (options.downloadNode) {
+			const launcherSrc = join(repoRoot, 'scripts', 'launch-server.js');
+			if (existsSync(launcherSrc)) {
+				copyFileSync(launcherSrc, join(destDir, 'launch-server.cjs'));
+				writeFileSync(join(destDir, 'YwCoder-Web.bat'), launcherBat, 'utf8');
+				writeFileSync(join(destDir, 'YwCoder-Web-Stop.bat'), launcherStopBat, 'utf8');
+			}
+		}
 	}
 
 	const nodeCmd = options.downloadNode

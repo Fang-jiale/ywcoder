@@ -119,6 +119,7 @@ async function main() {
 		'--port', String(config.port),
 		'--host', config.host,
 		'--connection-token', config.token,
+		'--builtin-extensions-dir', 'extensions',
 		'--accept-server-license-terms'
 	];
 
