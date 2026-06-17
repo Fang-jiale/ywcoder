@@ -1,0 +1,104 @@
+name: Package YwCoder Web
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Target platform'
+        required: true
+        default: 'linux'
+        type: choice
+        options:
+          - linux
+          - win32
+          - all
+      upload_artifact:
+        description: 'Upload build artifacts'
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  package-linux:
+    if: github.event.inputs.platform == 'linux' || github.event.inputs.platform == 'all'
+    # Use the oldest available Ubuntu runner so native modules compiled during
+    # the build are linked against the lowest practical glibc version.
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.1'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Build YwCoder extension
+        run: |
+          cd extension
+          npm ci
+          npm run build
+
+      - name: Build VS Code: web bundle and server
+        run: |
+          node build/next/index.ts bundle --nls --target web --out out-vscode-web
+          node scripts/generate-nls-zh-cn.mjs
+          node build/next/index.ts transpile --out out
+
+      - name: Package Linux x64 with bundled glibc-2.17 Node
+        run: node scripts/package-web-deployment.mjs --platform linux --arch x64 --download-node
+
+      - name: Verify bundled Node binary
+        run: |
+          NODE_BIN="dist/ywcoder-web-linux-x64/node-runtime/bin/node"
+          echo "Bundled Node version:"
+          "$NODE_BIN" --version
+          echo "Dynamic linker requirements:"
+          objdump -T "$NODE_BIN" | grep -oE 'GLIBC_[0-9.]+' | sort -V | tail -5
+
+      - name: Upload artifact
+        if: github.event.inputs.upload_artifact == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ywcoder-web-linux-x64
+          path: dist/ywcoder-web-linux-x64
+
+  package-windows:
+    if: github.event.inputs.platform == 'win32' || github.event.inputs.platform == 'all'
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.1'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Build YwCoder extension
+        run: |
+          cd extension
+          npm ci
+          npm run build
+
+      - name: Build VS Code: web bundle and server
+        run: |
+          node build/next/index.ts bundle --nls --target web --out out-vscode-web
+          node scripts/generate-nls-zh-cn.mjs
+          node build/next/index.ts transpile --out out
+
+      - name: Package Windows x64 with bundled Node
+        run: node scripts/package-web-deployment.mjs --platform win32 --arch x64 --download-node
+
+      - name: Upload artifact
+        if: github.event.inputs.upload_artifact == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ywcoder-web-win32-x64
+          path: dist/ywcoder-web-win32-x64

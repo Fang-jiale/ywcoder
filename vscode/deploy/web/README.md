@@ -49,12 +49,14 @@ dist/
 
 ## 环境要求
 
-- **Node.js**：`22.22.1`（当前仓库 `.nvmrc` 与 `remote/.npmrc` 要求；Windows 包已内置，无需目标机器安装）
+- **Node.js**：`22.22.1`（当前仓库 `.nvmrc` 与 `remote/.npmrc` 要求；Windows / Linux 包均已内置，无需目标机器安装）
+- **glibc（Linux）**：≥ 2.17。Linux 包内置的 Node 为 [unofficial-builds](https://unofficial-builds.nodejs.org/) 的 `glibc-217` 版本，可在 CentOS 7 / RHEL 7 / 龙蜥等旧发行版运行。
 - **CPU / 架构**：`x64`
 - **内存**：建议至少 2GB（取决于并发用户与扩展数量）
 - **磁盘**：
   - Windows 便携包约 400MB，解压后约 800MB
   - Linux 包（不含 node_modules）约 400MB，安装依赖后约 800MB
+- **浏览器**：Web 版需要 `crypto.subtle`，该 API 只在**安全上下文**中可用。请通过 `https://` 或 `http://localhost` / `http://127.0.0.1` 访问；直接用 `http://<服务器IP>` 打开会报 `crypto.subtle is not available`。
 
 ## Windows 部署
 
@@ -101,9 +103,11 @@ tar -xzf ywcoder-web-linux-x64.tar.gz -C /opt/ywcoder-web --strip-components=1
 cd /opt/ywcoder-web
 ```
 
-### 2. 安装 Node.js 22
+### 2. （可选）使用系统 Node.js
 
-推荐方式（Ubuntu/Debian）：
+Linux 包已内置 glibc-2.17 版 Node.js 22 运行时，默认优先使用 `./node-runtime/bin/node`。如果该目录不存在，启动脚本才会回退到系统 `node`。因此目标机器**无需**单独安装 Node。
+
+如需强制使用系统 Node，请删除或重命名 `node-runtime/` 目录，并确保系统 Node 为 22.x：
 
 ```bash
 curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
@@ -132,14 +136,25 @@ cd /opt/ywcoder-web
 ### 4. 启动服务
 
 ```bash
+# 默认监听 0.0.0.0:8001
 ./start-server.sh
+
+# 自定义端口与监听地址
+./start-server.sh 8080 0.0.0.0
 ```
 
-启动后访问：
+`start-server.sh` 支持两个位置参数：
+
+- `$1`：端口，默认 `8001`
+- `$2`：监听地址，默认 `0.0.0.0`
+
+启动后访问（同一台服务器）：
 
 ```
-http://localhost:8001
+http://localhost:8001?tkn=<脚本中生成的 token>
 ```
+
+从其他机器通过 IP 访问时，必须配置 HTTPS 反向代理，否则浏览器会报 `crypto.subtle is not available`（见 [安全配置](#安全配置) 与 [故障排查](#故障排查)）。
 
 ## 使用 systemd 托管（Linux）
 
@@ -259,6 +274,42 @@ Windows 一键启动器会自动检测端口占用并尝试结束上一次实例
 ### 扩展加载失败
 
 检查 `extensions/` 目录是否包含所需扩展。语言包应为 `extensions/vscode-language-pack-zh-hans/`。
+
+### `crypto.subtle is not available`
+
+该错误说明浏览器未处于安全上下文。`crypto.subtle` 仅在以下地址可用：
+
+- `https://` 站点
+- `http://localhost`
+- `http://127.0.0.1`
+
+通过 `http://<服务器IP>:8001` 直接访问会触发此错误。
+
+**解决方案：**
+
+1. **推荐**：在服务器前部署 Nginx / Caddy / IIS 反向代理并启用 HTTPS，域名指向服务器 IP。
+2. **临时**：使用 SSH 本地端口转发，把远程 8001 端口映射到本机 `localhost:8001`，然后访问 `http://localhost:8001`：
+
+   ```bash
+   ssh -L 8001:localhost:8001 user@服务器IP
+   ```
+
+3. **测试**：在服务器本机用 `http://localhost:8001` 访问验证功能正常。
+
+### Linux 启动报 `GLIBC_2.33 not found`（或 2.32 / 2.34 等）
+
+说明当前使用的 Node 二进制是针对更高版本 glibc 编译的。请确认：
+
+1. 使用的是 `--download-node` 打的 Linux 包，且 `node-runtime/bin/node` 存在。
+2. 不要通过系统 `node` 直接启动 `out/server-main.js`，应使用 `./start-server.sh`。
+3. 如需检查内置 Node 的 glibc 依赖，在 Linux 上执行：
+
+   ```bash
+   objdump -T node-runtime/bin/node | grep -oE 'GLIBC_[0-9.]+' | sort -V | tail -5
+   # 最高版本应 ≤ GLIBC_2.17
+   ```
+
+如果最高版本高于 2.17，说明打包时未使用 unofficial-builds 的 glibc-217 Node，请检查打包命令是否包含 `--download-node`，或改用本仓库的 GitHub Actions 工作流 `.github/workflows/package-web.yml`。
 
 ## 重新打包
 

@@ -313,7 +313,45 @@ async function downloadNode(platform, arch, destDir) {
 		});
 		rmSync(tarPath, { force: true });
 		console.log(`[package] Node.js extracted to ${nodeDir}`);
+
+		// Verify the extracted Linux Node binary is present and linked against a low glibc.
+		const nodeBin = join(nodeDir, 'bin', 'node');
+		if (!existsSync(nodeBin)) {
+			throw new Error(`Bundled Node binary not found after extraction: ${nodeBin}`);
+		}
+		if (process.platform === 'linux') {
+			await verifyGlibc(nodeBin);
+		} else {
+			console.log(`[package]   ${nodeBin} extracted (glibc verification skipped on ${process.platform})`);
+		}
 	}
+}
+
+function verifyGlibc(nodeBin) {
+	return new Promise((resolve, reject) => {
+		const proc = spawn('objdump', ['-T', nodeBin], { stdio: ['ignore', 'pipe', 'pipe'] });
+		let stdout = '';
+		proc.stdout.on('data', d => { stdout += d; });
+		proc.on('close', code => {
+			if (code !== 0) {
+				console.log('[package]   Could not verify glibc version (objdump unavailable)');
+				resolve();
+				return;
+			}
+			const versions = [...stdout.matchAll(/GLIBC_(\d+\.\d+)/g)].map(m => parseFloat(m[1]));
+			const max = versions.length ? Math.max(...versions) : 0;
+			console.log(`[package]   Bundled Node max glibc requirement: ${max.toFixed(2)}`);
+			if (max > 2.17) {
+				reject(new Error(`Bundled Node requires glibc ${max.toFixed(2)}; expected <= 2.17. The unofficial glibc-217 build may not have been used.`));
+			} else {
+				resolve();
+			}
+		});
+		proc.on('error', () => {
+			console.log('[package]   Could not verify glibc version (objdump unavailable)');
+			resolve();
+		});
+	});
 }
 
 async function packageForPlatform(platform, arch) {
@@ -487,110 +525,153 @@ function createStartupScripts(destDir, platform, arch) {
 	const token = generateToken();
 
 	if (platform === 'win32') {
-		const bat = options.downloadNode
-			? `@echo off
-setlocal
-
-set "YWCODER_DIR=%~dp0"
-cd /d "%YWCODER_DIR%"
-
-set NODE_EXE=.\\node-runtime\\node.exe
-if not exist "%NODE_EXE%" (
-    echo Error: bundled Node.js not found at %NODE_EXE%.
-    exit /b 1
-)
-
-for /f "tokens=1 delims=v" %%a in ('"%NODE_EXE%" --version') do (
-    echo Using bundled Node.js: %%a
-)
-
-set NODE_ENV=production
-set VSCODE_NLS_CONFIG={"locale":"${locale}","availableLanguages":{"*":"${locale}"}}
-
-if not exist "%USERPROFILE%\\.ywcoder-server\\extensions" mkdir "%USERPROFILE%\\.ywcoder-server\\extensions"
-if not exist "%USERPROFILE%\\.ywcoder-server\\workspace" mkdir "%USERPROFILE%\\.ywcoder-server\\workspace"
-
-echo Starting YwCoder Web Server on port ${port}...
-"%NODE_EXE%" out/server-main.js --port ${port} --connection-token ${token} --builtin-extensions-dir extensions --accept-server-license-terms %*
-
-endlocal
+		const nodeCheck = options.downloadNode
+			? `
+$NODE_EXE = Join-Path $YWCODER_DIR 'node-runtime' 'node.exe'
+if (-not (Test-Path $NODE_EXE)) {
+    Write-Host "Error: bundled Node.js not found at $NODE_EXE."
+    Write-Host 'Please re-package with --download-node or restore the node-runtime/ directory.'
+    exit 1
+}
 `
-			: `@echo off
+			: `
+$NODE_EXE = 'node'
+if (-not (Get-Command $NODE_EXE -ErrorAction SilentlyContinue)) {
+    Write-Host 'Error: Node.js is not found in PATH.'
+    Write-Host 'Please install Node.js ${NODE_VERSION} or package with --download-node.'
+    exit 1
+}
+`;
+
+		const startPs1 = `param(
+    [string]$Port = '${port}',
+    [string]$ListenHost = 'localhost'
+)
+
+$YWCODER_DIR = Split-Path -Parent $MyInvocation.MyCommand.Path
+${nodeCheck}
+$nodeVersion = & $NODE_EXE --version 2>$null
+Write-Host "Using Node.js: $nodeVersion"
+
+$env:NODE_ENV = 'production'
+$env:VSCODE_NLS_CONFIG = '{"locale":"${locale}","availableLanguages":{"*":"${locale}"}}'
+
+$extDir = Join-Path $env:USERPROFILE '.ywcoder-server\\extensions'
+$wsDir = Join-Path $env:USERPROFILE '.ywcoder-server\\workspace'
+New-Item -ItemType Directory -Force -Path $extDir | Out-Null
+New-Item -ItemType Directory -Force -Path $wsDir | Out-Null
+
+$pidFile = Join-Path $YWCODER_DIR 'ywcoder-server.pid'
+if (Test-Path $pidFile) {
+    $existingPid = Get-Content $pidFile -TotalCount 1
+    $proc = Get-Process -Id $existingPid -ErrorAction SilentlyContinue
+    if ($proc) {
+        Write-Host "Found existing server process $existingPid, stopping it first..."
+        & (Join-Path $YWCODER_DIR 'stop-server.ps1') -Quiet
+    } else {
+        Remove-Item $pidFile -Force
+    }
+}
+
+Write-Host "Starting YwCoder Web Server on $ListenHost\`:$Port..."
+
+$logFile = Join-Path $YWCODER_DIR 'ywcoder-server.log'
+$errFile = Join-Path $YWCODER_DIR 'ywcoder-server.err.log'
+
+$proc = Start-Process -FilePath $NODE_EXE \`
+    -ArgumentList @(
+        'out/server-main.js',
+        '--host', $ListenHost,
+        '--port', $Port,
+        '--connection-token', '${token}',
+        '--builtin-extensions-dir', 'extensions',
+        '--accept-server-license-terms'
+    ) \`
+    -WorkingDirectory $YWCODER_DIR \`
+    -WindowStyle Hidden \`
+    -RedirectStandardOutput $logFile \`
+    -RedirectStandardError $errFile \`
+    -PassThru
+
+$proc.Id | Out-File -FilePath $pidFile -Encoding ASCII -NoNewline
+Write-Host "Server started. PID: $($proc.Id)"
+Write-Host "Web UI available at http://$ListenHost\`:$($Port)?tkn=${token}"
+`;
+
+		const stopPs1 = `param(
+    [switch]$Quiet
+)
+
+$YWCODER_DIR = Split-Path -Parent $MyInvocation.MyCommand.Path
+$KILLED = $false
+
+$pidFile = Join-Path $YWCODER_DIR 'ywcoder-server.pid'
+if (Test-Path $pidFile) {
+    $pidValue = Get-Content $pidFile -TotalCount 1
+    $proc = Get-Process -Id $pidValue -ErrorAction SilentlyContinue
+    if ($proc) {
+        Write-Host "Stopping server process $pidValue..."
+        Stop-Process -Id $pidValue -Force -ErrorAction SilentlyContinue
+        $KILLED = $true
+    }
+    Remove-Item $pidFile -Force -ErrorAction SilentlyContinue
+}
+
+$procs = Get-CimInstance Win32_Process | Where-Object {
+    $_.Name -eq 'node.exe' -and
+    $_.CommandLine -like "*$YWCODER_DIR*"
+}
+
+foreach ($p in $procs) {
+    Write-Host "Stopping fallback process $($p.ProcessId)..."
+    Stop-Process -Id $p.ProcessId -Force -ErrorAction SilentlyContinue
+    $KILLED = $true
+}
+
+if ($KILLED) {
+    Write-Host 'Server stopped.'
+} elseif (-not $Quiet) {
+    Write-Host 'No running YwCoder server process found.'
+}
+`;
+
+		const startBat = `@echo off
 setlocal
 
 set "YWCODER_DIR=%~dp0"
 cd /d "%YWCODER_DIR%"
 
-where node >nul 2>nul
-if %errorlevel% neq 0 (
-    echo Error: Node.js is not found in PATH.
-    echo Please install Node.js ${NODE_VERSION} or run packaging with --download-node.
-    exit /b 1
-)
-
-for /f "tokens=1 delims=v" %%a in ('node --version') do (
-    echo Using Node.js: %%a
-)
-
-set NODE_ENV=production
-set VSCODE_NLS_CONFIG={"locale":"${locale}","availableLanguages":{"*":"${locale}"}}
-
-if not exist "%USERPROFILE%\\.ywcoder-server\\extensions" mkdir "%USERPROFILE%\\.ywcoder-server\\extensions"
-if not exist "%USERPROFILE%\\.ywcoder-server\\workspace" mkdir "%USERPROFILE%\\.ywcoder-server\\workspace"
-
-echo Starting YwCoder Web Server on port ${port}...
-node out/server-main.js --port ${port} --connection-token ${token} --builtin-extensions-dir extensions --accept-server-license-terms %*
+powershell -ExecutionPolicy Bypass -NoProfile -File "%~dp0start-server.ps1" %*
 
 endlocal
 `;
-		writeFileSync(join(destDir, 'start-server.bat'), bat, 'utf8');
 
-		if (options.downloadNode) {
-			const launcherBat = `@echo off
+		const stopBat = `@echo off
 setlocal
 
 set "YWCODER_DIR=%~dp0"
 cd /d "%YWCODER_DIR%"
 
-set NODE_EXE=.\\node-runtime\\node.exe
-if not exist "%NODE_EXE%" (
-    echo Error: bundled Node.js not found at %NODE_EXE%.
-    exit /b 1
-)
-
-"%NODE_EXE%" launch-server.cjs %*
+powershell -ExecutionPolicy Bypass -NoProfile -File "%~dp0stop-server.ps1" %*
 
 endlocal
 `;
-			writeFileSync(join(destDir, 'YwCoder-Web.bat'), launcherBat, 'utf8');
 
-			const stopBat = `@echo off
+		const restartBat = `@echo off
 setlocal
 
-cd /d "%~dp0"
-
-if not exist "server.pid" (
-    echo YwCoder Web Server is not running.
-    exit /b 0
-)
-
-set /p PID=<server.pid
-if "%PID%"=="" (
-    echo YwCoder Web Server is not running.
-    del server.pid
-    exit /b 0
-)
-
-echo Stopping YwCoder Web Server (PID %PID%)...
-taskkill /PID %PID% /T /F >nul 2>&1
-del server.pid
-
-echo Stopped.
+call "%~dp0stop-server.bat"
+timeout /t 2 /nobreak >nul
+call "%~dp0start-server.bat" %*
 
 endlocal
 `;
-			writeFileSync(join(destDir, 'YwCoder-Web-Stop.bat'), stopBat, 'utf8');
-		}
+
+		writeFileSync(join(destDir, 'start-server.ps1'), startPs1, 'utf8');
+		writeFileSync(join(destDir, 'stop-server.ps1'), stopPs1, 'utf8');
+		writeFileSync(join(destDir, 'start-server.bat'), startBat, 'utf8');
+		writeFileSync(join(destDir, 'stop-server.bat'), stopBat, 'utf8');
+		writeFileSync(join(destDir, 'restart-server.bat'), restartBat, 'utf8');
 	}
 
 	const nodeCmd = options.downloadNode
@@ -608,7 +689,13 @@ HOST="\${2:-localhost}"
 
 NODE_CMD="${nodeCmd}"
 if [ ! -f "$NODE_CMD" ]; then
+${options.downloadNode ? `
+    echo "Error: bundled Node.js not found at $NODE_CMD."
+    echo "Please re-package with --download-node or restore the node-runtime/ directory."
+    exit 1
+` : `
     NODE_CMD="node"
+`}
 fi
 
 if ! command -v "$NODE_CMD" &> /dev/null; then
