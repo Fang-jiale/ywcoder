@@ -45,6 +45,11 @@ jobs:
           node-version: '22.22.1'
 
       - name: Install root dependencies
+        env:
+          # vscode/.npmrc sets build_from_source=true, but root deps (e.g.
+          # @parcel/watcher) provide compatible prebuilt binaries and Rocky 8's
+          # g++ does not support the -std=gnu++20 they require.
+          npm_config_build_from_source: false
         run: npm ci
 
       - name: Install server dependencies
