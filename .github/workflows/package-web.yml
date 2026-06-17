@@ -8,12 +8,31 @@ on:
 
 jobs:
   package-linux-x64:
+    # Run inside Rocky Linux 8 (glibc 2.28) so native modules compiled during the
+    # build are linked against the same glibc version as the target server.
     runs-on: ubuntu-latest
+    container:
+      image: rockylinux:8
     defaults:
       run:
         working-directory: vscode
 
     steps:
+      - name: Check container OS and glibc
+        working-directory: .
+        run: |
+          cat /etc/os-release
+          ldd --version
+
+      - name: Install build tools
+        working-directory: .
+        run: |
+          dnf install -y git-core python3 python39 make gcc-c++ tar gzip curl binutils
+          ln -sf /usr/bin/python3.9 /usr/local/bin/python
+          git --version
+          python3.9 --version
+          gcc --version
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -21,23 +40,34 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22.22.1'
-          cache: 'npm'
-          cache-dependency-path: vscode/package-lock.json
 
-      - name: Install system build dependencies
+      - name: Install root dependencies (build native modules from source)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          npm_config_python: /usr/bin/python3.9
         run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential pkg-config libkrb5-dev libx11-dev libxkbfile-dev python-is-python3
+          export npm_config_build_from_source=true
+          npm ci
+          npm rebuild --build-from-source
 
-      - name: Install root dependencies
-        run: npm ci
-
-      - name: Install server dependencies
-        run: npm ci --prefix remote --omit=dev
+      - name: Install server dependencies (build native modules from source)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          npm_config_python: /usr/bin/python3.9
+        run: |
+          export npm_config_build_from_source=true
+          npm ci --prefix remote --omit=dev
+          npm rebuild --prefix remote --build-from-source
 
       - name: Install ywcoder extension dependencies
         working-directory: extension
-        run: npm ci
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          npm_config_python: /usr/bin/python3.9
+        run: |
+          export npm_config_build_from_source=true
+          npm ci
+          npm rebuild --build-from-source || true
 
       - name: Compile server and extensions
         env:
@@ -60,6 +90,49 @@ jobs:
         env:
           NODE_OPTIONS: --max-old-space-size=8192
         run: node scripts/package-web-deployment.mjs --platform linux --arch x64 --download-node
+
+      - name: Verify bundled Node binary and native modules
+        run: |
+          NODE_BIN="dist/ywcoder-web-linux-x64/node-runtime/bin/node"
+          echo "Container glibc:"
+          ldd --version | head -1
+          echo ""
+          echo "Bundled Node version:"
+          "$NODE_BIN" --version
+
+          NODE_MAX=$(objdump -T "$NODE_BIN" | grep -oE 'GLIBC_[0-9.]+' | sort -V | tail -1)
+          echo "Bundled Node max glibc requirement: $NODE_MAX"
+          if [ "$(printf '%s\n' '2.17' "${NODE_MAX#GLIBC_}" | sort -V | tail -1)" != "2.17" ]; then
+            echo "ERROR: Bundled Node requires $NODE_MAX, expected <= GLIBC_2.17"
+            exit 1
+          fi
+
+          echo ""
+          echo "Checking all native modules (.node) in dist..."
+          NATIVE_MAX=$(find dist/ywcoder-web-linux-x64 -name '*.node' -print0 | \
+            xargs -0 -r objdump -T 2>/dev/null | \
+            grep -oE 'GLIBC_[0-9.]+' | sort -V | tail -1 || true)
+          echo "Highest GLIBC required by any .node file: ${NATIVE_MAX:-none}"
+          if [ -n "$NATIVE_MAX" ] && [ "$(printf '%s\n' '2.28' "${NATIVE_MAX#GLIBC_}" | sort -V | tail -1)" != "2.28" ]; then
+            echo "ERROR: Native modules require $NATIVE_MAX, expected <= GLIBC_2.28"
+            exit 1
+          fi
+
+          echo ""
+          echo "Checking all ELF executables in dist..."
+          EXEC_MAX=$(find dist/ywcoder-web-linux-x64 -type f -print0 | while IFS= read -r -d '' f; do
+            if file "$f" | grep -q 'ELF.*executable'; then
+              objdump -T "$f" 2>/dev/null | grep -oE 'GLIBC_[0-9.]+' | sort -V | tail -1
+            fi
+          done | sort -V | tail -1 || true)
+          echo "Highest GLIBC required by any ELF executable: ${EXEC_MAX:-none}"
+          if [ -n "$EXEC_MAX" ] && [ "$(printf '%s\n' '2.28' "${EXEC_MAX#GLIBC_}" | sort -V | tail -1)" != "2.28" ]; then
+            echo "ERROR: ELF executables require $EXEC_MAX, expected <= GLIBC_2.28"
+            exit 1
+          fi
+
+          echo ""
+          echo "All glibc requirements OK."
 
       - name: Create distribution archive
         run: node scripts/archive-web-deployment.mjs --platform linux --arch x64
