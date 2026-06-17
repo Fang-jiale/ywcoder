@@ -19,7 +19,7 @@
 打包脚本生成的目录结构如下：
 
 ```
-ywcoder-web-{platform}-x64/
+ywcoder-web-{platform}-{arch}/
 ├── out/                    # 服务端代码
 ├── out-vscode-web/         # Web 前端资源（已包含中文 NLS）
 ├── extensions/             # 内置扩展（含简体中文语言包）
@@ -44,14 +44,18 @@ dist/
 ├── ywcoder-web-win32-x64/
 ├── ywcoder-web-win32-x64.zip   # Windows 便携包
 ├── ywcoder-web-linux-x64/
-└── ywcoder-web-linux-x64.tar.gz # Linux 包
+├── ywcoder-web-linux-x64.tar.gz # Linux x64 包
+├── ywcoder-web-linux-arm64/
+└── ywcoder-web-linux-arm64.tar.gz # Linux arm64 包
 ```
 
 ## 环境要求
 
 - **Node.js**：`22.22.1`（当前仓库 `.nvmrc` 与 `remote/.npmrc` 要求；Windows / Linux 包均已内置，无需目标机器安装）
-- **glibc（Linux）**：≥ 2.17。Linux 包内置的 Node 为 [unofficial-builds](https://unofficial-builds.nodejs.org/) 的 `glibc-217` 版本，可在 CentOS 7 / RHEL 7 / 龙蜥等旧发行版运行。
-- **CPU / 架构**：`x64`
+- **glibc（Linux）**：
+  - **x64**：≥ 2.17。Linux x64 包内置的 Node 为 [unofficial-builds](https://unofficial-builds.nodejs.org/) 的 `glibc-217` 版本，可在 CentOS 7 / RHEL 7 / 龙蜥等旧发行版运行。
+  - **arm64**：≥ 2.28。Linux arm64 包使用官方 Node.js 22 二进制，要求 glibc 2.28（适用于麒麟 V10 /  openEuler / Rocky Linux 8 等）。
+- **CPU / 架构**：`x64` 或 `arm64`（aarch64）
 - **内存**：建议至少 2GB（取决于并发用户与扩展数量）
 - **磁盘**：
   - Windows 便携包约 400MB，解压后约 800MB
@@ -95,6 +99,8 @@ nssm start YwCoderWeb
 
 ## Linux 部署
 
+下文以 `x64` 为例，`arm64` 包把文件名中的 `x64` 替换为 `arm64` 即可。
+
 ### 1. 解压部署包
 
 ```bash
@@ -105,7 +111,7 @@ cd /opt/ywcoder-web
 
 ### 2. （可选）使用系统 Node.js
 
-Linux 包已内置 glibc-2.17 版 Node.js 22 运行时，默认优先使用 `./node-runtime/bin/node`。如果该目录不存在，启动脚本才会回退到系统 `node`。因此目标机器**无需**单独安装 Node。
+Linux 包已内置 Node.js 22 运行时，默认优先使用 `./node-runtime/bin/node`。如果该目录不存在，启动脚本才会回退到系统 `node`。因此目标机器**无需**单独安装 Node。
 
 如需强制使用系统 Node，请删除或重命名 `node-runtime/` 目录，并确保系统 Node 为 22.x：
 
@@ -173,7 +179,7 @@ ExecStart=/opt/ywcoder-web/start-server.sh
 Restart=always
 RestartSec=5
 Environment="NODE_ENV=production"
-Environment="VSCODE_NLS_CONFIG={"locale":"zh-cn","availableLanguages":{"*":"zh-cn"}}"
+Environment="VSCODE_NLS_CONFIG={\"locale\":\"zh-cn\",\"availableLanguages\":{\"*\":\"zh-cn\"}}"
 
 [Install]
 WantedBy=multi-user.target
@@ -306,10 +312,11 @@ Windows 一键启动器会自动检测端口占用并尝试结束上一次实例
 
    ```bash
    objdump -T node-runtime/bin/node | grep -oE 'GLIBC_[0-9.]+' | sort -V | tail -5
-   # 最高版本应 ≤ GLIBC_2.17
+   # x64 包最高版本应 ≤ GLIBC_2.17
+   # arm64 包最高版本应 ≤ GLIBC_2.28
    ```
 
-如果最高版本高于 2.17，说明打包时未使用 unofficial-builds 的 glibc-217 Node，请检查打包命令是否包含 `--download-node`，或改用本仓库的 GitHub Actions 工作流 `.github/workflows/package-web.yml`。
+如果最高版本高于上述值，说明打包时未使用对应的 Node 二进制，请检查打包命令是否包含 `--download-node`，或改用本仓库的 GitHub Actions 工作流 `.github/workflows/package-web.yml`。
 
 ## 重新打包
 
@@ -326,8 +333,12 @@ node scripts/package-web-deployment.mjs --platform all --download-node
 # 或单独打包 Windows
 node scripts/package-web-deployment.mjs --platform win32 --download-node
 
-# 或单独打包 Linux
+# 或单独打包 Linux（同时生成 x64 与 arm64）
 node scripts/package-web-deployment.mjs --platform linux --download-node
+
+# 或指定架构
+node scripts/package-web-deployment.mjs --platform linux --arch x64 --download-node
+node scripts/package-web-deployment.mjs --platform linux --arch arm64 --download-node
 
 # 3. 生成 zip / tar.gz 分发包
 node scripts/archive-web-deployment.mjs --platform all
@@ -342,7 +353,9 @@ dist/
 │   └── ...
 ├── ywcoder-web-win32-x64.zip
 ├── ywcoder-web-linux-x64/
-└── ywcoder-web-linux-x64.tar.gz
+├── ywcoder-web-linux-x64.tar.gz
+├── ywcoder-web-linux-arm64/
+└── ywcoder-web-linux-arm64.tar.gz
 ```
 
 ## 附：常用启动参数
