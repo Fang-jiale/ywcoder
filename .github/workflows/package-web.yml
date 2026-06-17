@@ -19,7 +19,6 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       npm_config_python: /usr/bin/python3.9
-      npm_config_build_from_source: true
 
     steps:
       - name: Check container OS and glibc
@@ -49,10 +48,14 @@ jobs:
         run: npm ci
 
       - name: Install server dependencies
+        env:
+          npm_config_build_from_source: true
         run: npm ci --prefix remote --omit=dev
 
       - name: Install ywcoder extension dependencies
         working-directory: extension
+        env:
+          npm_config_build_from_source: true
         run: npm ci
 
       - name: Compile VS Code server and builtin extensions
