@@ -60,7 +60,13 @@ jobs:
           npm_config_target: '22.22.1'
           npm_config_disturl: 'https://nodejs.org/dist'
           npm_config_build_from_source: 'false'
-        run: npm ci
+        run: |
+          # VS Code's postinstall runs git config from vscode/, but git in the
+          # container cannot locate the parent .git. Temporarily point vscode/
+          # at the repository root .git so the postinstall script succeeds.
+          trap 'rm -f .git' EXIT
+          echo "gitdir: $GITHUB_WORKSPACE/.git" > .git
+          npm ci
 
       - name: Install server dependencies
         env:
