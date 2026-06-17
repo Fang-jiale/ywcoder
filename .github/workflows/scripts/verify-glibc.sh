@@ -30,7 +30,7 @@ echo "Bundled Node version:"
 NODE_MAX=$(objdump -T "$NODE_BIN" | grep -oE 'GLIBC_[0-9.]+' | sort -V | tail -1)
 NODE_MAX="${NODE_MAX#GLIBC_}"
 echo "Bundled Node max glibc requirement: ${NODE_MAX:-none}"
-require_max "$NODE_MAX" "2.17" "Bundled Node" "GLIBC"
+require_max "$NODE_MAX" "2.28" "Bundled Node" "GLIBC"
 
 echo ""
 echo "Checking all native modules (.node) in dist..."

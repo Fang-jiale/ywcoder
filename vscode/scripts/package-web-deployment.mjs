@@ -346,11 +346,14 @@ async function downloadNode(platform, arch, destDir) {
 			console.log(`[package] Node.js downloaded to ${outFile}`);
 		}
 	} else {
-		// Use unofficial glibc-217 build on Linux so the package runs on older distributions (glibc >= 2.17)
-		const tarName = platform === 'linux'
+		// Use unofficial glibc-217 build on Linux x64 so the package runs on older distributions (glibc >= 2.17).
+		// Linux arm64 does not have an unofficial glibc-217 build, so fall back to the official Node.js tarball
+		// (Node 22 official requires glibc 2.28, which matches Kylin V10).
+		const useUnofficialGlibc217 = platform === 'linux' && arch === 'x64';
+		const tarName = useUnofficialGlibc217
 			? `node-v${NODE_VERSION}-linux-${arch}-glibc-217.tar.gz`
 			: `node-v${NODE_VERSION}-${platform}-${arch}.tar.gz`;
-		const url = platform === 'linux'
+		const url = useUnofficialGlibc217
 			? `https://unofficial-builds.nodejs.org/download/release/v${NODE_VERSION}/${tarName}`
 			: `${NODE_BASE_URL}/v${NODE_VERSION}/${tarName}`;
 		const tarPath = join(nodeDir, 'node.tar.gz');
@@ -380,7 +383,9 @@ async function downloadNode(platform, arch, destDir) {
 			throw new Error(`Bundled Node binary not found after extraction: ${nodeBin}`);
 		}
 		if (process.platform === 'linux') {
-			await verifyGlibc(nodeBin);
+			// x64 uses the unofficial glibc-217 build; arm64 uses official Node 22 which requires glibc 2.28.
+			const maxGlibc = arch === 'x64' ? '2.17' : '2.28';
+			await verifyGlibc(nodeBin, maxGlibc);
 		} else {
 			console.log(`[package]   ${nodeBin} extracted (glibc verification skipped on ${process.platform})`);
 		}
@@ -404,7 +409,7 @@ function compareVersions(a, b) {
 	return 0;
 }
 
-function verifyGlibc(nodeBin) {
+function verifyGlibc(nodeBin, expectedMax = '2.17') {
 	return new Promise((resolve, reject) => {
 		const proc = spawn('objdump', ['-T', nodeBin], { stdio: ['ignore', 'pipe', 'pipe'] });
 		let stdout = '';
@@ -418,8 +423,8 @@ function verifyGlibc(nodeBin) {
 			const versions = [...stdout.matchAll(/GLIBC_(\d+\.\d+)/g)].map(m => m[1]);
 			const maxVersion = versions.reduce((max, v) => compareVersions(v, max) > 0 ? v : max, '0');
 			console.log(`[package]   Bundled Node max glibc requirement: ${maxVersion}`);
-			if (compareVersions(maxVersion, '2.17') > 0) {
-				reject(new Error(`Bundled Node requires glibc ${maxVersion}; expected <= 2.17. The unofficial glibc-217 build may not have been used.`));
+			if (compareVersions(maxVersion, expectedMax) > 0) {
+				reject(new Error(`Bundled Node requires glibc ${maxVersion}; expected <= ${expectedMax}. The unofficial glibc-217 build may not have been used.`));
 			} else {
 				resolve();
 			}

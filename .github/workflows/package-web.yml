@@ -7,10 +7,17 @@ on:
       - 'v*'
 
 jobs:
-  package-linux-x64:
+  package-linux:
     # Build in Rocky Linux 8 (glibc 2.28) so native modules are linked against the
     # same glibc version as the target Kylin V10 server.
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - arch: x64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     container:
       image: rockylinux:8
     defaults:
@@ -99,28 +106,28 @@ jobs:
           NODE_OPTIONS: --max-old-space-size=8192
         run: |
           node scripts/package-web-deployment.mjs \
-            --platform linux --arch x64 --download-node --skip-extension-build
+            --platform linux --arch ${{ matrix.arch }} --download-node --skip-extension-build
 
       - name: Verify bundled Node binary and native modules
         working-directory: .
-        run: .github/workflows/scripts/verify-glibc.sh vscode/dist/ywcoder-web-linux-x64
+        run: .github/workflows/scripts/verify-glibc.sh vscode/dist/ywcoder-web-linux-${{ matrix.arch }}
 
       - name: Create distribution archive
-        run: node scripts/archive-web-deployment.mjs --platform linux --arch x64
+        run: node scripts/archive-web-deployment.mjs --platform linux --arch ${{ matrix.arch }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ywcoder-web-linux-x64
-          path: vscode/dist/ywcoder-web-linux-x64.tar.gz
+          name: ywcoder-web-linux-${{ matrix.arch }}
+          path: vscode/dist/ywcoder-web-linux-${{ matrix.arch }}.tar.gz
           if-no-files-found: error
 
       - name: Upload build logs on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: build-logs-linux-x64
+          name: build-logs-linux-${{ matrix.arch }}
           path: |
-            vscode/dist/ywcoder-web-linux-x64/server.log
+            vscode/dist/ywcoder-web-linux-${{ matrix.arch }}/server.log
             vscode/npm-debug.log
           if-no-files-found: ignore
