@@ -118,12 +118,15 @@ function fileSize(path) {
 	}
 }
 
-function makeCopyFilter(sourceRoot, { skipTests = false, skipBin = true } = {}) {
+function makeCopyFilter(sourceRoot, { skipTests = false, skipBin = true, skipExtensionRootNodeModules = false } = {}) {
 	return src => {
 		const relative = src.slice(sourceRoot.length + 1).replace(/\\/g, '/');
 		if (relative.endsWith('.map')) { return false; }
 		if (skipTests && (relative.includes('/test/') || relative.includes('/tests/'))) { return false; }
 		if (skipBin && (relative.includes('/.bin/') || relative.startsWith('.bin/'))) { return false; }
+		if (skipExtensionRootNodeModules && /^[^/]+\/node_modules\//.test(relative)) {
+			return false;
+		}
 		try {
 			statSync(src);
 		} catch {
@@ -408,14 +411,14 @@ async function packageForPlatform(platform, arch) {
 	cpSync(extensionsBaseSource, join(destDir, 'extensions'), {
 		recursive: true,
 		dereference: true,
-		filter: makeCopyFilter(extensionsBaseSource, { skipTests: true })
+		filter: makeCopyFilter(extensionsBaseSource, { skipTests: true, skipExtensionRootNodeModules: true })
 	});
 	if (existsSync(extensionsBundledSource)) {
 		console.log(`[package] Merging bundled extensions from ${extensionsBundledSource}...`);
 		cpSync(extensionsBundledSource, join(destDir, 'extensions'), {
 			recursive: true,
 			dereference: true,
-			filter: makeCopyFilter(extensionsBundledSource, { skipTests: true })
+			filter: makeCopyFilter(extensionsBundledSource, { skipTests: true, skipExtensionRootNodeModules: true })
 		});
 	}
 
