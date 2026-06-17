@@ -21,17 +21,29 @@ on:
 jobs:
   package-linux:
     if: github.event.inputs.platform == 'linux' || github.event.inputs.platform == 'all'
-    # Use the oldest available Ubuntu runner so native modules compiled during
-    # the build are linked against the lowest practical glibc version.
-    runs-on: ubuntu-22.04
+    # Run inside Rocky Linux 8 (glibc 2.28) so native modules compiled during the
+    # build are linked against the same glibc version as the target server.
+    runs-on: ubuntu-latest
+    container:
+      image: rockylinux:8
     steps:
+      - name: Install build tools
+        run: |
+          dnf install -y git-core python3 make gcc-c++ tar gzip curl
+          git --version
+          python3 --version
+          gcc --version
+
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: '22.22.1'
+
+      - name: Verify Node runs on Rocky Linux 8
+        run: node --version
 
       - name: Install root dependencies
         run: npm ci
@@ -51,13 +63,15 @@ jobs:
       - name: Package Linux x64 with bundled glibc-2.17 Node
         run: node scripts/package-web-deployment.mjs --platform linux --arch x64 --download-node
 
-      - name: Verify bundled Node binary
+      - name: Verify bundled Node binary and native modules
         run: |
           NODE_BIN="dist/ywcoder-web-linux-x64/node-runtime/bin/node"
           echo "Bundled Node version:"
           "$NODE_BIN" --version
-          echo "Dynamic linker requirements:"
+          echo "Bundled Node max glibc requirement:"
           objdump -T "$NODE_BIN" | grep -oE 'GLIBC_[0-9.]+' | sort -V | tail -5
+          echo "Sample native module (spdlog) max glibc requirement:"
+          find dist/ywcoder-web-linux-x64/node_modules -name 'spdlog.node' -print0 | head -z -n 1 | xargs -0 -r objdump -T | grep -oE 'GLIBC_[0-9.]+' | sort -V | tail -5
 
       - name: Upload artifact
         if: github.event.inputs.upload_artifact == 'true'
