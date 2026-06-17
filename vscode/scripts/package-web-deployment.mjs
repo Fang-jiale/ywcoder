@@ -269,6 +269,30 @@ async function buildYwcoderExtension() {
 	}
 	ensureDir(targetDist);
 	cpSync(sourceDist, targetDist, { recursive: true, dereference: true });
+
+	const sourceResources = join(extensionDir, 'resources');
+	const targetResources = join(repoRoot, 'extensions', 'ywcoder', 'resources');
+	if (existsSync(sourceResources)) {
+		console.log(`[package] Copying extension resources to ${targetResources}...`);
+		if (existsSync(targetResources)) {
+			rmSync(targetResources, { recursive: true, force: true });
+		}
+		ensureDir(targetResources);
+		cpSync(sourceResources, targetResources, { recursive: true, dereference: true });
+	}
+
+	// The extension is bundled by esbuild; dependencies are not needed at runtime
+	// and would cause vsce's npm list check to fail if node_modules are missing.
+	const targetPkgPath = join(repoRoot, 'extensions', 'ywcoder', 'package.json');
+	if (existsSync(targetPkgPath)) {
+		const targetPkg = JSON.parse(readFileSync(targetPkgPath, 'utf8'));
+		if (targetPkg.dependencies || targetPkg.devDependencies) {
+			console.log('[package] Stripping bundled YwCoder extension dependencies...');
+			delete targetPkg.dependencies;
+			delete targetPkg.devDependencies;
+			writeFileSync(targetPkgPath, JSON.stringify(targetPkg, null, 2), 'utf8');
+		}
+	}
 }
 
 function verifyArtifacts() {
