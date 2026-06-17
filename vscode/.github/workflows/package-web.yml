@@ -45,14 +45,19 @@ jobs:
       - name: Verify Node runs on Rocky Linux 8
         run: node --version
 
-      - name: Install root dependencies
-        run: npm ci
+      - name: Install root dependencies (build native modules from source)
+        run: |
+          export npm_config_build_from_source=true
+          npm ci
+          npm rebuild --build-from-source
 
       - name: Build YwCoder extension
         run: |
           cd extension
+          export npm_config_build_from_source=true
           npm ci
           npm run build
+          npm rebuild --build-from-source
 
       - name: Build VS Code: web bundle and server
         run: |
@@ -70,8 +75,19 @@ jobs:
           "$NODE_BIN" --version
           echo "Bundled Node max glibc requirement:"
           objdump -T "$NODE_BIN" | grep -oE 'GLIBC_[0-9.]+' | sort -V | tail -5
-          echo "Sample native module (spdlog) max glibc requirement:"
-          find dist/ywcoder-web-linux-x64/node_modules -name 'spdlog.node' -print0 | head -z -n 1 | xargs -0 -r objdump -T | grep -oE 'GLIBC_[0-9.]+' | sort -V | tail -5
+          echo ""
+          echo "Checking all native modules (.node) in dist..."
+          find dist/ywcoder-web-linux-x64 -name '*.node' -print0 | while IFS= read -r -d '' f; do
+            MAX=$(objdump -T "$f" 2>/dev/null | grep -oE 'GLIBC_[0-9.]+' | sort -V | tail -1 || true)
+            if [ -n "$MAX" ]; then
+              echo "$(basename "$f"): $MAX"
+            fi
+          done
+          echo ""
+          echo "Highest GLIBC required by any .node file:"
+          find dist/ywcoder-web-linux-x64 -name '*.node' -print0 | \
+            xargs -0 -r objdump -T 2>/dev/null | \
+            grep -oE 'GLIBC_[0-9.]+' | sort -V | tail -1
 
       - name: Upload artifact
         if: github.event.inputs.upload_artifact == 'true'
