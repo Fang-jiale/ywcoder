@@ -327,6 +327,23 @@ async function downloadNode(platform, arch, destDir) {
 	}
 }
 
+function parseVersion(versionStr) {
+	return versionStr.split('.').map(Number);
+}
+
+function compareVersions(a, b) {
+	const av = parseVersion(a);
+	const bv = parseVersion(b);
+	for (let i = 0; i < Math.max(av.length, bv.length); i++) {
+		const ai = av[i] || 0;
+		const bi = bv[i] || 0;
+		if (ai !== bi) {
+			return ai - bi;
+		}
+	}
+	return 0;
+}
+
 function verifyGlibc(nodeBin) {
 	return new Promise((resolve, reject) => {
 		const proc = spawn('objdump', ['-T', nodeBin], { stdio: ['ignore', 'pipe', 'pipe'] });
@@ -338,11 +355,11 @@ function verifyGlibc(nodeBin) {
 				resolve();
 				return;
 			}
-			const versions = [...stdout.matchAll(/GLIBC_(\d+\.\d+)/g)].map(m => parseFloat(m[1]));
-			const max = versions.length ? Math.max(...versions) : 0;
-			console.log(`[package]   Bundled Node max glibc requirement: ${max.toFixed(2)}`);
-			if (max > 2.17) {
-				reject(new Error(`Bundled Node requires glibc ${max.toFixed(2)}; expected <= 2.17. The unofficial glibc-217 build may not have been used.`));
+			const versions = [...stdout.matchAll(/GLIBC_(\d+\.\d+)/g)].map(m => m[1]);
+			const maxVersion = versions.reduce((max, v) => compareVersions(v, max) > 0 ? v : max, '0');
+			console.log(`[package]   Bundled Node max glibc requirement: ${maxVersion}`);
+			if (compareVersions(maxVersion, '2.17') > 0) {
+				reject(new Error(`Bundled Node requires glibc ${maxVersion}; expected <= 2.17. The unofficial glibc-217 build may not have been used.`));
 			} else {
 				resolve();
 			}
