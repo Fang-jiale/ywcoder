@@ -465,9 +465,9 @@ export class WebClientServer {
 
 		const webviewHost = remoteAuthority.startsWith('[') ? 'localhost:8001' : remoteAuthority;
 		const webviewScheme = getFirstHeader('x-forwarded-proto') || 'http';
-		// [YwCoder] For local/offline use, serve webviews from the same origin so
-		// hashed subdomains like <uuid>.localhost do not need special DNS resolution.
-		const isLocalWebviewHost = /^(localhost|127\\.0\\.0\\.1|\\[::1\\]):\\d+$/.test(webviewHost);
+		// [YwCoder] For local/offline/IP-based access, serve webviews from the same origin so
+		// hashed subdomains like <uuid>.<ip> do not need special DNS resolution.
+		const isLocalWebviewHost = /^(localhost|(?:\d{1,3}\.){3}\d{1,3}|\[[0-9a-fA-F:]+\]):\d+$/.test(webviewHost);
 		const webviewEndpoint = isLocalWebviewHost
 			? `${webviewScheme}://${webviewHost}${staticRoute}/out/vs/workbench/contrib/webview/browser/pre/`
 			: `${webviewScheme}://{{uuid}}.${webviewHost}${staticRoute}/out/vs/workbench/contrib/webview/browser/pre/`;

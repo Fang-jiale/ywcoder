@@ -141,7 +141,13 @@ function makeCopyFilter(sourceRoot, { skipTests = false, skipBin = true, skipYwc
 	return src => {
 		const relative = src.slice(sourceRoot.length + 1).replace(/\\/g, '/');
 		if (relative.endsWith('.map')) { return false; }
-		if (skipTests && (relative.includes('/test/') || relative.includes('/tests/'))) { return false; }
+		if (skipTests && (relative.includes('/test/') || relative.includes('/tests/'))) {
+			// Compiled test utilities under extensions/*/out/ are required by some production code.
+			if (relative.includes('/out/test/') || relative.includes('/out/tests/')) {
+				return true;
+			}
+			return false;
+		}
 		if (skipBin && (relative.includes('/.bin/') || relative.startsWith('.bin/'))) { return false; }
 		// Only skip the YwCoder extension's source node_modules (build-time deps).
 		// Built-in extensions like git rely on their node_modules at runtime (e.g. @vscode/fs-copyfile).
@@ -174,6 +180,16 @@ function run(command, args, cwd) {
 		});
 		proc.on('error', reject);
 	});
+}
+
+async function buildWebExtensions() {
+	if (options.skipBuild) {
+		console.log('[package] Skipping web extension bundle build (--skip-build)');
+		return;
+	}
+
+	console.log('[package] Building web extension bundles...');
+	await run('npm', ['run', 'gulp', 'compile-web-extensions-build'], repoRoot);
 }
 
 async function buildWebBundle() {
@@ -464,7 +480,8 @@ async function packageForPlatform(platform, arch) {
 
 	// Builtin extensions: always start from source extensions/, then overlay .build/extensions if present
 	const extensionsBaseSource = join(repoRoot, 'extensions');
-	const extensionsBundledSource = join(repoRoot, '.build', 'extensions');
+	// Web-bundled builtin extensions overlay (produces dist/browser for web-capable extensions)
+	const extensionsBundledSource = join(repoRoot, '.build', 'web', 'extensions');
 	console.log(`[package] Copying builtin extensions from ${extensionsBaseSource}...`);
 	cpSync(extensionsBaseSource, join(destDir, 'extensions'), {
 		recursive: true,
@@ -472,7 +489,7 @@ async function packageForPlatform(platform, arch) {
 		filter: makeCopyFilter(extensionsBaseSource, { skipTests: true, skipYwcoderExtensionNodeModules: true })
 	});
 	if (existsSync(extensionsBundledSource)) {
-		console.log(`[package] Merging bundled extensions from ${extensionsBundledSource}...`);
+		console.log(`[package] Merging web extension bundles from ${extensionsBundledSource}...`);
 		cpSync(extensionsBundledSource, join(destDir, 'extensions'), {
 			recursive: true,
 			dereference: true,
@@ -1020,6 +1037,7 @@ async function main() {
 	try {
 		await buildYwcoderExtension();
 		await buildServerCode();
+		await buildWebExtensions();
 		await buildWebBundle();
 		syncNLSFilesToOut();
 		verifyArtifacts();
