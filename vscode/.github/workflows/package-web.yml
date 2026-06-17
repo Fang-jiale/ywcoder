@@ -79,31 +79,40 @@ jobs:
           NODE_BIN="dist/ywcoder-web-linux-x64/node-runtime/bin/node"
           echo "Bundled Node version:"
           "$NODE_BIN" --version
-          echo "Bundled Node max glibc requirement:"
-          objdump -T "$NODE_BIN" | grep -oE 'GLIBC_[0-9.]+' | sort -V | tail -5
+
+          NODE_MAX=$(objdump -T "$NODE_BIN" | grep -oE 'GLIBC_[0-9.]+' | sort -V | tail -1)
+          echo "Bundled Node max glibc requirement: $NODE_MAX"
+          if [[ "$NODE_MAX" > "GLIBC_2.17" ]]; then
+            echo "ERROR: Bundled Node requires $NODE_MAX, expected <= GLIBC_2.17"
+            exit 1
+          fi
+
           echo ""
           echo "Checking all native modules (.node) in dist..."
-          find dist/ywcoder-web-linux-x64 -name '*.node' -print0 | while IFS= read -r -d '' f; do
-            MAX=$(objdump -T "$f" 2>/dev/null | grep -oE 'GLIBC_[0-9.]+' | sort -V | tail -1 || true)
-            if [ -n "$MAX" ]; then
-              echo "$(basename "$f"): $MAX"
-            fi
-          done
+          NATIVE_MAX=$(find dist/ywcoder-web-linux-x64 -name '*.node' -print0 | \
+            xargs -0 -r objdump -T 2>/dev/null | \
+            grep -oE 'GLIBC_[0-9.]+' | sort -V | tail -1 || true)
+          echo "Highest GLIBC required by any .node file: ${NATIVE_MAX:-none}"
+          if [[ -n "$NATIVE_MAX" && "$NATIVE_MAX" > "GLIBC_2.28" ]]; then
+            echo "ERROR: Native modules require $NATIVE_MAX, expected <= GLIBC_2.28"
+            exit 1
+          fi
+
           echo ""
           echo "Checking all ELF executables in dist..."
-          find dist/ywcoder-web-linux-x64 -type f -print0 | while IFS= read -r -d '' f; do
+          EXEC_MAX=$(find dist/ywcoder-web-linux-x64 -type f -print0 | while IFS= read -r -d '' f; do
             if file "$f" | grep -q 'ELF.*executable'; then
-              MAX=$(objdump -T "$f" 2>/dev/null | grep -oE 'GLIBC_[0-9.]+' | sort -V | tail -1 || true)
-              if [ -n "$MAX" ]; then
-                echo "$(basename "$f"): $MAX"
-              fi
+              objdump -T "$f" 2>/dev/null | grep -oE 'GLIBC_[0-9.]+' | sort -V | tail -1
             fi
-          done
+          done | sort -V | tail -1 || true)
+          echo "Highest GLIBC required by any ELF executable: ${EXEC_MAX:-none}"
+          if [[ -n "$EXEC_MAX" && "$EXEC_MAX" > "GLIBC_2.28" ]]; then
+            echo "ERROR: ELF executables require $EXEC_MAX, expected <= GLIBC_2.28"
+            exit 1
+          fi
+
           echo ""
-          echo "Highest GLIBC required by any .node file:"
-          find dist/ywcoder-web-linux-x64 -name '*.node' -print0 | \
-            xargs -0 -r objdump -T 2>/dev/null | \
-            grep -oE 'GLIBC_[0-9.]+' | sort -V | tail -1
+          echo "All glibc requirements OK."
 
       - name: Upload artifact
         if: github.event.inputs.upload_artifact == 'true'
