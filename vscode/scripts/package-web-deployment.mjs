@@ -608,7 +608,7 @@ function createStartupScripts(destDir, platform, arch) {
 	if (platform === 'win32') {
 		const nodeCheck = options.downloadNode
 			? `
-$NODE_EXE = Join-Path $YWCODER_DIR 'node-runtime' 'node.exe'
+$NODE_EXE = Join-Path (Join-Path $YWCODER_DIR 'node-runtime') 'node.exe'
 if (-not (Test-Path $NODE_EXE)) {
     Write-Host "Error: bundled Node.js not found at $NODE_EXE."
     Write-Host 'Please re-package with --download-node or restore the node-runtime/ directory.'
@@ -645,10 +645,14 @@ New-Item -ItemType Directory -Force -Path $wsDir | Out-Null
 $pidFile = Join-Path $YWCODER_DIR 'ywcoder-server.pid'
 if (Test-Path $pidFile) {
     $existingPid = Get-Content $pidFile -TotalCount 1
-    $proc = Get-Process -Id $existingPid -ErrorAction SilentlyContinue
-    if ($proc) {
-        Write-Host "Found existing server process $existingPid, stopping it first..."
-        & (Join-Path $YWCODER_DIR 'stop-server.ps1') -Quiet
+    if ($existingPid -and ($existingPid = $existingPid.Trim()) -and $existingPid -match '^\d+$') {
+        $proc = Get-Process -Id $existingPid -ErrorAction SilentlyContinue
+        if ($proc) {
+            Write-Host "Found existing server process $existingPid, stopping it first..."
+            & (Join-Path $YWCODER_DIR 'stop-server.ps1') -Quiet
+        } else {
+            Remove-Item $pidFile -Force
+        }
     } else {
         Remove-Item $pidFile -Force
     }
