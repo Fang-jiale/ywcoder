@@ -603,8 +603,8 @@ set -e
 YWCODER_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$YWCODER_DIR"
 
-PORT="${1:-${port}}"
-HOST="${2:-localhost}"
+PORT="\${1:-${port}}"
+HOST="\${2:-localhost}"
 
 NODE_CMD="${nodeCmd}"
 if [ ! -f "$NODE_CMD" ]; then
