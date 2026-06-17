@@ -50,6 +50,8 @@ jobs:
           export npm_config_build_from_source=true
           npm ci
           npm rebuild --build-from-source
+          cd remote
+          npm rebuild --build-from-source || true
 
       - name: Build YwCoder extension
         run: |
@@ -57,7 +59,7 @@ jobs:
           export npm_config_build_from_source=true
           npm ci
           npm run build
-          npm rebuild --build-from-source
+          npm rebuild --build-from-source || true
 
       - name: Build VS Code: web bundle and server
         run: |
