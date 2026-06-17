@@ -645,7 +645,7 @@ New-Item -ItemType Directory -Force -Path $wsDir | Out-Null
 $pidFile = Join-Path $YWCODER_DIR 'ywcoder-server.pid'
 if (Test-Path $pidFile) {
     $existingPid = Get-Content $pidFile -TotalCount 1
-    if ($existingPid -and ($existingPid = $existingPid.Trim()) -and $existingPid -match '^\d+$') {
+    if ($existingPid -and ($existingPid = $existingPid.Trim()) -and $existingPid -match '^\\d+$') {
         $proc = Get-Process -Id $existingPid -ErrorAction SilentlyContinue
         if ($proc) {
             Write-Host "Found existing server process $existingPid, stopping it first..."
