@@ -51,7 +51,7 @@ dist/
 
 ## 环境要求
 
-- **Node.js**：`22.22.1`（当前仓库 `.nvmrc` 与 `remote/.npmrc` 要求；Windows / Linux 包均已内置，无需目标机器安装）
+- **Node.js**：部署包已内置 Node.js 运行时，目标机器无需单独安装 Node.js
 - **glibc（Linux）**：
   - **x64**：≥ 2.17。Linux x64 包内置的 Node 为 [unofficial-builds](https://unofficial-builds.nodejs.org/) 的 `glibc-217` 版本，可在 CentOS 7 / RHEL 7 / 龙蜥等旧发行版运行。
   - **arm64**：≥ 2.28。Linux arm64 包使用官方 Node.js 22 二进制，要求 glibc 2.28（适用于麒麟 V10 /  openEuler / Rocky Linux 8 等）。
