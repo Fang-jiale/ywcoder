@@ -32,6 +32,8 @@ jobs:
       - name: Install build tools
         working-directory: .
         run: |
+          dnf install -y dnf-plugins-core
+          dnf config-manager --set-enabled powertools
           dnf install -y gcc-toolset-12-gcc-c++ git-core python3 python39 make cmake tar gzip curl binutils file pkgconfig krb5-devel libX11-devel libxkbfile-devel libnotify-devel libsecret-devel
           echo "/opt/rh/gcc-toolset-12/root/usr/bin" >> "$GITHUB_PATH"
           ln -sf /usr/bin/python3.9 /usr/local/bin/python
