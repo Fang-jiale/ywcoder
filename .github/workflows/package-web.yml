@@ -32,7 +32,9 @@ jobs:
       - name: Install build tools
         working-directory: .
         run: |
-          dnf install -y gcc-toolset-12-gcc-c++ git-core python3 python39 make tar gzip curl binutils file
+          dnf install -y dnf-plugins-core
+          dnf config-manager --set-enabled powertools
+          dnf install -y gcc-toolset-12-gcc-c++ git-core python3 python39 make cmake tar gzip curl binutils file pkgconfig krb5-devel libX11-devel libxkbfile-devel libnotify-devel libsecret-devel
           echo "/opt/rh/gcc-toolset-12/root/usr/bin" >> "$GITHUB_PATH"
           ln -sf /usr/bin/python3.9 /usr/local/bin/python
           git --version
@@ -49,17 +51,24 @@ jobs:
           node-version: '22.22.1'
 
       - name: Install root dependencies
+        # vscode/.npmrc targets Electron 39 with build_from_source=true, but the
+        # web server package only needs Node.js-compatible native modules. Use
+        # prebuilt Node.js binaries where available to avoid dragging in desktop
+        # build dependencies (gssapi/kerberos, etc.).
+        env:
+          npm_config_runtime: 'node'
+          npm_config_target: '22.22.1'
+          npm_config_disturl: 'https://nodejs.org/dist'
+          npm_config_build_from_source: 'false'
         run: npm ci
 
       - name: Install server dependencies
         env:
-          npm_config_build_from_source: true
+          npm_config_build_from_source: 'true'
         run: npm ci --prefix remote --omit=dev
 
       - name: Install ywcoder extension dependencies
         working-directory: extension
-        env:
-          npm_config_build_from_source: true
         run: npm ci
 
       - name: Compile VS Code server and builtin extensions
