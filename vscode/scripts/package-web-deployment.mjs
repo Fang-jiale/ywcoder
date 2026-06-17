@@ -118,13 +118,15 @@ function fileSize(path) {
 	}
 }
 
-function makeCopyFilter(sourceRoot, { skipTests = false, skipBin = true, skipExtensionRootNodeModules = false } = {}) {
+function makeCopyFilter(sourceRoot, { skipTests = false, skipBin = true, skipYwcoderExtensionNodeModules = false } = {}) {
 	return src => {
 		const relative = src.slice(sourceRoot.length + 1).replace(/\\/g, '/');
 		if (relative.endsWith('.map')) { return false; }
 		if (skipTests && (relative.includes('/test/') || relative.includes('/tests/'))) { return false; }
 		if (skipBin && (relative.includes('/.bin/') || relative.startsWith('.bin/'))) { return false; }
-		if (skipExtensionRootNodeModules && /^[^/]+\/node_modules\//.test(relative)) {
+		// Only skip the YwCoder extension's source node_modules (build-time deps).
+		// Built-in extensions like git rely on their node_modules at runtime (e.g. @vscode/fs-copyfile).
+		if (skipYwcoderExtensionNodeModules && /^ywcoder\/node_modules\//.test(relative)) {
 			return false;
 		}
 		try {
@@ -291,22 +293,42 @@ async function downloadNode(platform, arch, destDir) {
 	const nodeDir = join(destDir, 'node-runtime');
 	ensureDir(nodeDir);
 
+	const cacheRoot = join(repoRoot, '.tools', 'node-cache', `v${NODE_VERSION}`);
+
 	if (platform === 'win32') {
 		const url = `${NODE_BASE_URL}/v${NODE_VERSION}/win-${arch}/node.exe`;
 		const outFile = join(nodeDir, 'node.exe');
-		console.log(`[package] Downloading Node.js for ${platform}-${arch}...`);
-		console.log(`[package]   ${url}`);
-		await downloadFile(url, outFile);
-		console.log(`[package] Node.js downloaded to ${outFile}`);
+		const cachedFile = join(cacheRoot, `${platform}-${arch}`, 'node.exe');
+		if (existsSync(cachedFile)) {
+			console.log(`[package] Using cached Node.js for ${platform}-${arch}...`);
+			console.log(`[package]   ${cachedFile}`);
+			copyFileSync(cachedFile, outFile);
+			console.log(`[package] Node.js copied to ${outFile}`);
+		} else {
+			console.log(`[package] Downloading Node.js for ${platform}-${arch}...`);
+			console.log(`[package]   ${url}`);
+			await downloadFile(url, outFile);
+			console.log(`[package] Node.js downloaded to ${outFile}`);
+		}
 	} else {
 		// Use unofficial glibc-217 build on Linux so the package runs on older distributions (glibc >= 2.17)
+		const tarName = platform === 'linux'
+			? `node-v${NODE_VERSION}-linux-${arch}-glibc-217.tar.gz`
+			: `node-v${NODE_VERSION}-${platform}-${arch}.tar.gz`;
 		const url = platform === 'linux'
-			? `https://unofficial-builds.nodejs.org/download/release/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${arch}-glibc-217.tar.gz`
-			: `${NODE_BASE_URL}/v${NODE_VERSION}/node-v${NODE_VERSION}-${platform}-${arch}.tar.gz`;
+			? `https://unofficial-builds.nodejs.org/download/release/v${NODE_VERSION}/${tarName}`
+			: `${NODE_BASE_URL}/v${NODE_VERSION}/${tarName}`;
 		const tarPath = join(nodeDir, 'node.tar.gz');
-		console.log(`[package] Downloading Node.js for ${platform}-${arch}...`);
-		console.log(`[package]   ${url}`);
-		await downloadFile(url, tarPath);
+		const cachedTar = join(cacheRoot, tarName);
+		if (existsSync(cachedTar)) {
+			console.log(`[package] Using cached Node.js tarball for ${platform}-${arch}...`);
+			console.log(`[package]   ${cachedTar}`);
+			copyFileSync(cachedTar, tarPath);
+		} else {
+			console.log(`[package] Downloading Node.js for ${platform}-${arch}...`);
+			console.log(`[package]   ${url}`);
+			await downloadFile(url, tarPath);
+		}
 		console.log('[package] Extracting Node.js tarball...');
 		await new Promise((resolve, reject) => {
 			// Use relative paths and cwd to avoid tar on Windows interpreting "D:" as a remote host
@@ -404,6 +426,23 @@ async function packageForPlatform(platform, arch) {
 		filter: makeCopyFilter(outVscodeWebSource)
 	});
 
+	// Workbench icons / manifest referenced by workbench.html as /resources/server/*
+	const resourcesServerSource = join(repoRoot, 'resources', 'server');
+	if (existsSync(resourcesServerSource)) {
+		console.log('[package] Copying workbench resources (resources/server/)...');
+		cpSync(resourcesServerSource, join(destDir, 'resources', 'server'), {
+			recursive: true,
+			dereference: true,
+			filter: src => {
+				const relative = src.slice(resourcesServerSource.length + 1).replace(/\\/g, '/');
+				if (!relative) { return true; }
+				if (relative.startsWith('bin/') || relative.startsWith('bin-dev/')) { return false; }
+				if (relative.endsWith('.map')) { return false; }
+				return true;
+			}
+		});
+	}
+
 	// Builtin extensions: always start from source extensions/, then overlay .build/extensions if present
 	const extensionsBaseSource = join(repoRoot, 'extensions');
 	const extensionsBundledSource = join(repoRoot, '.build', 'extensions');
@@ -411,14 +450,14 @@ async function packageForPlatform(platform, arch) {
 	cpSync(extensionsBaseSource, join(destDir, 'extensions'), {
 		recursive: true,
 		dereference: true,
-		filter: makeCopyFilter(extensionsBaseSource, { skipTests: true, skipExtensionRootNodeModules: true })
+		filter: makeCopyFilter(extensionsBaseSource, { skipTests: true, skipYwcoderExtensionNodeModules: true })
 	});
 	if (existsSync(extensionsBundledSource)) {
 		console.log(`[package] Merging bundled extensions from ${extensionsBundledSource}...`);
 		cpSync(extensionsBundledSource, join(destDir, 'extensions'), {
 			recursive: true,
 			dereference: true,
-			filter: makeCopyFilter(extensionsBundledSource, { skipTests: true, skipExtensionRootNodeModules: true })
+			filter: makeCopyFilter(extensionsBundledSource, { skipTests: true, skipYwcoderExtensionNodeModules: true })
 		});
 	}
 
