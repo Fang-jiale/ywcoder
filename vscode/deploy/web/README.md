@@ -59,7 +59,7 @@ dist/
 - **内存**：建议至少 2GB（取决于并发用户与扩展数量）
 - **磁盘**：
   - Windows 便携包约 400MB，解压后约 800MB
-  - Linux 包（不含 node_modules）约 400MB，安装依赖后约 800MB
+  - Linux 包（GitHub Actions 同架构构建，已含 node_modules）约 800MB
 - **浏览器**：Web 版需要 `crypto.subtle`，该 API 只在**安全上下文**中可用。请通过 `https://` 或 `http://localhost` / `http://127.0.0.1` 访问；直接用 `http://<服务器IP>` 打开会报 `crypto.subtle is not available`。
 
 ## Windows 部署
@@ -109,24 +109,11 @@ tar -xzf ywcoder-web-linux-x64.tar.gz -C /opt/ywcoder-web --strip-components=1
 cd /opt/ywcoder-web
 ```
 
-### 2. （可选）使用系统 Node.js
+### 2. 使用系统 Node.js（可选）
 
-Linux 包已内置 Node.js 运行时，默认优先使用 `./node-runtime/bin/node`。如果该目录不存在，启动脚本才会回退到系统 `node`。因此目标机器**无需**单独安装 Node。
+Linux 包已内置 Node.js 运行时，默认优先使用 `./node-runtime/bin/node`。因此目标机器**无需**单独安装 Node。
 
-如需强制使用系统 Node，请删除或重命名 `node-runtime/` 目录，并确保系统 Node 为 22.x 或更高版本：
-
-```bash
-curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
-apt-get install -y nodejs
-node --version
-```
-
-或使用 [nvm](https://github.com/nvm-sh/nvm)：
-
-```bash
-nvm install 22
-nvm use 22
-```
+如需强制使用系统 Node，请删除或重命名 `node-runtime/` 目录，并确保系统 Node 版本与打包时使用的运行时兼容。
 
 ### 3. 安装生产依赖（按需）
 
@@ -144,17 +131,19 @@ cd /opt/ywcoder-web
 ### 4. 启动服务
 
 ```bash
-# 默认监听 0.0.0.0:8001
+# 默认监听 localhost:8001
 ./start-server.sh
 
-# 自定义端口与监听地址
-./start-server.sh 8080 0.0.0.0
+# 服务器部署：绑定到 0.0.0.0 以便远程访问
+./start-server.sh 8001 0.0.0.0
 ```
 
 `start-server.sh` 支持两个位置参数：
 
 - `$1`：端口，默认 `8001`
-- `$2`：监听地址，默认 `0.0.0.0`
+- `$2`：监听地址，默认 `localhost`
+
+> 默认绑定 `localhost`，仅本机可访问。若需从其他机器通过 IP 访问，请显式传入 `0.0.0.0`。
 
 启动后访问（同一台服务器）：
 
@@ -162,7 +151,7 @@ cd /opt/ywcoder-web
 http://localhost:8001?tkn=<脚本中生成的 token>
 ```
 
-从其他机器通过 IP 访问时，必须配置 HTTPS 反向代理，否则浏览器会报 `crypto.subtle is not available`（见 [安全配置](#安全配置) 与 [故障排查](#故障排查)）。
+从其他机器通过 IP 访问时，建议配置 HTTPS 反向代理；否则浏览器可能报 `crypto.subtle is not available`（见 [安全配置](#安全配置) 与 [故障排查](#故障排查)）。
 
 ## 使用 systemd 托管（Linux）
 
@@ -177,7 +166,7 @@ After=network.target
 Type=simple
 User=ywcoder
 WorkingDirectory=/opt/ywcoder-web
-ExecStart=/opt/ywcoder-web/start-server.sh
+ExecStart=/opt/ywcoder-web/start-server.sh 8001 0.0.0.0
 Restart=always
 RestartSec=5
 Environment="NODE_ENV=production"
@@ -217,7 +206,7 @@ server {
     ssl_certificate_key /path/to/key.pem;
 
     location / {
-        proxy_pass http://127.0.0.1:8080;
+        proxy_pass http://127.0.0.1:8001;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
@@ -237,24 +226,24 @@ server {
 ## 安全配置
 
 1. **修改连接令牌**
-   默认 `start-server` 脚本中的 `--connection-token` 是自动生成的随机字符串。生产环境请务必替换为强随机密码：
+   `start-server.sh` 中的 `--connection-token` 在打包时随机生成并写入脚本。生产环境请务必替换为强随机密码：
 
    ```bash
-   node out/server-main.js --port 8080 --connection-token YOUR_STRONG_TOKEN
+   node out/server-main.js --host 0.0.0.0 --port 8001 --connection-token YOUR_STRONG_TOKEN
    ```
 
 2. **使用 HTTPS**
    通过反向代理终止 TLS，或配置 Node.js 原生 HTTPS（不推荐直接使用）。
 
 3. **限制监听地址**
-   默认监听 `0.0.0.0`。如果不需要公网直接访问，可改为：
+   如需避免公网直接访问，可限制为仅本机：
 
    ```bash
-   node out/server-main.js --port 8080 --host 127.0.0.1 --connection-token YOUR_TOKEN
+   node out/server-main.js --port 8001 --host 127.0.0.1 --connection-token YOUR_TOKEN
    ```
 
 4. **防火墙**
-   仅开放反向代理端口（如 443），内部 8080 端口不对外暴露。
+   仅开放反向代理端口（如 443），内部 8001 端口不对外暴露。
 
 ## 故障排查
 
@@ -271,10 +260,10 @@ server {
 
 ### 端口被占用
 
-修改启动脚本中的 `--port` 参数，或运行时传入：
+修改启动脚本中的端口，或运行时传入新端口：
 
 ```bash
-./start-server.sh --port 9090
+./start-server.sh 9090 0.0.0.0
 ```
 
 Windows 一键启动器会自动检测端口占用并尝试结束上一次实例。
@@ -351,7 +340,7 @@ node scripts/archive-web-deployment.mjs --platform all
 ```
 dist/
 ├── ywcoder-web-win32-x64/
-│   ├── YwCoder-Web.vbs     # Windows 一键启动器
+│   ├── YwCoder-Web.bat     # Windows 一键启动器
 │   └── ...
 ├── ywcoder-web-win32-x64.zip
 ├── ywcoder-web-linux-x64/
@@ -364,8 +353,8 @@ dist/
 
 | 参数 | 说明 |
 |------|------|
-| `--port` | 监听端口，默认 8080 |
-| `--host` | 监听地址，默认 0.0.0.0 |
+| `--port` | 监听端口，`server-main.js` 默认 `8080`；`start-server.sh` 默认 `8001` |
+| `--host` | 监听地址，`server-main.js` 默认 `0.0.0.0`；`start-server.sh` 默认 `localhost` |
 | `--connection-token` | 连接令牌，必须设置 |
 | `--server-data-dir` | 服务端数据目录，默认 `~/.ywcoder-server` |
 | `--accept-server-license-terms` | 接受许可条款 |
