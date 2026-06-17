@@ -27,10 +27,10 @@ jobs:
       - name: Install build tools
         working-directory: .
         run: |
-          dnf install -y git-core python3 make gcc-c++ tar gzip curl binutils
-          ln -sf /usr/bin/python3 /usr/local/bin/python
+          dnf install -y git-core python3 python39 make gcc-c++ tar gzip curl binutils
+          ln -sf /usr/bin/python3.9 /usr/local/bin/python
           git --version
-          python3 --version
+          python3.9 --version
           gcc --version
 
       - name: Checkout
@@ -44,6 +44,7 @@ jobs:
       - name: Install root dependencies (build native modules from source)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          npm_config_python: /usr/bin/python3.9
         run: |
           export npm_config_build_from_source=true
           npm ci
@@ -52,6 +53,7 @@ jobs:
       - name: Install server dependencies (build native modules from source)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          npm_config_python: /usr/bin/python3.9
         run: |
           export npm_config_build_from_source=true
           npm ci --prefix remote --omit=dev
@@ -61,6 +63,7 @@ jobs:
         working-directory: extension
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          npm_config_python: /usr/bin/python3.9
         run: |
           export npm_config_build_from_source=true
           npm ci
