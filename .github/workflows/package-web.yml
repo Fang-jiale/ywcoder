@@ -32,7 +32,7 @@ jobs:
       - name: Install build tools
         working-directory: .
         run: |
-          dnf install -y gcc-toolset-12-gcc-c++ git-core python3 python39 make tar gzip curl binutils file krb5-devel
+          dnf install -y gcc-toolset-12-gcc-c++ git-core python3 python39 make tar gzip curl binutils file pkgconfig krb5-devel libX11-devel libxkbfile-devel libnotify-devel
           echo "/opt/rh/gcc-toolset-12/root/usr/bin" >> "$GITHUB_PATH"
           ln -sf /usr/bin/python3.9 /usr/local/bin/python
           git --version
