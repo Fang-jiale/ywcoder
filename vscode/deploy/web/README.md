@@ -24,7 +24,7 @@ ywcoder-web-{platform}-{arch}/
 ├── out-vscode-web/         # Web 前端资源（已包含中文 NLS）
 ├── extensions/             # 内置扩展（含简体中文语言包）
 ├── node_modules/           # 生产依赖（Windows 包已包含；Linux 包需安装）
-├── node-runtime/           # 内置 Node.js 22 运行时（--download-node）
+├── node-runtime/           # 内置 Node.js 运行时（--download-node）
 ├── product.json            # 产品配置
 ├── package.json            # 生产依赖清单
 ├── package-lock.json       # 生产依赖锁定
@@ -54,7 +54,7 @@ dist/
 - **Node.js**：部署包已内置 Node.js 运行时，目标机器无需单独安装 Node.js
 - **glibc（Linux）**：
   - **x64**：≥ 2.17。Linux x64 包内置的 Node 为 [unofficial-builds](https://unofficial-builds.nodejs.org/) 的 `glibc-217` 版本，可在 CentOS 7 / RHEL 7 / 龙蜥等旧发行版运行。
-  - **arm64**：≥ 2.28。Linux arm64 包使用官方 Node.js 22 二进制，要求 glibc 2.28（适用于麒麟 V10 /  openEuler / Rocky Linux 8 等）。
+  - **arm64**：≥ 2.28。Linux arm64 包使用官方 Node.js 二进制，要求 glibc 2.28（适用于麒麟 V10 /  openEuler / Rocky Linux 8 等）。
 - **CPU / 架构**：`x64` 或 `arm64`（aarch64）
 - **内存**：建议至少 2GB（取决于并发用户与扩展数量）
 - **磁盘**：
@@ -71,7 +71,7 @@ dist/
 3. 终端窗口打开，服务启动，启动成功后自动打开浏览器。
 4. 保持终端窗口运行；关闭终端即停止服务。
 
-> 便携包已内置 Node.js 22 运行时，目标机器无需单独安装 Node。
+> 便携包已内置 Node.js 运行时，目标机器无需单独安装 Node。
 
 启动后访问：
 
@@ -111,21 +111,21 @@ cd /opt/ywcoder-web
 
 ### 2. （可选）使用系统 Node.js
 
-Linux 包已内置 Node.js 22 运行时，默认优先使用 `./node-runtime/bin/node`。如果该目录不存在，启动脚本才会回退到系统 `node`。因此目标机器**无需**单独安装 Node。
+Linux 包已内置 Node.js 运行时，默认优先使用 `./node-runtime/bin/node`。如果该目录不存在，启动脚本才会回退到系统 `node`。因此目标机器**无需**单独安装 Node。
 
-如需强制使用系统 Node，请删除或重命名 `node-runtime/` 目录，并确保系统 Node 为 22.x：
+如需强制使用系统 Node，请删除或重命名 `node-runtime/` 目录，并确保系统 Node 为 22.x 或更高版本：
 
 ```bash
 curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
 apt-get install -y nodejs
-node --version  # 应显示 v22.22.1
+node --version
 ```
 
 或使用 [nvm](https://github.com/nvm-sh/nvm)：
 
 ```bash
-nvm install 22.22.1
-nvm use 22.22.1
+nvm install 22
+nvm use 22
 ```
 
 ### 3. 安装生产依赖
