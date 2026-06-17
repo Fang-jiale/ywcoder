@@ -100,6 +100,16 @@ jobs:
           cp -r extension/dist vscode/extensions/ywcoder/dist
           rm -rf vscode/extensions/ywcoder/resources
           cp -r extension/resources vscode/extensions/ywcoder/resources
+          # The extension is already bundled by esbuild; strip dependencies so
+          # vsce's npm list check does not require node_modules here.
+          node -e "
+            const fs = require('fs');
+            const p = 'vscode/extensions/ywcoder/package.json';
+            const pkg = JSON.parse(fs.readFileSync(p, 'utf8'));
+            delete pkg.dependencies;
+            delete pkg.devDependencies;
+            fs.writeFileSync(p, JSON.stringify(pkg, null, 2) + '\n');
+          "
 
       - name: Package deployment bundle
         env:
@@ -131,3 +141,32 @@ jobs:
             vscode/dist/ywcoder-web-linux-${{ matrix.arch }}/server.log
             vscode/npm-debug.log
           if-no-files-found: ignore
+
+  release:
+    name: Create GitHub Release
+    needs: package-linux
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download x64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ywcoder-web-linux-x64
+          path: release-assets
+
+      - name: Download arm64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ywcoder-web-linux-arm64
+          path: release-assets
+
+      - name: Upload release assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --title "YwCoder Web ${{ github.ref_name }}" \
+            --generate-notes || true
+          gh release upload "${{ github.ref_name }}" release-assets/*.tar.gz --clobber
