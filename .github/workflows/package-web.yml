@@ -19,9 +19,11 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       npm_config_python: /usr/bin/python3.9
+      CC: /opt/rh/gcc-toolset-12/root/usr/bin/gcc
+      CXX: /opt/rh/gcc-toolset-12/root/usr/bin/g++
 
     steps:
-      - name: Check container OS and glibc
+      - name: Check container OS, glibc and compiler
         working-directory: .
         run: |
           cat /etc/os-release
@@ -30,11 +32,13 @@ jobs:
       - name: Install build tools
         working-directory: .
         run: |
-          dnf install -y git-core python3 python39 make gcc-c++ tar gzip curl binutils file
+          dnf install -y gcc-toolset-12-gcc-c++ git-core python3 python39 make tar gzip curl binutils file
+          echo "/opt/rh/gcc-toolset-12/root/usr/bin" >> "$GITHUB_PATH"
           ln -sf /usr/bin/python3.9 /usr/local/bin/python
           git --version
           python3.9 --version
-          gcc --version
+          "$CC" --version
+          "$CXX" --version
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -45,11 +49,6 @@ jobs:
           node-version: '22.22.1'
 
       - name: Install root dependencies
-        env:
-          # vscode/.npmrc sets build_from_source=true, but root deps (e.g.
-          # @parcel/watcher) provide compatible prebuilt binaries and Rocky 8's
-          # g++ does not support the -std=gnu++20 they require.
-          npm_config_build_from_source: false
         run: npm ci
 
       - name: Install server dependencies
