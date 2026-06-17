@@ -296,7 +296,10 @@ async function downloadNode(platform, arch, destDir) {
 		await downloadFile(url, outFile);
 		console.log(`[package] Node.js downloaded to ${outFile}`);
 	} else {
-		const url = `${NODE_BASE_URL}/v${NODE_VERSION}/node-v${NODE_VERSION}-${platform}-${arch}.tar.gz`;
+		// Use unofficial glibc-217 build on Linux so the package runs on older distributions (glibc >= 2.17)
+		const url = platform === 'linux'
+			? `https://unofficial-builds.nodejs.org/download/release/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${arch}-glibc-217.tar.gz`
+			: `${NODE_BASE_URL}/v${NODE_VERSION}/node-v${NODE_VERSION}-${platform}-${arch}.tar.gz`;
 		const tarPath = join(nodeDir, 'node.tar.gz');
 		console.log(`[package] Downloading Node.js for ${platform}-${arch}...`);
 		console.log(`[package]   ${url}`);
@@ -593,15 +596,23 @@ endlocal
 	const nodeCmd = options.downloadNode
 		? (platform === 'win32' ? '.\\node-runtime\\node.exe' : './node-runtime/bin/node')
 		: 'node';
-	const sh = `#!/usr/bin/env bash
+
+	const startSh = `#!/usr/bin/env bash
 set -e
 
 YWCODER_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$YWCODER_DIR"
 
+PORT="${1:-${port}}"
+HOST="${2:-localhost}"
+
 NODE_CMD="${nodeCmd}"
+if [ ! -f "$NODE_CMD" ]; then
+    NODE_CMD="node"
+fi
+
 if ! command -v "$NODE_CMD" &> /dev/null; then
-    echo "Error: Node.js is not found in PATH."
+    echo "Error: Node.js is not found."
     echo "Please install Node.js ${NODE_VERSION} or run packaging with --download-node."
     exit 1
 fi
@@ -615,13 +626,95 @@ export VSCODE_NLS_CONFIG='{"locale":"${locale}","availableLanguages":{"*":"${loc
 mkdir -p ~/.ywcoder-server/extensions
 mkdir -p ~/.ywcoder-server/workspace
 
-echo "Starting YwCoder Web Server on port ${port}..."
-"$NODE_CMD" out/server-main.js --port ${port} --connection-token ${token} --builtin-extensions-dir extensions --accept-server-license-terms "$@"
+if [ -f "ywcoder-server.pid" ]; then
+    PID=$(cat ywcoder-server.pid)
+    if kill -0 "$PID" 2>/dev/null; then
+        echo "Found existing server process $PID, stopping it first..."
+        "$YWCODER_DIR/stop-server.sh"
+    else
+        rm -f ywcoder-server.pid
+    fi
+fi
+
+echo "Starting YwCoder Web Server on $HOST:$PORT..."
+
+nohup "$NODE_CMD" out/server-main.js \\
+    --host "$HOST" \\
+    --port "$PORT" \\
+    --connection-token ${token} \\
+    --builtin-extensions-dir extensions \\
+    --accept-server-license-terms \\
+    > ywcoder-server.log 2> ywcoder-server.err.log &
+
+SERVER_PID=$!
+echo "$SERVER_PID" > ywcoder-server.pid
+echo "Server started. PID: $SERVER_PID"
+echo "Web UI available at http://$HOST:$PORT?tkn=${token}"
 `;
-	const shPath = join(destDir, 'start-server.sh');
-	writeFileSync(shPath, sh, 'utf8');
+
+	const stopSh = `#!/usr/bin/env bash
+set -e
+
+YWCODER_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$YWCODER_DIR"
+
+KILLED=0
+
+if [ -f "ywcoder-server.pid" ]; then
+    PID=$(cat ywcoder-server.pid)
+    if kill -0 "$PID" 2>/dev/null; then
+        echo "Stopping server process $PID..."
+        kill -9 "$PID" 2>/dev/null || true
+        KILLED=1
+    fi
+    rm -f ywcoder-server.pid
+fi
+
+PIDS=$(pgrep -f "out/server-main.js" || true)
+if [ -n "$PIDS" ]; then
+    for PID in $PIDS; do
+        CMDLINE=$(cat "/proc/$PID/cmdline" 2>/dev/null | tr '\\0' ' ')
+        if echo "$CMDLINE" | grep -q "$YWCODER_DIR"; then
+            echo "Stopping fallback process $PID..."
+            kill -9 "$PID" 2>/dev/null || true
+            KILLED=1
+        fi
+    done
+fi
+
+if [ "$KILLED" -eq 1 ]; then
+    echo "Server stopped."
+else
+    echo "No running YwCoder server process found."
+fi
+`;
+
+	const restartSh = `#!/usr/bin/env bash
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+"$SCRIPT_DIR/stop-server.sh"
+sleep 2
+"$SCRIPT_DIR/start-server.sh" "$@"
+`;
+
+	const startPath = join(destDir, 'start-server.sh');
+	const stopPath = join(destDir, 'stop-server.sh');
+	const restartPath = join(destDir, 'restart-server.sh');
+	writeFileSync(startPath, startSh, 'utf8');
+	writeFileSync(stopPath, stopSh, 'utf8');
+	writeFileSync(restartPath, restartSh, 'utf8');
+
 	if (process.platform !== 'win32') {
-		try { chmodSync(shPath, 0o755); } catch { /* ignore */ }
+		try {
+			chmodSync(startPath, 0o755);
+			chmodSync(stopPath, 0o755);
+			chmodSync(restartPath, 0o755);
+			const bundledNode = join(destDir, 'node-runtime', 'bin', 'node');
+			if (existsSync(bundledNode)) {
+				chmodSync(bundledNode, 0o755);
+			}
+		} catch { /* ignore */ }
 	}
 }
 
