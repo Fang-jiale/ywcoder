@@ -67,8 +67,6 @@ jobs:
 
       - name: Install ywcoder extension dependencies
         working-directory: extension
-        env:
-          npm_config_build_from_source: 'true'
         run: npm ci
 
       - name: Compile VS Code server and builtin extensions
