@@ -173,3 +173,4 @@ jobs:
             --title "YwCoder Web ${{ github.ref_name }}" \
             --generate-notes || true
           gh release upload "${{ github.ref_name }}" release-assets/*.tar.gz --clobber
+          gh release upload "${{ github.ref_name }}" vscode/deploy/web/README.md --clobber
