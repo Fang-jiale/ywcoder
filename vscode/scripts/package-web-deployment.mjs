@@ -940,10 +940,6 @@ endlocal
 		}
 	}
 
-	const nodeCmd = options.downloadNode
-		? (platform === 'win32' ? '.\\node-runtime\\node.exe' : './node-runtime/bin/node')
-		: 'node';
-
 	const startSh = `#!/usr/bin/env bash
 set -e
 
@@ -953,16 +949,22 @@ cd "$YWCODER_DIR"
 PORT="\${1:-${port}}"
 HOST="\${2:-localhost}"
 
-NODE_CMD="${nodeCmd}"
-if [ ! -f "$NODE_CMD" ]; then
 ${options.downloadNode ? `
+NODE_CMD="$YWCODER_DIR/node-runtime/bin/node"
+if [ ! -f "$NODE_CMD" ]; then
     echo "Error: bundled Node.js not found at $NODE_CMD."
     echo "Please re-package with --download-node or restore the node-runtime/ directory."
     exit 1
-` : `
-    NODE_CMD="node"
-`}
 fi
+
+# Ensure the bundled binary is executable (tarball permissions may be lost
+# when the archive is unpacked on some filesystems or via certain tools).
+if [ ! -x "$NODE_CMD" ]; then
+    chmod +x "$NODE_CMD" 2>/dev/null || true
+fi
+` : `
+NODE_CMD="node"
+`}
 
 if ! command -v "$NODE_CMD" &> /dev/null; then
     echo "Error: Node.js is not found."
