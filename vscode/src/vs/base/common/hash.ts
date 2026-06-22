@@ -84,6 +84,22 @@ export const hashAsync = (input: string | ArrayBufferView | VSBuffer) => {
 		return Promise.resolve(sha.digest());
 	}
 
+	// YwCoder: in non-secure contexts (e.g. http://IP) crypto.subtle is unavailable.
+	// Fall back to the pure-JS StringSHA1 implementation. The resulting hash is used
+	// only for non-security purposes (cache keys, state validation), so consistency
+	// with crypto.subtle output is not required.
+	if (!crypto.subtle) {
+		const sha = new StringSHA1();
+		if (typeof input === 'string') {
+			sha.update(input);
+		} else if (input instanceof VSBuffer) {
+			sha.update(new TextDecoder().decode(input.buffer));
+		} else {
+			sha.update(new TextDecoder().decode(input));
+		}
+		return Promise.resolve(sha.digest());
+	}
+
 	let buff: ArrayBufferView;
 	if (typeof input === 'string') {
 		buff = new TextEncoder().encode(input);
