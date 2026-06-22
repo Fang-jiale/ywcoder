@@ -182,14 +182,17 @@ function run(command, args, cwd) {
 	});
 }
 
-async function buildWebExtensions() {
+async function buildExtensions() {
 	if (options.skipBuild) {
-		console.log('[package] Skipping web extension bundle build (--skip-build)');
+		console.log('[package] Skipping builtin extension build (--skip-build)');
 		return;
 	}
 
-	console.log('[package] Building web extension bundles...');
-	await run('npm', ['run', 'gulp', 'compile-web-extensions-build'], repoRoot);
+	// The reh-web server needs the compiled/bundled builtin extensions (dist/
+	// for emmet, git-base, merge-conflict, etc.) which are produced under
+	// .build/extensions by the compile-extensions-build gulp task.
+	console.log('[package] Building builtin extension bundles...');
+	await run('npm', ['run', 'gulp', 'compile-extensions-build'], repoRoot);
 }
 
 async function buildWebBundle() {
@@ -1066,7 +1069,7 @@ async function main() {
 	try {
 		await buildYwcoderExtension();
 		await buildServerCode();
-		await buildWebExtensions();
+		await buildExtensions();
 		await buildWebBundle();
 		syncNLSFilesToOut();
 		verifyArtifacts();
