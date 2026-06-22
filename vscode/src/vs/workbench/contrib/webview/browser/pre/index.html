@@ -5,7 +5,7 @@
 	<meta charset="UTF-8">
 
 	<meta http-equiv="Content-Security-Policy"
-		content="default-src 'none'; script-src 'sha256-tzT6Kd0m9Siw55vrbCiaqfFzg7uX15H/IBuP1jvpyXU=' 'self'; frame-src 'self'; style-src 'unsafe-inline';">
+		content="default-src 'none'; script-src 'sha256-aojh5KAE48nZ9PndHqjH4Sj9dhjdf2ccFj7BoHXddxc=' 'self'; frame-src 'self'; style-src 'unsafe-inline';">
 
 	<!-- Disable pinch zooming -->
 	<meta name="viewport"
@@ -332,10 +332,20 @@
 
 				const hostname = location.hostname;
 
+				// [YwCoder] For trusted intranet / IP-based deployments, skip the origin hash
+				// validation. Hashed subdomains are not resolvable for raw IPs, and localhost/
+				// 127.0.0.1 are safe same-origin contexts.
+				if (
+					hostname === 'localhost' ||
+					hostname === '127.0.0.1' ||
+					/^(?:\d{1,3}\.){3}\d{1,3}$/.test(hostname) ||
+					/^\[[0-9a-fA-F:]+\]$/.test(hostname)
+				) {
+					console.warn('[ywcoder] skipping webview origin validation for local/intranet host');
+					return start(parentOrigin);
+				}
+
 				if (!crypto.subtle) {
-					// YwCoder: allow webviews to load in non-secure contexts (e.g. http://IP) by
-					// skipping the origin hash validation. This weakens webview isolation but is
-					// acceptable for trusted intranet deployments.
 					console.warn('[ywcoder] crypto.subtle not available, skipping webview origin validation');
 					return start(parentOrigin);
 				}
@@ -356,7 +366,7 @@
 					throw err instanceof Error ? err : new Error(String(err));
 				}
 
-				if (hostname === parentOriginHash || hostname.startsWith(parentOriginHash + '.') || hostname === 'localhost' || hostname === '127.0.0.1') {
+				if (hostname === parentOriginHash || hostname.startsWith(parentOriginHash + '.')) {
 					// validation succeeded!
 					return start(parentOrigin);
 				}

@@ -4,7 +4,7 @@
 		<meta http-equiv="Content-Security-Policy" content="
 			default-src 'none';
 			child-src 'self' data: blob:;
-			script-src 'self' 'unsafe-eval' 'sha256-pERPYL/6WqtucDEE2l25EqG1v4DyGKl2kgbforDTYGU=' https: http://localhost:* blob:;
+			script-src 'self' 'unsafe-eval' 'sha256-TWv90+S4fXX2LbnIdzi2UeoIe4CjTtx8l0ftYBO/6l8=' https: http://localhost:* blob:;
 			connect-src 'self' https: wss: http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*;"/>
 	</head>
 	<body>
@@ -21,13 +21,25 @@
 	(async function () {
 		const hostnameValidationMarker = 'v--';
 		const hostname = location.hostname;
+
+		// [YwCoder] For trusted intranet / IP-based deployments, skip the origin hash
+		// validation. Hashed subdomains are not resolvable for raw IPs, and localhost/
+		// 127.0.0.1 are safe same-origin contexts.
+		if (
+			hostname === 'localhost' ||
+			hostname === '127.0.0.1' ||
+			/^(?:\d{1,3}\.){3}\d{1,3}$/.test(hostname) ||
+			/^\[[0-9a-fA-F:]+\]$/.test(hostname)
+		) {
+			console.warn('[ywcoder] skipping web worker origin validation for local/intranet host');
+			return start();
+		}
+
 		if (!hostname.startsWith(hostnameValidationMarker)) {
 			// validation not requested
 			return start();
 		}
 		if (!crypto.subtle) {
-			// YwCoder: allow web workers to load in non-secure contexts (e.g. http://IP)
-			// by skipping the origin hash validation for trusted intranet deployments.
 			console.warn('[ywcoder] crypto.subtle not available, skipping web worker origin validation');
 			return start();
 		}

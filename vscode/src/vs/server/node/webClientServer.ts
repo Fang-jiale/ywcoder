@@ -562,7 +562,7 @@ export class WebClientServer {
 			return void res.end('Not found');
 		}
 
-		const webWorkerExtensionHostIframeScriptSHA = 'sha256-pERPYL/6WqtucDEE2l25EqG1v4DyGKl2kgbforDTYGU=';
+		const webWorkerExtensionHostIframeScriptSHA = 'sha256-TWv90+S4fXX2LbnIdzi2UeoIe4CjTtx8l0ftYBO/6l8=';
 
 		const cspDirectives = [
 			'default-src \'self\';',
