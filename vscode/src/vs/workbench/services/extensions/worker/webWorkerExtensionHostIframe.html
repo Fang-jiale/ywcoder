@@ -26,8 +26,10 @@
 			return start();
 		}
 		if (!crypto.subtle) {
-			// cannot validate, not running in a secure context
-			return sendError(new Error(`Cannot validate in current context!`));
+			// YwCoder: allow web workers to load in non-secure contexts (e.g. http://IP)
+			// by skipping the origin hash validation for trusted intranet deployments.
+			console.warn('[ywcoder] crypto.subtle not available, skipping web worker origin validation');
+			return start();
 		}
 
 		// Here the `parentOriginHash()` function from `src/vs/base/browser/iframe.ts` is inlined

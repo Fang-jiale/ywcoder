@@ -117,7 +117,11 @@ export class IframeUtils {
 export async function parentOriginHash(parentOrigin: string, salt: string): Promise<string> {
 	// This same code is also inlined at `src/vs/workbench/services/extensions/worker/webWorkerExtensionHostIframe.html`
 	if (!crypto.subtle) {
-		throw new Error(`'crypto.subtle' is not available so webviews will not work. This is likely because the editor is not running in a secure context (https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts).`);
+		// YwCoder: in non-secure contexts (e.g. http://IP) we cannot compute the
+		// origin hash. Return a fixed marker so webviews can still be created in
+		// trusted intranet deployments.
+		console.warn('[ywcoder] crypto.subtle not available, using insecure parent origin hash');
+		return 'insecure';
 	}
 
 	const strData = JSON.stringify({ parentOrigin, salt });
