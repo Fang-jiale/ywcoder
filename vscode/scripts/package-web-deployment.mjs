@@ -164,6 +164,63 @@ function makeCopyFilter(sourceRoot, { skipTests = false, skipBin = true, skipYwc
 	};
 }
 
+// Extensions ship a lot of source/build files that are not needed at runtime.
+// Skip them to keep the deployment package small.
+const EXTENSION_UNUSED_ROOT_FILES = new Set([
+	'esbuild.mts',
+	'esbuild.browser.mts',
+	'tsconfig.json',
+	'tsconfig.base.json',
+	'package-lock.json',
+	'README.md',
+	'CHANGELOG.md',
+	'cgmanifest.json',
+	'.vscodeignore',
+	'.npmrc',
+	'.eslintrc.json',
+	'.eslintrc.js',
+	'.gitignore',
+	'yarn.lock'
+]);
+const EXTENSION_UNUSED_ROOT_DIRS = new Set([
+	'src',
+	'packageMocks',
+	'build',
+	'test',
+	'tests'
+]);
+
+function makeExtensionCopyFilter(sourceRoot) {
+	return src => {
+		const relative = src.slice(sourceRoot.length + 1).replace(/\\/g, '/');
+		if (!relative) { return true; }
+		const segments = relative.split('/');
+		const firstSegment = segments[0];
+		// Skip unused files at the root of each extension (e.g. esbuild.mts, tsconfig.json, README.md)
+		if (segments.length === 1 && EXTENSION_UNUSED_ROOT_FILES.has(segments[0])) {
+			return false;
+		}
+		// Skip unused directories at the root of each extension
+		if (segments.length === 1 && EXTENSION_UNUSED_ROOT_DIRS.has(segments[0])) {
+			return false;
+		}
+		// Skip dev-only contents inside extension node_modules
+		if (segments.length >= 3 && segments[1] === 'node_modules') {
+			if (segments[2] === '.bin' || segments[2] === '@types') {
+				return false;
+			}
+			if (relative.endsWith('.d.ts') || relative.endsWith('.md') || relative.endsWith('.map')) {
+				return false;
+			}
+			if (segments[segments.length - 1] === 'binding.gyp') {
+				return false;
+			}
+		}
+		// Keep the rest of the generic copy-filter logic
+		return makeCopyFilter(sourceRoot, { skipTests: true, skipYwcoderExtensionNodeModules: true })(src);
+	};
+}
+
 function run(command, args, cwd) {
 	return new Promise((resolve, reject) => {
 		console.log(`[package] Running: ${command} ${args.join(' ')}`);
@@ -188,11 +245,24 @@ async function buildExtensions() {
 		return;
 	}
 
-	// The reh-web server needs the compiled/bundled builtin extensions (dist/
-	// for emmet, git-base, merge-conflict, etc.) which are produced under
-	// .build/extensions by the compile-extensions-build gulp task.
+	// The reh-web extension host (Node) needs the compiled/bundled builtin
+	// extensions (dist/ for emmet, git-base, merge-conflict, etc.) which are
+	// produced under .build/extensions by compile-extensions-build.
 	console.log('[package] Building builtin extension bundles...');
 	await run('npm', ['run', 'gulp', 'compile-extensions-build'], repoRoot);
+}
+
+async function buildWebExtensions() {
+	if (options.skipBuild) {
+		console.log('[package] Skipping web extension bundle build (--skip-build)');
+		return;
+	}
+
+	// Web-capable builtin extensions (including ywcoder) are bundled into
+	// .build/web/extensions and need to be available before the web workbench
+	// bundle is created.
+	console.log('[package] Building web extension bundles...');
+	await run('npm', ['run', 'gulp', 'compile-web-extensions-build'], repoRoot);
 }
 
 async function buildWebBundle() {
@@ -510,22 +580,32 @@ async function packageForPlatform(platform, arch) {
 		});
 	}
 
-	// Builtin extensions: always start from source extensions/, then overlay .build/extensions if present
+	// Builtin extensions: always start from source extensions/, then overlay
+	// .build/extensions (Node extension bundles) and .build/web/extensions
+	// (web extension bundles) if present.
 	const extensionsBaseSource = join(repoRoot, 'extensions');
-	// Web-bundled builtin extensions overlay (produces dist/browser for web-capable extensions)
-	const extensionsBundledSource = join(repoRoot, '.build', 'web', 'extensions');
+	const extensionsBundledSource = join(repoRoot, '.build', 'extensions');
+	const extensionsWebBundledSource = join(repoRoot, '.build', 'web', 'extensions');
 	console.log(`[package] Copying builtin extensions from ${extensionsBaseSource}...`);
 	cpSync(extensionsBaseSource, join(destDir, 'extensions'), {
 		recursive: true,
 		dereference: true,
-		filter: makeCopyFilter(extensionsBaseSource, { skipTests: true, skipYwcoderExtensionNodeModules: true })
+		filter: makeExtensionCopyFilter(extensionsBaseSource)
 	});
 	if (existsSync(extensionsBundledSource)) {
-		console.log(`[package] Merging web extension bundles from ${extensionsBundledSource}...`);
+		console.log(`[package] Merging bundled extensions from ${extensionsBundledSource}...`);
 		cpSync(extensionsBundledSource, join(destDir, 'extensions'), {
 			recursive: true,
 			dereference: true,
-			filter: makeCopyFilter(extensionsBundledSource, { skipTests: true, skipYwcoderExtensionNodeModules: true })
+			filter: makeExtensionCopyFilter(extensionsBundledSource)
+		});
+	}
+	if (existsSync(extensionsWebBundledSource)) {
+		console.log(`[package] Merging web extension bundles from ${extensionsWebBundledSource}...`);
+		cpSync(extensionsWebBundledSource, join(destDir, 'extensions'), {
+			recursive: true,
+			dereference: true,
+			filter: makeExtensionCopyFilter(extensionsWebBundledSource)
 		});
 	}
 
@@ -1070,6 +1150,7 @@ async function main() {
 		await buildYwcoderExtension();
 		await buildServerCode();
 		await buildExtensions();
+		await buildWebExtensions();
 		await buildWebBundle();
 		syncNLSFilesToOut();
 		verifyArtifacts();
