@@ -377,7 +377,7 @@ export abstract class AbstractExtensionService extends Disposable implements IEx
 		}
 
 		const extensionKinds = this._runningLocations.readExtensionKinds(extension);
-		const isRemote = extension.extensionLocation.scheme === Schemas.vscodeRemote;
+		const isRemote = this._runningLocations.isInstalledRemotely(extension);
 		const extensionHostKind = this._extensionHostKindPicker.pickExtensionHostKind(extension.identifier, extensionKinds, !isRemote, isRemote, ExtensionRunningPreference.None);
 		if (extensionHostKind === null) {
 			return false;

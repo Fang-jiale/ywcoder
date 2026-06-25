@@ -21,6 +21,7 @@ export class ExtensionRunningLocationTracker {
 	private _runningLocation = new ExtensionIdentifierMap<ExtensionRunningLocation | null>();
 	private _maxLocalProcessAffinity: number = 0;
 	private _maxLocalWebWorkerAffinity: number = 0;
+	private _remoteExtensionIds = new Set<string>();
 
 	public get maxLocalProcessAffinity(): number {
 		return this._maxLocalProcessAffinity;
@@ -65,6 +66,18 @@ export class ExtensionRunningLocationTracker {
 
 	public filterByExtensionHostManager(extensions: readonly IExtensionDescription[], extensionHostManager: IExtensionHostManager): IExtensionDescription[] {
 		return filterExtensionDescriptions(extensions, this._runningLocation, extRunningLocation => extensionHostManager.representsRunningLocation(extRunningLocation));
+	}
+
+	/**
+	 * Returns whether the extension is installed on the remote extension host.
+	 * This considers both the extension's own location and any previously recorded
+	 * remote copy discovered during initial extension scanning.
+	 */
+	public isInstalledRemotely(extension: IExtensionDescription): boolean {
+		if (extension.extensionLocation.scheme === Schemas.vscodeRemote) {
+			return true;
+		}
+		return this._remoteExtensionIds.has(ExtensionIdentifier.toKey(extension.identifier));
 	}
 
 	private _computeAffinity(inputExtensions: IExtensionDescription[], extensionHostKind: ExtensionHostKind, isInitialAllocation: boolean): { affinities: ExtensionIdentifierMap<number>; maxAffinity: number } {
@@ -231,6 +244,13 @@ export class ExtensionRunningLocationTracker {
 	}
 
 	private _doComputeRunningLocation(existingRunningLocation: ExtensionIdentifierMap<ExtensionRunningLocation | null>, localExtensions: IExtensionDescription[], remoteExtensions: IExtensionDescription[], isInitialAllocation: boolean): { runningLocation: ExtensionIdentifierMap<ExtensionRunningLocation | null>; maxLocalProcessAffinity: number; maxLocalWebWorkerAffinity: number } {
+		// Remember which extensions are available on the remote extension host so that
+		// delta extension handling (e.g. after workspace trust changes) can still prefer
+		// the remote host even when only the local IExtension object is being re-added.
+		for (const extension of remoteExtensions) {
+			this._remoteExtensionIds.add(ExtensionIdentifier.toKey(extension.identifier));
+		}
+
 		// Skip extensions that have an existing running location
 		localExtensions = localExtensions.filter(extension => !existingRunningLocation.has(extension.identifier));
 		remoteExtensions = remoteExtensions.filter(extension => !existingRunningLocation.has(extension.identifier));
@@ -326,7 +346,7 @@ export class ExtensionRunningLocationTracker {
 		const localWebWorkerExtensions: IExtensionDescription[] = [];
 		for (const extension of toAdd) {
 			const extensionKind = this.readExtensionKinds(extension);
-			const isRemote = extension.extensionLocation.scheme === Schemas.vscodeRemote;
+			const isRemote = this.isInstalledRemotely(extension);
 			const extensionHostKind = this._extensionHostKindPicker.pickExtensionHostKind(extension.identifier, extensionKind, !isRemote, isRemote, ExtensionRunningPreference.None);
 			let runningLocation: ExtensionRunningLocation | null = null;
 			if (extensionHostKind === ExtensionHostKind.LocalProcess) {
