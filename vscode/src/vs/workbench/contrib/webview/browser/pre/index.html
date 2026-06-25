@@ -5,7 +5,7 @@
 	<meta charset="UTF-8">
 
 	<meta http-equiv="Content-Security-Policy"
-		content="default-src 'none'; script-src 'sha256-aojh5KAE48nZ9PndHqjH4Sj9dhjdf2ccFj7BoHXddxc=' 'self'; frame-src 'self'; style-src 'unsafe-inline';">
+		content="default-src 'none'; script-src 'sha256-tyYdIsE+YQ478sMZit11p68XrW0CW3Mk7+9mYaaXNRs=' 'self'; frame-src 'self'; style-src 'unsafe-inline';">
 
 	<!-- Disable pinch zooming -->
 	<meta name="viewport"
@@ -254,6 +254,9 @@
 
 			const swPath = encodeURI(`service-worker.js?v=${expectedWorkerVersion}&vscode-resource-base-authority=${searchParams.get('vscode-resource-base-authority')}&remoteAuthority=${searchParams.get('remoteAuthority') ?? ''}`);
 			navigator.serviceWorker.register(swPath, { type: 'module', updateViaCache: 'none' })
+				.catch(e => /module|NotSupportedError/.test(String(e))
+					? navigator.serviceWorker.register(swPath, { updateViaCache: 'none' })
+					: Promise.reject(e))
 				.then(async registration => {
 					if (navigator.serviceWorker.controller) {
 						// A previous SW is already controlling. Force an update
@@ -343,6 +346,18 @@
 				) {
 					console.warn('[ywcoder] skipping webview origin validation for local/intranet host');
 					return start(parentOrigin);
+				}
+
+				// [YwCoder] Simple reverse-proxy / intranet deployments often serve webviews from
+				// the same origin as the workbench. Allow this without requiring a hashed subdomain.
+				try {
+					const parentHost = new URL(parentOrigin).hostname;
+					if (parentHost && hostname === parentHost) {
+						console.warn('[ywcoder] same-origin webview, skipping origin hash validation');
+						return start(parentOrigin);
+					}
+				} catch (e) {
+					// ignore invalid parentOrigin
 				}
 
 				if (!crypto.subtle) {
