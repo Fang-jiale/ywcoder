@@ -17,6 +17,14 @@ import { ExtensionIdentifier } from '../../../../platform/extensions/common/exte
 import { IWorkbenchLayoutService } from '../../../services/layout/browser/layoutService.js';
 import { IOverlayWebview, IWebview, IWebviewElement, IWebviewService, KEYBINDING_CONTEXT_WEBVIEW_FIND_WIDGET_ENABLED, KEYBINDING_CONTEXT_WEBVIEW_FIND_WIDGET_VISIBLE, WebviewContentOptions, WebviewExtensionDescription, WebviewInitInfo, WebviewMessageReceivedEvent, WebviewOptions } from './webview.js';
 
+const supportsAnchorPositioning = (() => {
+	try {
+		return typeof CSS !== 'undefined' && CSS.supports('position-anchor', 'auto');
+	} catch {
+		return false;
+	}
+})();
+
 /**
  * Webview that is absolutely positioned over another element and that can
  * creates and destroys an underlying webview as needed.
@@ -57,6 +65,8 @@ export class OverlayWebview extends Disposable implements IOverlayWebview {
 
 	private _overlayLayout: OverlayLayoutElement | undefined;
 
+	private _inlineContainer: HTMLElement | undefined;
+
 	private _anchorState: { readonly anchorElement: HTMLElement; readonly clippingContainer?: HTMLElement } | undefined;
 
 	public constructor(
@@ -91,6 +101,9 @@ export class OverlayWebview extends Disposable implements IOverlayWebview {
 		this._overlayLayout?.dispose();
 		this._overlayLayout = undefined;
 
+		this._inlineContainer?.remove();
+		this._inlineContainer = undefined;
+
 		for (const msg of this._firstLoadPendingMessages) {
 			msg.resolve(false);
 		}
@@ -106,7 +119,29 @@ export class OverlayWebview extends Disposable implements IOverlayWebview {
 			throw new Error(`OverlayWebview has been disposed`);
 		}
 
-		return this.overlayLayout.content;
+		if (supportsAnchorPositioning) {
+			return this.overlayLayout.content;
+		}
+
+		if (!this._inlineContainer) {
+			this._inlineContainer = document.createElement('div');
+			this._inlineContainer.style.position = 'absolute';
+			this._inlineContainer.style.top = '0';
+			this._inlineContainer.style.left = '0';
+			this._inlineContainer.style.width = '100%';
+			this._inlineContainer.style.height = '100%';
+			this._inlineContainer.style.overflow = 'hidden';
+		}
+
+		if (this._anchorState?.anchorElement && this._inlineContainer.parentElement !== this._anchorState.anchorElement) {
+			const anchor = this._anchorState.anchorElement;
+			if (getComputedStyle(anchor).position === 'static') {
+				anchor.style.position = 'relative';
+			}
+			anchor.appendChild(this._inlineContainer);
+		}
+
+		return this._inlineContainer;
 	}
 
 	private get overlayLayout() {
@@ -138,6 +173,8 @@ export class OverlayWebview extends Disposable implements IOverlayWebview {
 			this._webviewEvents.clear();
 			this._overlayLayout?.dispose();
 			this._overlayLayout = undefined;
+			this._inlineContainer?.remove();
+			this._inlineContainer = undefined;
 		}
 
 		this._owner = owner;
@@ -145,7 +182,12 @@ export class OverlayWebview extends Disposable implements IOverlayWebview {
 		this._show(targetWindow);
 
 		if (this._anchorState) {
-			this.overlayLayout.setAnchorElement(this._anchorState.anchorElement, { clippingContainer: this._anchorState.clippingContainer });
+			if (supportsAnchorPositioning) {
+				this.overlayLayout.setAnchorElement(this._anchorState.anchorElement, { clippingContainer: this._anchorState.clippingContainer });
+			} else {
+				// Ensure the inline container is attached to the anchor element
+				this.container;
+			}
 		}
 
 		if (oldOwner !== owner) {
@@ -177,8 +219,12 @@ export class OverlayWebview extends Disposable implements IOverlayWebview {
 		this._scopedContextKeyService.clear();
 
 		this._owner = undefined;
-		if (this._overlayLayout) {
-			this._overlayLayout.content.style.visibility = 'hidden';
+		if (supportsAnchorPositioning) {
+			if (this._overlayLayout) {
+				this._overlayLayout.content.style.visibility = 'hidden';
+			}
+		} else if (this._inlineContainer) {
+			this._inlineContainer.style.visibility = 'hidden';
 		}
 
 		if (this._options.retainContextWhenHidden) {
@@ -194,8 +240,14 @@ export class OverlayWebview extends Disposable implements IOverlayWebview {
 
 	public setAnchorElement(anchorElement: HTMLElement, clippingContainer?: HTMLElement) {
 		this._anchorState = { anchorElement, clippingContainer };
-		// Force the overlay layout to be created if it doesn't exist
-		this.overlayLayout.setAnchorElement(anchorElement, { clippingContainer });
+		if (supportsAnchorPositioning) {
+			this.overlayLayout.setAnchorElement(anchorElement, { clippingContainer });
+		} else {
+			// Mount inline: attach the container to the anchor element.
+			// If the webview has already been created, moving its container preserves
+			// iframe state because the iframe itself is never removed from the DOM.
+			this.container;
+		}
 	}
 
 	private _show(targetWindow: CodeWindow) {
@@ -270,8 +322,12 @@ export class OverlayWebview extends Disposable implements IOverlayWebview {
 			this._shouldShowFindWidgetOnRestore = false;
 		}
 
-		if (this._overlayLayout) {
-			this._overlayLayout.content.style.visibility = 'visible';
+		if (supportsAnchorPositioning) {
+			if (this._overlayLayout) {
+				this._overlayLayout.content.style.visibility = 'visible';
+			}
+		} else if (this._inlineContainer) {
+			this._inlineContainer.style.visibility = 'visible';
 		}
 	}
 
