@@ -191,7 +191,11 @@ const deleteSession = async (wrappedSession: ReturnType<typeof useSession> | und
   if (!ok) return;
 
   try {
-    await store.deleteSession(sessionId);
+    const success = await store.deleteSession(sessionId);
+    if (!success) {
+      error.value = '删除会话失败';
+    }
+    await store.listSessions();
   } catch (err) {
     error.value = `删除会话失败: ${err}`;
   }
