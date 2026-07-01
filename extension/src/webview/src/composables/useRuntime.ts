@@ -97,45 +97,50 @@ export function useRuntime(): RuntimeInstance {
 
       if (disposed) return;
 
-      try {
-        const selection = await connection.getCurrentSelection();
-        if (!disposed) appContext.currentSelection(selection?.selection ?? undefined);
-      } catch (e) { /* ignore */ }
+      // 传输层已就绪就让 UI 可用，不必等会话列表/资源/选择区全部拉完。
+      appContext.isReady(true);
 
-      try {
-        const assets = await connection.getAssetUris();
-        if (!disposed) appContext.assetUris(assets.assetUris);
-      } catch (e) { /* ignore */ }
+      // 下面这些初始化可以并行在后台跑，不影响首屏交互。
+      await Promise.all([
+        (async () => {
+          try {
+            const selection = await connection.getCurrentSelection();
+            if (!disposed) appContext.currentSelection(selection?.selection ?? undefined);
+          } catch (e) { /* ignore */ }
+        })(),
+        (async () => {
+          try {
+            const assets = await connection.getAssetUris();
+            if (!disposed) appContext.assetUris(assets.assetUris);
+          } catch (e) { /* ignore */ }
+        })(),
+        (async () => {
+          try {
+            await sessionStore.listSessions();
+            if (disposed) return;
 
-      try {
-        await sessionStore.listSessions();
-        if (!disposed) {
-          const urlParams = new URLSearchParams(window.location.search);
-          const sessionIdFromUrl = urlParams.get('session');
-
-          if (sessionIdFromUrl) {
-            const sessionFromUrl = sessionStore.sessions().find(s => s.sessionId() === sessionIdFromUrl);
-            if (sessionFromUrl) {
-              sessionStore.setActiveSession(sessionFromUrl);
+            const urlParams = new URLSearchParams(window.location.search);
+            const sessionIdFromUrl = urlParams.get('session');
+            if (sessionIdFromUrl) {
+              const sessionFromUrl = sessionStore.sessions().find(s => s.sessionId() === sessionIdFromUrl);
+              if (sessionFromUrl) {
+                sessionStore.setActiveSession(sessionFromUrl);
+              }
             }
-          }
 
-          if (!sessionStore.activeSession()) {
-            const lastSession = sessionStore.sessionsByLastModified()[0];
-            if (lastSession) {
-              sessionStore.setActiveSession(lastSession);
+            if (!sessionStore.activeSession()) {
+              const lastSession = sessionStore.sessionsByLastModified()[0];
+              if (lastSession) {
+                sessionStore.setActiveSession(lastSession);
+              }
             }
-          }
 
-          if (!sessionStore.activeSession()) {
-            await sessionStore.createSession({ isExplicit: false });
-          }
-        }
-      } catch (e) { /* ignore */ }
-
-      if (!disposed) {
-        appContext.isReady(true);
-      }
+            if (!sessionStore.activeSession()) {
+              await sessionStore.createSession({ isExplicit: false });
+            }
+          } catch (e) { /* ignore */ }
+        })(),
+      ]);
     })();
 
     onUnmounted(() => {
