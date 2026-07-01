@@ -71,7 +71,8 @@ export interface UseSessionReturn {
   send: (
     input: string,
     attachments?: Array<{ fileName: string; mediaType: string; data: string }>,
-    includeSelection?: boolean
+    includeSelection?: boolean,
+    allowWhileBusy?: boolean
   ) => Promise<void>;
   launchYwCoder: () => Promise<string | undefined>;
   interrupt: () => Promise<void>;

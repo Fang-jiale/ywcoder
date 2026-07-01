@@ -32,7 +32,7 @@
             :class="{ 'thinking-active': isThinkingOn }"
             @click="handleThinkingToggle"
           >
-            <span class="codicon codicon-brain text-[16px]!" />
+            <span class="codicon codicon-lightbulb text-[16px]!" />
           </button>
         </Tooltip>
 
@@ -73,11 +73,11 @@
           >
             <span
               v-if="submitVariant === 'stop'"
-              class="codicon codicon-debug-stop text-[12px]! bg-(--vscode-editor-background)e-[0.6] rounded-[1px]"
+              class="codicon codicon-debug-stop text-[12px]! rounded-[1px]"
             />
             <span
               v-else
-              class="codicon codicon-arrow-up-two text-[12px]!"
+              class="codicon codicon-send text-[12px]!"
             />
           </button>
         </Tooltip>
@@ -273,18 +273,21 @@ function handleFileUpload(event: Event) {
 }
 
 .submit-button {
-  scale: 1.1;
+  transform: scale(1.1);
 }
 
 .submit-button[data-variant="enabled"] {
+  background-color: var(--vscode-foreground);
   background-color: color-mix(in srgb, var(--vscode-editor-foreground) 80%, transparent);
   color: var(--vscode-editor-background);
   opacity: 1;
+  outline: 1.5px solid var(--vscode-foreground);
   outline: 1.5px solid color-mix(in srgb, var(--vscode-editor-foreground) 60%, transparent);
   outline-offset: 1px;
 }
 
 .submit-button[data-variant="disabled"] {
+  background-color: var(--vscode-foreground);
   background-color: color-mix(in srgb, var(--vscode-editor-foreground) 80%, transparent);
   color: var(--vscode-editor-background);
   opacity: 0.5;
@@ -292,9 +295,11 @@ function handleFileUpload(event: Event) {
 }
 
 .submit-button[data-variant="stop"] {
+  background-color: var(--vscode-foreground);
   background-color: color-mix(in srgb, var(--vscode-editor-foreground) 80%, transparent);
   color: var(--vscode-editor-background);
   opacity: 1;
+  outline: 1.5px solid var(--vscode-foreground);
   outline: 1.5px solid color-mix(in srgb, var(--vscode-editor-foreground) 60%, transparent);
   outline-offset: 1px;
 }

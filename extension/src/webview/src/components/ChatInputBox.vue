@@ -877,7 +877,7 @@ defineExpose({
   height: 16px;
   opacity: 1;
   transition: opacity 0.15s ease;
-  scale: 0.8;
+  transform: scale(0.8);
 }
 
 /* 确保图标样式正确应用（使用 :deep 穿透到 FileIcon 内部） */

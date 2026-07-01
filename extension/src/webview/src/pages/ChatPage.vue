@@ -74,6 +74,7 @@
               :placeholder="isReady ? undefined : 'YwCoder 正在初始化中，请稍候...'"
               @submit="handleSubmit"
               @stop="handleStop"
+              @queue-message="handleQueueMessage"
               @add-attachment="handleAddAttachment"
               @remove-attachment="handleRemoveAttachment"
               @thinking-toggle="handleToggleThinking"
@@ -330,6 +331,19 @@
       attachments.value = [];
     } catch (e) {
       console.error('[ChatPage] send failed', e);
+    }
+  }
+
+  async function handleQueueMessage(content: string) {
+    const s = session.value;
+    const trimmed = (content || '').trim();
+    if (!s || !trimmed) return;
+
+    try {
+      // 在对话进行中追加的追问或 /btw，允许在 busy 状态下发送
+      await s.send(trimmed, [], false, true);
+    } catch (e) {
+      console.error('[ChatPage] queue message failed', e);
     }
   }
 

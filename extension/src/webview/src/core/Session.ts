@@ -212,9 +212,14 @@ export class Session {
   async send(
     input: string,
     attachments: AttachmentPayload[] = [],
-    includeSelection = false
+    includeSelection = false,
+    allowWhileBusy = false
   ): Promise<void> {
     const connection = await this.getConnection();
+
+    if (this.busy() && !allowWhileBusy) {
+      return;
+    }
 
     // 官方路线：不在 slash 命令时临时切换 thinkingLevel，保持会话一致性，
     // 由 SDK/服务端在 assistant 消息中提供 thinking/redacted_thinking 块以满足约束

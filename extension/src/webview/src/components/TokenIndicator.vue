@@ -87,18 +87,23 @@ const tooltipText = computed(() => {
   return formattedPercentage.value
 })
 
-const strokeColor = 'color-mix(in srgb,var(--vscode-foreground) 92%,transparent)'
+const strokeColor = 'var(--token-indicator-stroke, var(--vscode-foreground))'
+
 </script>
 
 <style scoped>
 .progress-container {
+  --token-indicator-stroke: color-mix(in srgb, var(--vscode-foreground) 92%, transparent);
+  --token-indicator-text: color-mix(in srgb, var(--vscode-foreground) 48%, transparent);
+
   position: relative;
   z-index: 100;
 }
 
 .progress-text {
   font-size: 12px;
-  color: color-mix(in srgb,var(--vscode-foreground) 48%,transparent);
+  color: var(--vscode-foreground);
+  color: var(--token-indicator-text);
   line-height: 1;
 }
 

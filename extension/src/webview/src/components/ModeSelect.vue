@@ -129,6 +129,7 @@ function handleModeSelect(item: DropdownItemData, close: () => void) {
   flex-shrink: 0;
   cursor: pointer;
   border: none;
+  background: rgba(128, 128, 128, 0.2);
   background: color-mix(in srgb, var(--vscode-foreground) 20%, transparent);
   transition: background-color 0.2s ease;
   opacity: .8;
