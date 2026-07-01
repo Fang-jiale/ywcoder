@@ -22,6 +22,7 @@ export class ExtensionRunningLocationTracker {
 	private _maxLocalProcessAffinity: number = 0;
 	private _maxLocalWebWorkerAffinity: number = 0;
 	private _remoteExtensionIds = new Set<string>();
+	private _remoteExtensionDescriptions = new ExtensionIdentifierMap<IExtensionDescription>();
 
 	public get maxLocalProcessAffinity(): number {
 		return this._maxLocalProcessAffinity;
@@ -29,6 +30,10 @@ export class ExtensionRunningLocationTracker {
 
 	public get maxLocalWebWorkerAffinity(): number {
 		return this._maxLocalWebWorkerAffinity;
+	}
+
+	public getRemoteExtensionDescription(extensionId: ExtensionIdentifier): IExtensionDescription | undefined {
+		return this._remoteExtensionDescriptions.get(extensionId);
 	}
 
 	constructor(
@@ -249,6 +254,7 @@ export class ExtensionRunningLocationTracker {
 		// the remote host even when only the local IExtension object is being re-added.
 		for (const extension of remoteExtensions) {
 			this._remoteExtensionIds.add(ExtensionIdentifier.toKey(extension.identifier));
+			this._remoteExtensionDescriptions.set(extension.identifier, extension);
 		}
 
 		// Skip extensions that have an existing running location
@@ -346,7 +352,11 @@ export class ExtensionRunningLocationTracker {
 		const localWebWorkerExtensions: IExtensionDescription[] = [];
 		for (const extension of toAdd) {
 			const extensionKind = this.readExtensionKinds(extension);
-			const isRemote = this.isInstalledRemotely(extension);
+			// In a web + remote authority setup, workspace extensions that are re-added
+			// (e.g. after a workspace trust change) may arrive before the remote scanner
+			// has populated _remoteExtensionIds. Treat them as remote so they do not fall
+			// back to the browser extension host.
+			const isRemote = this.isInstalledRemotely(extension) || (!!this._environmentService.remoteAuthority && extensionKind.includes('workspace'));
 			const extensionHostKind = this._extensionHostKindPicker.pickExtensionHostKind(extension.identifier, extensionKind, !isRemote, isRemote, ExtensionRunningPreference.None);
 			let runningLocation: ExtensionRunningLocation | null = null;
 			if (extensionHostKind === ExtensionHostKind.LocalProcess) {

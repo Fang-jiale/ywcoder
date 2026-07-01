@@ -293,14 +293,45 @@ export abstract class AbstractExtensionService extends Disposable implements IEx
 			toRemove.push(extensionDescription);
 		}
 
+		// Workspace trust changes can remove and immediately re-add an extension using
+		// only the local IExtension object. For extensions that actually run on the remote
+		// host, keep the remote extension description so the remote extension host receives
+		// a vscode-remote URI instead of a browser HTTP URL.
+		const removedRemoteDescriptions = new ExtensionIdentifierMap<IExtensionDescription>();
+		for (const extensionOrId of _toRemove) {
+			const extensionId = (typeof extensionOrId === 'string' ? extensionOrId : extensionOrId.identifier.id);
+			const extensionDescription = this._registry.getExtensionDescription(extensionId);
+			if (extensionDescription && extensionDescription.extensionLocation.scheme === Schemas.vscodeRemote) {
+				removedRemoteDescriptions.set(extensionDescription.identifier, extensionDescription);
+			}
+		}
+
 		const toAdd: IExtensionDescription[] = [];
+		let remoteExtensionsPromise: Promise<IExtensionDescription[]> | undefined;
 		for (let i = 0, len = _toAdd.length; i < len; i++) {
 			const extension = _toAdd[i];
 
-			const extensionDescription = toExtensionDescription(extension, false);
+			let extensionDescription = toExtensionDescription(extension, false);
 			if (!extensionDescription) {
 				// could not scan extension...
 				continue;
+			}
+
+			const extensionKinds = this._runningLocations.readExtensionKinds(extensionDescription);
+			const isRemote = this._runningLocations.isInstalledRemotely(extensionDescription) || (!!this._environmentService.remoteAuthority && extensionKinds.includes('workspace'));
+			const extensionHostKind = this._extensionHostKindPicker.pickExtensionHostKind(extensionDescription.identifier, extensionKinds, !isRemote, isRemote, ExtensionRunningPreference.None);
+			if (extensionHostKind === ExtensionHostKind.Remote) {
+				let remoteDescription = removedRemoteDescriptions.get(extensionDescription.identifier) ?? this._runningLocations.getRemoteExtensionDescription(extensionDescription.identifier);
+				if (!remoteDescription) {
+					if (!remoteExtensionsPromise) {
+						remoteExtensionsPromise = this._remoteExtensionsScannerService.scanExtensions();
+					}
+					const allRemoteExtensions = await remoteExtensionsPromise;
+					remoteDescription = allRemoteExtensions.find(ext => ExtensionIdentifier.equals(ext.identifier, extensionDescription.identifier));
+				}
+				if (remoteDescription) {
+					extensionDescription = remoteDescription;
+				}
 			}
 
 			if (!this._canAddExtension(extensionDescription, toRemove)) {
