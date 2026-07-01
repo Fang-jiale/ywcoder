@@ -3,7 +3,10 @@ import { createPinia } from 'pinia';
 import App from './App.vue';
 import '@vscode/codicons/dist/codicon.css';
 import '@mdi/font/css/materialdesignicons.min.css';
-import 'virtual:svg-icons-register';
+
+// Load SVG icon sprite asynchronously so the initial bundle stays smaller.
+// The <Icon> component will fall back to the MDI font until the sprite is ready.
+import('./icons');
 
 declare global {
   interface Window {

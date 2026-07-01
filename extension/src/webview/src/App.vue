@@ -33,14 +33,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, provide } from 'vue';
+import { ref, onMounted, provide, defineAsyncComponent } from 'vue';
 import { Motion } from 'motion-v';
-import SessionsPage from './pages/SessionsPage.vue';
 import ChatPage from './pages/ChatPage.vue';
-import SettingsPage from './pages/SettingsPage.vue';
 import './styles/claude-theme.css';
 import { useRuntime } from './composables/useRuntime';
 import { RuntimeKey } from './composables/runtimeContext';
+
+const SessionsPage = defineAsyncComponent(() => import('./pages/SessionsPage.vue'));
+const SettingsPage = defineAsyncComponent(() => import('./pages/SettingsPage.vue'));
 // import IconTestPage from './pages/IconTestPage.vue';
 
 type PageName = 'sessions' | 'chat' | 'settings';

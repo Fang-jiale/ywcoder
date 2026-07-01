@@ -10,6 +10,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import ids from 'virtual:svg-icons-names';
+import { iconsReady } from '../composables/useIconSprite';
 
 type IconType = 'codicon' | 'mdi';
 
@@ -81,7 +82,7 @@ const localSymbolId = computed(() => {
   return resolveLocalId(name);
 });
 
-const useLocalSvg = computed(() => !!localSymbolId.value);
+const useLocalSvg = computed(() => iconsReady() && !!localSymbolId.value);
 
 const svgWrapperClasses = computed(() => {
   const classes = [props.className];
