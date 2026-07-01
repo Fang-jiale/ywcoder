@@ -65,6 +65,7 @@ import {
     handleOpenDiff,
     handleListSessions,
     handleGetSession,
+    handleDeleteSession,
     handleExec,
     handleListFiles,
     handleStatPath,
@@ -729,6 +730,9 @@ export class AIAgentService implements IAIAgentService {
 
             case "get_session_request":
                 return handleGetSession(request, this.handlerContext);
+
+            case "delete_session_request":
+                return handleDeleteSession(request, this.handlerContext);
 
         // 文件操作
         case "list_files_request":

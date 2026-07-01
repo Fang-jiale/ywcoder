@@ -176,6 +176,25 @@ export class SessionStore {
     this.activeSession(session);
   }
 
+  async deleteSession(sessionId: string): Promise<boolean> {
+    const connection = await this.getConnection();
+    const response = await connection.deleteSession(sessionId);
+
+    const sessions = this.sessions();
+    const index = sessions.findIndex(s => s.sessionId() === sessionId);
+    if (index !== -1) {
+      const [removed] = sessions.splice(index, 1);
+      removed.dispose();
+      this.sessions([...sessions]);
+    }
+
+    if (this.activeSession()?.sessionId() === sessionId) {
+      this.activeSession(undefined);
+    }
+
+    return !!response?.success;
+  }
+
   dispose(): void {
     // 清理所有 effects
     for (const cleanup of this.effectCleanups) {

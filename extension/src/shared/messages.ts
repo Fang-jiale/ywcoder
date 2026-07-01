@@ -334,6 +334,20 @@ export interface GetSessionResponse {
 }
 
 /**
+ * 删除会话
+ */
+export interface DeleteSessionRequest {
+    type: "delete_session_request";
+    sessionId: string;
+}
+
+export interface DeleteSessionResponse {
+    type: "delete_session_response";
+    success: boolean;
+    error?: string;
+}
+
+/**
  * 执行命令
  */
 export interface ExecRequest {
@@ -812,6 +826,7 @@ export type WebViewRequest =
     | GetAssetUrisRequest
     | ListSessionsRequest
     | GetSessionRequest
+    | DeleteSessionRequest
     | ExecRequest
     | ListFilesRequest
     | OpenURLRequest
@@ -853,6 +868,7 @@ export type WebViewRequestResponse =
     | GetAssetUrisResponse
     | ListSessionsResponse
     | GetSessionResponse
+    | DeleteSessionResponse
     | ExecResponse
     | ListFilesResponse
     | OpenURLResponse

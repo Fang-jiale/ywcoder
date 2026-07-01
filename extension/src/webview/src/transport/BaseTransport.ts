@@ -234,6 +234,9 @@ export abstract class BaseTransport {
   getSession(sessionId: string): Promise<any> {
     return this.sendRequest({ type: "get_session_request", sessionId });
   }
+  deleteSession(sessionId: string): Promise<any> {
+    return this.sendRequest({ type: "delete_session_request", sessionId });
+  }
   listFiles(pattern?: string, signal?: AbortSignal): Promise<any> {
     return this.sendRequest({ type: "list_files_request", pattern }, undefined, signal);
   }

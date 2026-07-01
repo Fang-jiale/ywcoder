@@ -71,6 +71,11 @@ export interface ISessionService {
      * 获取指定会话的所有消息
      */
     getSession(sessionIdOrPath: string, cwd: string): Promise<any[]>;
+
+    /**
+     * 删除指定会话
+     */
+    deleteSession(sessionId: string, cwd: string): Promise<boolean>;
 }
 
 // ============================================================================
@@ -439,6 +444,29 @@ export class SessionService implements ISessionService {
         } catch (error) {
             this.logService.error(`[SessionService] 获取会话消息失败:`, error);
             return [];
+        }
+    }
+
+    /**
+     * 删除指定会话
+     */
+    async deleteSession(sessionId: string, cwd: string): Promise<boolean> {
+        try {
+            const validSessionId = validateSessionId(sessionId);
+            if (!validSessionId) {
+                this.logService.error(`[SessionService] 无效的会话 ID: ${sessionId}`);
+                return false;
+            }
+
+            const projectDir = getProjectHistoryDir(cwd);
+            const filePath = path.join(projectDir, `${validSessionId}.jsonl`);
+
+            this.logService.info(`[SessionService] 删除会话文件: ${filePath}`);
+            await fs.unlink(filePath);
+            return true;
+        } catch (error) {
+            this.logService.error(`[SessionService] 删除会话失败:`, error);
+            return false;
         }
     }
 

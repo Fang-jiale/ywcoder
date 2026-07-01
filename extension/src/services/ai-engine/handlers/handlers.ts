@@ -33,6 +33,8 @@ import type {
     ListSessionsResponse,
     GetSessionRequest,
     GetSessionResponse,
+    DeleteSessionRequest,
+    DeleteSessionResponse,
     ExecRequest,
     ExecResponse,
     ListFilesRequest,
@@ -641,6 +643,34 @@ export async function handleGetSession(
         return {
             type: "get_session_response",
             messages: []
+        };
+    }
+}
+
+/**
+ * 删除会话
+ */
+export async function handleDeleteSession(
+    request: DeleteSessionRequest,
+    context: HandlerContext
+): Promise<DeleteSessionResponse> {
+    const { logService, sessionService, workspaceService } = context;
+
+    try {
+        const cwd = workspaceService.getDefaultWorkspaceFolder()?.uri.fsPath || process.cwd();
+        const success = await sessionService.deleteSession(request.sessionId, cwd);
+
+        return {
+            type: "delete_session_response",
+            success
+        };
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        logService.error(`Failed to delete session: ${error}`);
+        return {
+            type: "delete_session_response",
+            success: false,
+            error: message
         };
     }
 }

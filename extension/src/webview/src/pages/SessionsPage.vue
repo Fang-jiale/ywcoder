@@ -76,7 +76,16 @@
 
             <div class="session-meta">
               <span class="session-messages">{{ session.messageCount.value }} 条消息</span>
-              <span v-if="session.sessionId.value" class="session-id">{{ session.sessionId.value }}</span>
+              <div class="session-actions">
+                <span v-if="session.sessionId.value" class="session-id">{{ session.sessionId.value }}</span>
+                <button
+                  class="delete-btn"
+                  title="删除会话"
+                  @click.stop="deleteSession(session)"
+                >
+                  <span class="codicon codicon-trash"></span>
+                </button>
+              </div>
             </div>
 
         </div>
@@ -171,6 +180,21 @@ const createNewSession = async () => {
   store.setActiveSession(rawSession);
   // 🔥 访问 alien-signals 需要函数调用
   emit('switchToChat', rawSession.sessionId());
+};
+
+const deleteSession = async (wrappedSession: ReturnType<typeof useSession> | undefined) => {
+  if (!wrappedSession) return;
+  const sessionId = wrappedSession.sessionId.value;
+  if (!sessionId) return;
+
+  const ok = confirm('确定要删除这个会话吗？此操作不可恢复。');
+  if (!ok) return;
+
+  try {
+    await store.deleteSession(sessionId);
+  } catch (err) {
+    error.value = `删除会话失败: ${err}`;
+  }
 };
 
 const startNewChat = () => {
@@ -480,6 +504,40 @@ onMounted(() => {
   align-items: center;
   font-size: 11px;
   color: var(--vscode-descriptionForeground);
+}
+
+.session-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: var(--vscode-descriptionForeground);
+  border-radius: 3px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, background-color 0.2s;
+}
+
+.session-card:hover .delete-btn {
+  opacity: 1;
+}
+
+.delete-btn:hover {
+  background: var(--vscode-toolbar-hoverBackground);
+  color: var(--vscode-errorForeground);
+}
+
+.delete-btn .codicon {
+  font-size: 12px;
 }
 
 .session-id {

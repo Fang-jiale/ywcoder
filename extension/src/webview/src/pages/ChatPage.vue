@@ -15,6 +15,16 @@
       </div>
     </div>
 
+    <!-- 会话标签栏 -->
+    <SessionTabs
+      v-if="sessions.length > 1"
+      :sessions="sessions"
+      :active-session="activeSessionRaw"
+      @switch-session="handleSwitchSession"
+      @close-session="handleCloseSession"
+      @create-session="createNew"
+    />
+
     <!-- 主体：消息容器 -->
     <div class="main">
       <!-- <div class="chatContainer"> -->
@@ -107,6 +117,7 @@
   import YwCoderWordmark from '../components/YwCoderWordmark.vue';
   import RandomTip from '../components/RandomTip.vue';
   import MessageRenderer from '../components/Messages/MessageRenderer.vue';
+  import SessionTabs from '../components/SessionTabs.vue';
   import { useKeybinding } from '../utils/useKeybinding';
   import { useSignal } from '@gn8/alien-signals-vue';
   import type { PermissionMode } from '@anthropic-ai/claude-agent-sdk';
@@ -133,6 +144,9 @@
   const activeSessionRaw = useSignal<Session | undefined>(
     runtime.sessionStore.activeSession
   );
+
+  // 所有会话列表
+  const sessions = useSignal(runtime.sessionStore.sessions);
 
   // 缓存 useSession 结果，避免 computed 每次读取都重建 signal 订阅
   const session = shallowRef<ReturnType<typeof useSession> | null>(null);
@@ -315,6 +329,29 @@
 
     // 3. 当前会话有内容，创建新会话
     await runtime.sessionStore.createSession({ isExplicit: true });
+  }
+
+  function handleSwitchSession(rawSession: Session) {
+    if (!runtime) return;
+    runtime.sessionStore.setActiveSession(rawSession);
+  }
+
+  function handleCloseSession(rawSession: Session) {
+    if (!runtime) return;
+    const store = runtime.sessionStore;
+    const currentSessions = store.sessions();
+    const index = currentSessions.findIndex(s => s === rawSession);
+    if (index === -1) return;
+
+    const nextSessions = [...currentSessions];
+    nextSessions.splice(index, 1);
+    store.sessions(nextSessions);
+
+    if (store.activeSession() === rawSession) {
+      store.setActiveSession(nextSessions[0] ?? undefined);
+    }
+
+    rawSession.dispose();
   }
 
   // ChatInput 事件处理
