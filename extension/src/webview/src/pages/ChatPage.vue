@@ -92,10 +92,6 @@
               @mode-select="handleModeSelect"
               @model-select="handleModelSelect"
             />
-            <div v-if="!isReady" class="init-overlay">
-              <Spinner :size="14" />
-              <span class="init-text">YwCoder 正在初始化中...</span>
-            </div>
           </div>
         </div>
       <!-- </div> -->
@@ -176,7 +172,7 @@
   const isSessionReady = computed(() => !!session.value);
 
   const inputPlaceholder = computed(() => {
-    if (!isReady.value) return 'YwCoder 正在初始化中，请稍候...';
+    if (!isReady.value) return '正在连接 YwCoder...';
     if (!isSessionReady.value) return '正在恢复会话，请稍候...';
     return undefined;
   });
