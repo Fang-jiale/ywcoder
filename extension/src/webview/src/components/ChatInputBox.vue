@@ -163,7 +163,6 @@ interface Props {
   attachments?: AttachmentItem[]
   thinkingLevel?: string
   permissionMode?: PermissionMode
-  sessionReady?: boolean
 }
 
 interface Emits {
@@ -190,8 +189,7 @@ const props = withDefaults(defineProps<Props>(), {
   conversationWorking: false,
   attachments: () => [],
   thinkingLevel: 'default_on',
-  permissionMode: 'default',
-  sessionReady: true
+  permissionMode: 'default'
 })
 
 const emit = defineEmits<Emits>()
@@ -205,7 +203,7 @@ const isDragOver = ref(false)
 
 const isSubmitDisabled = computed(() => {
   const hasContent = !!content.value.trim() || (props.attachments?.length ?? 0) > 0
-  return !hasContent || isLoading.value || !props.sessionReady
+  return !hasContent || isLoading.value
 })
 
 // === 使用新的 Completion Dropdown Composable ===

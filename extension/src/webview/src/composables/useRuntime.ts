@@ -21,9 +21,6 @@ export function useRuntime(): RuntimeInstance {
   const connectionManager = new ConnectionManager(() => transport);
   const appContext = new AppContext(connectionManager);
 
-  // UI 一创建就可用，不必等后端连接/会话恢复；发送等关键操作再由 sessionReady 控制。
-  appContext.isReady(true);
-
   // 创建 alien-signal 用于 SessionContext
   // AppContext.currentSelection 是 Vue Ref，但 SessionContext 需要 alien-signal
   const currentSelectionSignal = signal<SelectionRange | undefined>(undefined);
@@ -100,47 +97,45 @@ export function useRuntime(): RuntimeInstance {
 
       if (disposed) return;
 
-      // 下面这些初始化可以并行在后台跑，不影响首屏交互。
-      await Promise.all([
-        (async () => {
-          try {
-            const selection = await connection.getCurrentSelection();
-            if (!disposed) appContext.currentSelection(selection?.selection ?? undefined);
-          } catch (e) { /* ignore */ }
-        })(),
-        (async () => {
-          try {
-            const assets = await connection.getAssetUris();
-            if (!disposed) appContext.assetUris(assets.assetUris);
-          } catch (e) { /* ignore */ }
-        })(),
-        (async () => {
-          try {
-            await sessionStore.listSessions();
-            if (disposed) return;
+      try {
+        const selection = await connection.getCurrentSelection();
+        if (!disposed) appContext.currentSelection(selection?.selection ?? undefined);
+      } catch (e) { /* ignore */ }
 
-            const urlParams = new URLSearchParams(window.location.search);
-            const sessionIdFromUrl = urlParams.get('session');
-            if (sessionIdFromUrl) {
-              const sessionFromUrl = sessionStore.sessions().find(s => s.sessionId() === sessionIdFromUrl);
-              if (sessionFromUrl) {
-                sessionStore.setActiveSession(sessionFromUrl);
-              }
-            }
+      try {
+        const assets = await connection.getAssetUris();
+        if (!disposed) appContext.assetUris(assets.assetUris);
+      } catch (e) { /* ignore */ }
 
-            if (!sessionStore.activeSession()) {
-              const lastSession = sessionStore.sessionsByLastModified()[0];
-              if (lastSession) {
-                sessionStore.setActiveSession(lastSession);
-              }
-            }
+      try {
+        await sessionStore.listSessions();
+        if (!disposed) {
+          const urlParams = new URLSearchParams(window.location.search);
+          const sessionIdFromUrl = urlParams.get('session');
 
-            if (!sessionStore.activeSession()) {
-              await sessionStore.createSession({ isExplicit: false });
+          if (sessionIdFromUrl) {
+            const sessionFromUrl = sessionStore.sessions().find(s => s.sessionId() === sessionIdFromUrl);
+            if (sessionFromUrl) {
+              sessionStore.setActiveSession(sessionFromUrl);
             }
-          } catch (e) { /* ignore */ }
-        })(),
-      ]);
+          }
+
+          if (!sessionStore.activeSession()) {
+            const lastSession = sessionStore.sessionsByLastModified()[0];
+            if (lastSession) {
+              sessionStore.setActiveSession(lastSession);
+            }
+          }
+
+          if (!sessionStore.activeSession()) {
+            await sessionStore.createSession({ isExplicit: false });
+          }
+        }
+      } catch (e) { /* ignore */ }
+
+      if (!disposed) {
+        appContext.isReady(true);
+      }
     })();
 
     onUnmounted(() => {
