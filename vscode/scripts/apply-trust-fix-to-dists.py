@@ -10,6 +10,10 @@ import sys
 REPO_ROOT = r'D:\project\ywcoder\vscode'
 
 TARGETS = [
+    # dev / unminified build used by ./scripts/code-server
+    r'out-vscode-web\vs\code\browser\workbench\workbench.js',
+    r'out-vscode-web\vs\workbench\workbench.web.main.internal.js',
+    # packaged platform dists
     r'dist\ywcoder-web-win32-x64\out-vscode-web\vs\code\browser\workbench\workbench.js',
     r'dist\ywcoder-web-win32-x64\out-vscode-web\vs\workbench\workbench.web.main.internal.js',
     r'dist\ywcoder-web-linux-x64\out-vscode-web\vs\code\browser\workbench\workbench.js',
