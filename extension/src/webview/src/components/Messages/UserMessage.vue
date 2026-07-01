@@ -33,6 +33,8 @@
               v-for="att in messageAttachments"
               :key="att.id"
               class="message-attachment-item"
+              :title="`点击预览或下载 ${att.fileName}`"
+              @click.stop="openAttachment(att)"
             >
               <FileIcon :file-name="att.fileName" :size="14" />
               <span class="attachment-label">{{ att.fileName }}</span>
@@ -54,6 +56,36 @@
         </div>
       </div>
     </div>
+
+    <!-- 附件预览/下载弹窗 -->
+    <div
+      v-if="previewAttachment"
+      class="attachment-preview-overlay"
+      @click.self="closePreview"
+      @keydown.esc="closePreview"
+      tabindex="0"
+    >
+      <div class="attachment-preview-content">
+        <div class="preview-header">
+          <span class="preview-title">{{ previewAttachment.fileName }}</span>
+          <button class="preview-close" @click="closePreview">
+            <span class="codicon codicon-close" />
+          </button>
+        </div>
+        <img
+          v-if="isImageAttachment(previewAttachment)"
+          :src="attachmentDataUrl(previewAttachment)"
+          class="preview-image"
+          :alt="previewAttachment.fileName"
+        />
+        <div v-else class="preview-download">
+          <FileIcon :file-name="previewAttachment.fileName" :size="48" />
+          <button class="btn-primary" @click="downloadAttachment(previewAttachment)">
+            下载 {{ previewAttachment.fileName }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -62,6 +94,7 @@ import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue';
 import type { Message } from '../../models/Message';
 import type { ToolContext } from '../../types/tool';
 import type { AttachmentItem } from '../../types/attachment';
+import { IMAGE_MEDIA_TYPES } from '../../types/attachment';
 import Tooltip from '../Common/Tooltip.vue';
 import ChatInputBox from '../ChatInputBox.vue';
 import FileIcon from '../FileIcon.vue';
@@ -77,6 +110,7 @@ const isEditing = ref(false);
 const chatInputRef = ref<InstanceType<typeof ChatInputBox>>();
 const containerRef = ref<HTMLElement>();
 const attachments = ref<AttachmentItem[]>([]);
+const previewAttachment = ref<AttachmentItem | null>(null);
 
 // 显示内容（纯文本）
 const displayContent = computed(() => {
@@ -178,11 +212,44 @@ function handleRestore() {
   // TODO: 实现 restore checkpoint 逻辑
 }
 
+function isImageAttachment(att: AttachmentItem): boolean {
+  return IMAGE_MEDIA_TYPES.includes(att.mediaType as any);
+}
+
+function attachmentDataUrl(att: AttachmentItem): string {
+  return `data:${att.mediaType};base64,${att.data}`;
+}
+
+function openAttachment(att: AttachmentItem) {
+  previewAttachment.value = att;
+}
+
+function closePreview() {
+  previewAttachment.value = null;
+}
+
+function downloadAttachment(att: AttachmentItem) {
+  const dataUrl = attachmentDataUrl(att);
+  const link = document.createElement('a');
+  link.href = dataUrl;
+  link.download = att.fileName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
 // 监听键盘事件
 function handleKeydown(event: KeyboardEvent) {
-  if (isEditing.value && event.key === 'Escape') {
-    event.preventDefault();
-    cancelEdit();
+  if (event.key === 'Escape') {
+    if (previewAttachment.value) {
+      event.preventDefault();
+      closePreview();
+      return;
+    }
+    if (isEditing.value) {
+      event.preventDefault();
+      cancelEdit();
+    }
   }
 }
 
@@ -356,6 +423,13 @@ onUnmounted(() => {
   font-size: 11px;
   color: var(--vscode-foreground);
   opacity: 0.8;
+  cursor: pointer;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.message-attachment-item:hover {
+  background-color: color-mix(in srgb, var(--vscode-input-background) 80%, transparent);
+  opacity: 1;
 }
 
 .attachment-label {
@@ -384,5 +458,97 @@ onUnmounted(() => {
 .edit-mode :deep(.full-input-box:focus-within) {
   box-shadow: 0 0 8px 2px
     color-mix(in srgb, var(--vscode-input-background) 30%, transparent);
+}
+
+/* 附件预览弹窗 */
+.attachment-preview-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  padding: 24px;
+}
+
+.attachment-preview-content {
+  display: flex;
+  flex-direction: column;
+  max-width: 90vw;
+  max-height: 90vh;
+  background: var(--vscode-editor-background);
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--vscode-panel-border);
+  gap: 16px;
+}
+
+.preview-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--vscode-editor-foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preview-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--vscode-foreground);
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.preview-close:hover {
+  background: var(--vscode-toolbar-hoverBackground);
+}
+
+.preview-image {
+  max-width: 100%;
+  max-height: calc(90vh - 60px);
+  object-fit: contain;
+  background: var(--vscode-sideBar-background);
+}
+
+.preview-download {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 48px;
+  min-width: 280px;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.btn-primary:hover {
+  background: var(--vscode-button-hoverBackground);
 }
 </style>

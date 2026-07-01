@@ -110,7 +110,7 @@
   import type { PermissionRequest } from '../core/PermissionRequest';
   import type { ToolContext } from '../types/tool';
   import type { AttachmentItem } from '../types/attachment';
-  import { convertFileToAttachment } from '../types/attachment';
+  import { convertFileToAttachment, IMAGE_MEDIA_TYPES } from '../types/attachment';
   import ChatInputBox from '../components/ChatInputBox.vue';
   import PermissionRequestModal from '../components/PermissionRequestModal.vue';
   import Spinner from '../components/Messages/WaitingIndicator.vue';
@@ -338,20 +338,7 @@
 
   function handleCloseSession(rawSession: Session) {
     if (!runtime) return;
-    const store = runtime.sessionStore;
-    const currentSessions = store.sessions();
-    const index = currentSessions.findIndex(s => s === rawSession);
-    if (index === -1) return;
-
-    const nextSessions = [...currentSessions];
-    nextSessions.splice(index, 1);
-    store.sessions(nextSessions);
-
-    if (store.activeSession() === rawSession) {
-      store.setActiveSession(nextSessions[0] ?? undefined);
-    }
-
-    rawSession.dispose();
+    runtime.sessionStore.closeSession(rawSession);
   }
 
   // ChatInput 事件处理
@@ -468,11 +455,39 @@
 
   async function handleAddAttachment(files: FileList) {
     if (!files || files.length === 0) return;
+    if (!runtime) return;
+
+    const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
+    const MAX_DOC_SIZE = 1 * 1024 * 1024; // 1 MB
+
+    const allowedFiles: File[] = [];
+    const skippedNames: string[] = [];
+
+    for (const file of Array.from(files)) {
+      const isImage = file.type.startsWith('image/');
+      const limit = isImage ? MAX_IMAGE_SIZE : MAX_DOC_SIZE;
+      if (file.size > limit) {
+        skippedNames.push(file.name);
+        continue;
+      }
+      allowedFiles.push(file);
+    }
+
+    if (skippedNames.length > 0) {
+      const list = skippedNames.join(', ');
+      const hint = '大文件建议用 @路径 引用，避免占用过多上下文';
+      runtime.appContext.showNotification(
+        `以下文件过大已跳过：${list}。${hint}`,
+        'warning'
+      );
+    }
+
+    if (allowedFiles.length === 0) return;
 
     try {
       // 将所有文件转换为 AttachmentItem
       const conversions = await Promise.all(
-        Array.from(files).map(convertFileToAttachment)
+        allowedFiles.map(convertFileToAttachment)
       );
 
       // 添加到附件列表

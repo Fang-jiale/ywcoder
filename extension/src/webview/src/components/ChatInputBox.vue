@@ -29,11 +29,14 @@
       ref="textareaRef"
       contenteditable="true"
       class="aislash-editor-input custom-scroll-container"
+      :class="{ 'drag-over': isDragOver }"
       :data-placeholder="placeholder"
       style="min-height: 34px; max-height: 240px; resize: none; overflow-y: hidden; word-wrap: break-word; white-space: pre-wrap; width: 100%; height: 34px;"
       @input="handleInput"
       @keydown="handleKeydown"
       @paste="handlePaste"
+      @dragenter="handleDragEnter"
+      @dragleave="handleDragLeave"
       @dragover="handleDragOver"
       @drop="handleDrop"
     />
@@ -196,6 +199,7 @@ const runtime = inject(RuntimeKey)
 const content = ref('')
 const isLoading = ref(false)
 const textareaRef = ref<HTMLDivElement | null>(null)
+const isDragOver = ref(false)
 
 const isSubmitDisabled = computed(() => {
   const hasContent = !!content.value.trim() || (props.attachments?.length ?? 0) > 0
@@ -527,8 +531,13 @@ function isFileDrop(event: DragEvent): boolean {
   if (!dataTransfer) return false
 
   const types = Array.from(dataTransfer.types || [])
+  // 桌面/浏览器文件
   if (types.includes('Files')) return true
+  // 标准 URI 列表
   if (types.includes('text/uri-list')) return true
+  // VS Code 内部拖拽类型
+  if (types.includes('ResourceURLs')) return true
+  if (types.includes('CodeFiles')) return true
 
   return false
 }
@@ -536,6 +545,47 @@ function isFileDrop(event: DragEvent): boolean {
 function extractFilePathsFromDataTransfer(dataTransfer: DataTransfer): string[] {
   const paths: string[] = []
 
+  // 1. 优先处理 VS Code 内部 ResourceURLs（Explorer / 编辑器标签拖出）
+  const resourceUrls = dataTransfer.getData('ResourceURLs')
+  if (resourceUrls) {
+    try {
+      const uris = JSON.parse(resourceUrls) as string[]
+      for (const uri of uris) {
+        try {
+          const url = new URL(uri)
+          // file: / vscode-remote: / vscode-remote-argv: 等都取 pathname 再相对化
+          const decodedPath = decodeURIComponent(url.pathname)
+          paths.push(toWorkspaceRelativePath(decodedPath))
+        } catch {
+          paths.push(toWorkspaceRelativePath(uri))
+        }
+      }
+    } catch {
+      // 不是 JSON，按换行拆分
+      for (const line of resourceUrls.split(/\r?\n/).filter(Boolean)) {
+        paths.push(toWorkspaceRelativePath(line))
+      }
+    }
+  }
+  if (paths.length > 0) return paths
+
+  // 2. VS Code 内部 CodeFiles（JSON 路径数组）
+  const codeFiles = dataTransfer.getData('CodeFiles')
+  if (codeFiles) {
+    try {
+      const files = JSON.parse(codeFiles) as string[]
+      for (const file of files) {
+        paths.push(toWorkspaceRelativePath(file))
+      }
+    } catch {
+      for (const line of codeFiles.split(/\r?\n/).filter(Boolean)) {
+        paths.push(toWorkspaceRelativePath(line))
+      }
+    }
+  }
+  if (paths.length > 0) return paths
+
+  // 3. 标准 text/uri-list
   const uriList = dataTransfer.getData('text/uri-list')
   if (uriList) {
     const lines = uriList
@@ -558,6 +608,7 @@ function extractFilePathsFromDataTransfer(dataTransfer: DataTransfer): string[] 
     }
   }
 
+  // 4. 真实 File 对象（桌面等）
   if (paths.length === 0 && dataTransfer.files && dataTransfer.files.length > 0) {
     for (const file of Array.from(dataTransfer.files)) {
       const fileWithPath = file as File & { path?: string }
@@ -599,27 +650,53 @@ async function statPaths(
   return result
 }
 
+function handleDragEnter(event: DragEvent) {
+  if (props.readonly) return
+  if (!isFileDrop(event)) return
+  isDragOver.value = true
+}
+
+function handleDragLeave(event: DragEvent) {
+  // 只有离开输入框本身（而不是子元素）时才取消高亮
+  if (textareaRef.value && event.relatedTarget && textareaRef.value.contains(event.relatedTarget as Node)) {
+    return
+  }
+  isDragOver.value = false
+}
+
 function handleDragOver(event: DragEvent) {
-  // 仅在按住 Shift 且为文件/URI 拖拽时拦截，避免干扰普通文本拖拽
-  if (!event.shiftKey) return
+  // 文件/URI 拖拽默认拦截，提供视觉反馈并允许放置
+  if (props.readonly) return
   if (!isFileDrop(event)) return
 
   event.preventDefault()
+  event.dataTransfer!.dropEffect = 'copy'
+  isDragOver.value = true
 }
 
 async function handleDrop(event: DragEvent) {
   const dataTransfer = event.dataTransfer
   if (!dataTransfer) return
-
-  // 按住 Shift 时，将资源管理器文件拖入视为“插入路径”
-  if (!event.shiftKey) return
+  if (props.readonly) return
   if (!isFileDrop(event)) return
 
   event.preventDefault()
+  isDragOver.value = false
 
+  // 1. 真实文件对象（桌面、图片等）优先作为附件添加
+  if (dataTransfer.files && dataTransfer.files.length > 0) {
+    handleAddFiles(dataTransfer.files)
+    return
+  }
+
+  // 2. VS Code Explorer / 编辑器标签等内部拖拽：解析路径并插入 @path
   const paths = extractFilePathsFromDataTransfer(dataTransfer)
-  if (paths.length === 0) return
+  if (paths.length > 0) {
+    await insertMentions(paths)
+  }
+}
 
+async function insertMentions(paths: string[]) {
   const types = await statPaths(paths)
 
   const mentionText = paths
@@ -800,6 +877,12 @@ defineExpose({
 .aislash-editor-input:focus {
   outline: none !important;
   border: none !important;
+}
+
+.aislash-editor-input.drag-over {
+  outline: 2px dashed var(--vscode-focusBorder) !important;
+  outline-offset: -2px;
+  background-color: color-mix(in srgb, var(--vscode-focusBorder) 10%, transparent);
 }
 
 /* 移除父容器聚焦时的边框 */

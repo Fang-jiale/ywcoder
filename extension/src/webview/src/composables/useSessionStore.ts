@@ -27,6 +27,7 @@ import type { BaseTransport } from '../transport/BaseTransport';
 export interface UseSessionStoreReturn {
   // 状态
   sessions: Ref<Session[]>;
+  allSessions: Ref<Session[]>;
   activeSession: Ref<Session | undefined>;
 
   // 计算属性
@@ -40,6 +41,8 @@ export interface UseSessionStoreReturn {
   listSessions: () => Promise<void>;
   deleteSession: (sessionId: string) => Promise<boolean>;
   setActiveSession: (session: Session | undefined) => void;
+  openSession: (session: Session | undefined) => void;
+  closeSession: (session: Session | undefined) => void;
   dispose: () => void;
 
   // 原始实例（用于高级场景）
@@ -55,6 +58,7 @@ export interface UseSessionStoreReturn {
 export function useSessionStore(store: SessionStore): UseSessionStoreReturn {
   // 🔥 使用官方 useSignal 桥接
   const sessions = useSignal(store.sessions);
+  const allSessions = useSignal(store.allSessions);
   const activeSession = useSignal(store.activeSession);
 
   // 🔥 使用 useSignal 包装 alien computed
@@ -68,11 +72,14 @@ export function useSessionStore(store: SessionStore): UseSessionStoreReturn {
   const listSessions = store.listSessions.bind(store);
   const deleteSession = store.deleteSession.bind(store);
   const setActiveSession = store.setActiveSession.bind(store);
+  const openSession = store.openSession.bind(store);
+  const closeSession = store.closeSession.bind(store);
   const dispose = store.dispose.bind(store);
 
   return {
     // 状态
     sessions,
+    allSessions,
     activeSession,
 
     // 计算属性
@@ -86,6 +93,8 @@ export function useSessionStore(store: SessionStore): UseSessionStoreReturn {
     listSessions,
     deleteSession,
     setActiveSession,
+    openSession,
+    closeSession,
     dispose,
 
     // 原始实例

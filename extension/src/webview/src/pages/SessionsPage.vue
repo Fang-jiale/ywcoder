@@ -169,7 +169,7 @@ const openSession = (wrappedSession: ReturnType<typeof useSession> | undefined) 
   if (!wrappedSession) return;
   // 🔥 从包装对象中获取原始 Session 实例
   const rawSession = wrappedSession.__session;
-  store.setActiveSession(rawSession);
+  store.openSession(rawSession);
   emit('switchToChat', wrappedSession.sessionId.value);
 };
 
@@ -187,8 +187,12 @@ const deleteSession = async (wrappedSession: ReturnType<typeof useSession> | und
   const sessionId = wrappedSession.sessionId.value;
   if (!sessionId) return;
 
-  const ok = confirm('确定要删除这个会话吗？此操作不可恢复。');
-  if (!ok) return;
+  const confirmed = await runtime.appContext.showNotification(
+    '确定要删除这个会话吗？此操作不可恢复。',
+    'warning',
+    ['删除', '取消']
+  );
+  if (confirmed !== '删除') return;
 
   try {
     const success = await store.deleteSession(sessionId);

@@ -11,12 +11,16 @@ export interface PermissionEvent {
 }
 
 export class SessionStore {
+  // 已打开的对话标签页
   readonly sessions = signal<Session[]>([]);
+  // 当前激活标签
   readonly activeSession = signal<Session | undefined>(undefined);
+  // 所有历史会话（供历史记录页使用）
+  readonly allSessions = signal<Session[]>([]);
   readonly permissionRequested = new EventEmitter<PermissionEvent>();
 
   readonly sessionsByLastModified = computed(() =>
-    [...this.sessions()].sort((a, b) => b.lastModifiedTime() - a.lastModifiedTime())
+    [...this.allSessions()].sort((a, b) => b.lastModifiedTime() - a.lastModifiedTime())
   );
 
   readonly connectionState = computed(() => this.connectionManager.state());
@@ -114,9 +118,11 @@ export class SessionStore {
     const session = new Session(() => this.getConnection(), this.context, options);
 
     this.sessions([session, ...this.sessions()]);
+    this.allSessions([session, ...this.allSessions().filter((s) => s !== session)]);
     this.activeSession(session);
 
     this.attachPermissionListener(session);
+    this.persistTabs();
 
     return session;
   }
@@ -132,7 +138,7 @@ export class SessionStore {
         const response = await connection.listSessions();
 
         const existing = new Map(
-          this.sessions()
+          this.allSessions()
             .filter((session) => !!session.sessionId())
             .map((session) => [session.sessionId() as string, session])
         );
@@ -158,12 +164,15 @@ export class SessionStore {
           );
 
           this.attachPermissionListener(session);
-          this.sessions([...this.sessions(), session]);
+          this.allSessions([...this.allSessions(), session]);
         }
 
-        this.sessions(
-          [...this.sessions()].sort((a, b) => b.lastModifiedTime() - a.lastModifiedTime())
+        this.allSessions(
+          [...this.allSessions()].sort((a, b) => b.lastModifiedTime() - a.lastModifiedTime())
         );
+
+        // 历史记录加载完成后，恢复上次打开的标签页
+        this.restoreTabs();
       } finally {
         this.currentConnectionPromise = undefined;
       }
@@ -174,25 +183,129 @@ export class SessionStore {
 
   setActiveSession(session: Session | undefined): void {
     this.activeSession(session);
+    this.persistTabs();
+  }
+
+  openSession(session: Session | undefined): void {
+    if (!session) return;
+
+    const tabs = this.sessions();
+    if (!tabs.includes(session)) {
+      this.sessions([session, ...tabs]);
+    }
+    this.activeSession(session);
+    this.persistTabs();
+  }
+
+  closeSession(session: Session | undefined): void {
+    if (!session) return;
+
+    const tabs = this.sessions().filter((s) => s !== session);
+    this.sessions(tabs);
+
+    // 未保存的新会话直接销毁；有 sessionId 的保留在历史记录中
+    if (!session.sessionId()) {
+      session.dispose();
+    }
+
+    if (this.activeSession() === session) {
+      if (tabs.length > 0) {
+        this.activeSession(tabs[0]);
+      } else {
+        void this.createSession({ isExplicit: false });
+      }
+    }
+
+    this.persistTabs();
   }
 
   async deleteSession(sessionId: string): Promise<boolean> {
     const connection = await this.getConnection();
     const response = await connection.deleteSession(sessionId);
 
-    const sessions = this.sessions();
-    const index = sessions.findIndex(s => s.sessionId() === sessionId);
-    if (index !== -1) {
-      const [removed] = sessions.splice(index, 1);
+    const all = this.allSessions();
+    const allIndex = all.findIndex((s) => s.sessionId() === sessionId);
+    if (allIndex !== -1) {
+      const [removed] = all.splice(allIndex, 1);
       removed.dispose();
-      this.sessions([...sessions]);
+      this.allSessions([...all]);
+    }
+
+    const tabs = this.sessions();
+    const index = tabs.findIndex((s) => s.sessionId() === sessionId);
+    if (index !== -1) {
+      const [removed] = tabs.splice(index, 1);
+      if (!all.find((s) => s === removed)) {
+        removed.dispose();
+      }
+      this.sessions([...tabs]);
     }
 
     if (this.activeSession()?.sessionId() === sessionId) {
-      this.activeSession(undefined);
+      if (tabs.length > 0) {
+        this.activeSession(tabs[0]);
+        this.persistTabs();
+      } else {
+        void this.createSession({ isExplicit: false });
+      }
+    } else {
+      this.persistTabs();
     }
 
     return !!response?.success;
+  }
+
+  private persistTabs(): void {
+    try {
+      const data = {
+        activeSessionId: this.activeSession()?.sessionId() ?? null,
+        openSessionIds: this.sessions()
+          .map((s) => s.sessionId())
+          .filter((id): id is string => !!id),
+      };
+      localStorage.setItem('ywcoder.session-tabs', JSON.stringify(data));
+    } catch {
+      // ignore storage errors
+    }
+  }
+
+  private restoreTabs(): void {
+    if (this.sessions().length > 0) {
+      // 已经恢复过，避免覆盖
+      return;
+    }
+
+    let data: { activeSessionId?: string | null; openSessionIds?: string[] } = {};
+    try {
+      const raw = localStorage.getItem('ywcoder.session-tabs');
+      if (raw) {
+        data = JSON.parse(raw);
+      }
+    } catch {
+      // ignore
+    }
+
+    const all = this.allSessions();
+    const byId = new Map(all.filter((s) => !!s.sessionId()).map((s) => [s.sessionId() as string, s]));
+
+    const restoredTabs: Session[] = [];
+    for (const id of data.openSessionIds ?? []) {
+      const session = byId.get(id);
+      if (session) {
+        restoredTabs.push(session);
+      }
+    }
+
+    this.sessions(restoredTabs);
+
+    const activeId = data.activeSessionId;
+    const activeSession = activeId ? byId.get(activeId) : undefined;
+    this.activeSession(activeSession ?? restoredTabs[0] ?? all[0] ?? undefined);
+
+    // 没有任何标签时自动创建一个空会话
+    if (this.sessions().length === 0) {
+      void this.createSession({ isExplicit: false });
+    }
   }
 
   dispose(): void {
