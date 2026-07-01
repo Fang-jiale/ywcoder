@@ -104,6 +104,64 @@ export class SessionStore {
         }
       })
     );
+
+    this.effectCleanups.push(
+      effect(() => {
+        const all = this.allSessions();
+        const tabs = this.sessions();
+        const active = this.activeSession();
+        const seen = new Map<string, Session>();
+        const deduped: Session[] = [];
+        let changed = false;
+
+        for (const session of all) {
+          const id = session.sessionId();
+          if (!id) {
+            deduped.push(session);
+            continue;
+          }
+
+          const duplicate = seen.get(id);
+          if (duplicate && duplicate !== session) {
+            const keep =
+              tabs.includes(duplicate) || active === duplicate || duplicate.messageCount() >= session.messageCount()
+                ? duplicate
+                : session;
+            const discard = keep === duplicate ? session : duplicate;
+
+            this.mergeSessionMetadata(keep, discard);
+            if (active === discard) {
+              this.activeSession(keep);
+            }
+
+            if (keep === session) {
+              const idx = deduped.indexOf(duplicate);
+              if (idx !== -1) {
+                deduped[idx] = session;
+              }
+              seen.set(id, session);
+              if (!tabs.includes(duplicate)) {
+                duplicate.dispose();
+              }
+            } else {
+              if (!tabs.includes(session)) {
+                session.dispose();
+              }
+            }
+            changed = true;
+            continue;
+          }
+
+          seen.set(id, session);
+          deduped.push(session);
+        }
+
+        if (changed) {
+          deduped.sort((a, b) => b.lastModifiedTime() - a.lastModifiedTime());
+          this.allSessions(deduped);
+        }
+      })
+    );
   }
 
   onPermissionRequested(callback: (event: PermissionEvent) => void): () => void {
