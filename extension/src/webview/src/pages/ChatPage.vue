@@ -172,7 +172,6 @@
   const isSessionReady = computed(() => !!session.value);
 
   const inputPlaceholder = computed(() => {
-    if (!isReady.value) return '正在连接 YwCoder...';
     if (!isSessionReady.value) return '正在恢复会话，请稍候...';
     return undefined;
   });

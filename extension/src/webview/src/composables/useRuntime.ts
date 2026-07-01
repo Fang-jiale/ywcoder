@@ -21,6 +21,9 @@ export function useRuntime(): RuntimeInstance {
   const connectionManager = new ConnectionManager(() => transport);
   const appContext = new AppContext(connectionManager);
 
+  // UI 一创建就可用，不必等后端连接/会话恢复；发送等关键操作再由 sessionReady 控制。
+  appContext.isReady(true);
+
   // 创建 alien-signal 用于 SessionContext
   // AppContext.currentSelection 是 Vue Ref，但 SessionContext 需要 alien-signal
   const currentSelectionSignal = signal<SelectionRange | undefined>(undefined);
@@ -96,9 +99,6 @@ export function useRuntime(): RuntimeInstance {
       try { await connection.opened; } catch (e) { console.error('[runtime] open failed', e); return; }
 
       if (disposed) return;
-
-      // 传输层已就绪就让 UI 可用，不必等会话列表/资源/选择区全部拉完。
-      appContext.isReady(true);
 
       // 下面这些初始化可以并行在后台跑，不影响首屏交互。
       await Promise.all([
