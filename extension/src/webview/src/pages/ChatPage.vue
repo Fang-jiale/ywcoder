@@ -81,7 +81,8 @@
               :permission-mode="session?.permissionMode.value"
               :selected-model="session?.modelSelection.value"
               :readonly="!isReady"
-              :placeholder="isReady ? undefined : 'YwCoder 正在初始化中，请稍候...'"
+              :placeholder="inputPlaceholder"
+              :session-ready="isSessionReady"
               @submit="handleSubmit"
               @stop="handleStop"
               @queue-message="handleQueueMessage"
@@ -172,8 +173,13 @@
   const pendingPermission = computed(() => permissionRequests.value[0] as any);
   const platform = computed(() => runtime.appContext.platform);
   const isReady = useSignal(runtime.appContext.isReady);
+  const isSessionReady = computed(() => !!session.value);
 
-  // 注册命令：permissionMode.toggle（在下方定义函数后再注册）
+  const inputPlaceholder = computed(() => {
+    if (!isReady.value) return 'YwCoder 正在初始化中，请稍候...';
+    if (!isSessionReady.value) return '正在恢复会话，请稍候...';
+    return undefined;
+  });
 
   // 根据当前选中模型获取上下文窗口大小
   const modelContextWindow = computed(() => {
