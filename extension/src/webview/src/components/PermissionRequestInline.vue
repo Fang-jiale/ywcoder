@@ -1,25 +1,10 @@
 <template>
-  <div
-    class="permission-request-container"
-    tabIndex="0"
-    @keydown="handleContainerKeyDown"
-    data-permission-panel="1"
-  >
+  <div class="permission-request-inline">
     <div class="permission-request-content">
       <div class="permission-request-header">
         是否允许 <strong>{{ request.toolName }}</strong> 执行此操作？
       </div>
 
-      <!-- 工具特定的权限 UI（预留扩展点） -->
-      <!-- <ToolPermissionView
-        v-if="toolPermissionComponent"
-        :toolName="request.toolName"
-        :context="context"
-        :inputs="request.inputs"
-        @modify="handleModifyInputs"
-      /> -->
-
-      <!-- 通用 Details 作为兜底 -->
       <div v-if="hasInputs" class="permission-request-description">
         <details>
           <summary>
@@ -102,7 +87,6 @@ const handleModifyInputs = (newInputs: any) => {
 
 const handleApprove = () => {
   if (modifiedInputs.value) {
-    // 覆盖 inputs 为修改后的值
     (props.request as any).inputs = modifiedInputs.value;
   }
   props.onResolve(props.request, true);
@@ -130,43 +114,18 @@ const handleKeyDown = (e: KeyboardEvent) => {
     handleReject();
   }
 };
-
-const handleContainerKeyDown = (e: KeyboardEvent) => {
-  if (inputRef.value && document.activeElement === inputRef.value) {
-    return;
-  }
-
-  if (e.key === '1') {
-    e.preventDefault();
-    handleApprove();
-  } else if (e.key === '2') {
-    e.preventDefault();
-    if (showSecondButton.value) {
-      handleApproveAndDontAsk();
-    } else {
-      handleReject();
-    }
-  } else if (e.key === '3' && showSecondButton.value) {
-    e.preventDefault();
-    handleReject();
-  } else if (e.key === 'Escape') {
-    e.preventDefault();
-    handleReject();
-  }
-};
 </script>
 
 <style scoped>
-.permission-request-container {
+.permission-request-inline {
   display: flex;
   flex-direction: column;
   gap: 12px;
   background: var(--vscode-editor-background);
   border: 1px solid var(--vscode-input-border);
   border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  padding: 12px 16px;
+  margin: 8px 16px 12px;
   outline: none;
 }
 
@@ -177,7 +136,7 @@ const handleContainerKeyDown = (e: KeyboardEvent) => {
 }
 
 .permission-request-header {
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.5;
   color: var(--vscode-foreground);
 }
@@ -187,7 +146,7 @@ const handleContainerKeyDown = (e: KeyboardEvent) => {
 }
 
 .permission-request-description {
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .permission-request-description details {
@@ -245,8 +204,8 @@ const handleContainerKeyDown = (e: KeyboardEvent) => {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  padding: 8px 12px;
-  font-size: 13px;
+  padding: 6px 12px;
+  font-size: 12px;
   background: var(--vscode-button-secondaryBackground);
   color: var(--vscode-button-secondaryForeground);
   border: 1px solid var(--vscode-button-border);
@@ -283,7 +242,7 @@ const handleContainerKeyDown = (e: KeyboardEvent) => {
 
 .reject-message-input {
   padding: 8px 12px;
-  font-size: 13px;
+  font-size: 12px;
   background: var(--vscode-input-background);
   color: var(--vscode-input-foreground);
   border: 1px solid var(--vscode-input-border);

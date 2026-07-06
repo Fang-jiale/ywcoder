@@ -30,7 +30,7 @@
       <!-- <div class="chatContainer"> -->
         <div
           ref="containerEl"
-          :class="['messagesContainer', 'custom-scroll-container', { dimmed: permissionRequestsLen > 0 }]"
+          class="messagesContainer custom-scroll-container"
         >
           <template v-if="messages.length === 0">
             <div v-if="isBusy" class="emptyState">
@@ -57,18 +57,17 @@
             <div v-if="isBusy" class="spinnerRow">
               <Spinner :size="16" :permission-mode="permissionMode" />
             </div>
+            <PermissionRequestInline
+              v-if="pendingPermission && toolContext"
+              :request="pendingPermission"
+              :context="toolContext"
+              :on-resolve="handleResolvePermission"
+            />
             <div ref="endEl" />
           </template>
         </div>
 
         <div class="inputContainer">
-          <PermissionRequestModal
-            v-if="pendingPermission && toolContext"
-            :request="pendingPermission"
-            :context="toolContext"
-            :on-resolve="handleResolvePermission"
-            data-permission-panel="1"
-          />
           <div class="input-wrapper" :class="{ disabled: !isReady }">
             <ChatInputBox
               ref="chatInputRef"
@@ -112,7 +111,7 @@
   import type { AttachmentItem } from '../types/attachment';
   import { convertFileToAttachment, IMAGE_MEDIA_TYPES } from '../types/attachment';
   import ChatInputBox from '../components/ChatInputBox.vue';
-  import PermissionRequestModal from '../components/PermissionRequestModal.vue';
+  import PermissionRequestInline from '../components/PermissionRequestInline.vue';
   import Spinner from '../components/Messages/WaitingIndicator.vue';
   import YwCoderWordmark from '../components/YwCoderWordmark.vue';
   import RandomTip from '../components/RandomTip.vue';
@@ -623,11 +622,6 @@
     overflow-x: hidden;
     padding: 8px 0 12px;
     position: relative;
-  }
-  .messagesContainer.dimmed {
-    filter: blur(1px);
-    opacity: 0.5;
-    pointer-events: none;
   }
 
   .msg-list {
