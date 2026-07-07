@@ -282,15 +282,9 @@ export class Session {
         this.cwd(connection.config()?.defaultCwd);
       }
 
-      if (!this.modelSelection()) {
-        this.modelSelection(connection.config()?.modelSetting);
-      }
-
-      if (!this.permissionMode()) {
-        this.permissionMode(
-          (connection.config()?.defaultPermissionMode as PermissionMode) || 'default'
-        );
-      }
+      // 注意：不再在 launch 时把 permissionMode/modelSelection 预填为默认值，
+      // 否则它们会在服务端状态恢复前变成非空，导致持久化值被“本地默认值”覆盖。
+      // UI 组件已处理 undefined（显示为默认），实际传给 CLI 时仍会用 'default'。
 
       if (!this.thinkingLevel()) {
         this.thinkingLevel(
@@ -424,9 +418,17 @@ export class Session {
 
     return connection.permissionRequested.add((request) => {
       // 动态获取当前 channelId，避免闭包捕获旧值
-      if (request.channelId === this.ywcoderChannelId()) {
-        callback(request);
+      if (request.channelId !== this.ywcoderChannelId()) {
+        return;
       }
+
+      // 绕过权限模式：自动接受所有工具权限请求，不再弹窗
+      if (this.permissionMode() === 'bypassPermissions') {
+        request.accept();
+        return;
+      }
+
+      callback(request);
     });
   }
 

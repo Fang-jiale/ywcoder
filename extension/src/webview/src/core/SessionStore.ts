@@ -4,6 +4,8 @@ import type { ConnectionManager } from './ConnectionManager';
 import { Session, type SessionContext, type SessionOptions } from './Session';
 import type { PermissionRequest } from './PermissionRequest';
 import type { SessionSummary } from './types';
+import type { PermissionMode } from '@anthropic-ai/claude-agent-sdk';
+import { loadRootState, saveRootState } from '../utils/webviewState';
 
 export interface PermissionEvent {
   session: Session;
@@ -27,6 +29,8 @@ export class SessionStore {
 
   private currentConnectionPromise?: Promise<void>;
   private effectCleanups: Array<() => void> = [];
+  private readonly stateRestored = signal<Set<string>>(new Set());
+  private readonly serverStateCache = new Map<string, { permissionMode?: PermissionMode; modelSelection?: string }>();
 
   constructor(
     private readonly connectionManager: ConnectionManager,
@@ -50,23 +54,98 @@ export class SessionStore {
           return;
         }
 
+        // 对已有 sessionId 的会话，等状态从服务端恢复后再 launch，
+        // 避免 launch 时用的还是未恢复的默认值。
+        const id = session.sessionId();
+        if (id && !this.stateRestored().has(id)) {
+          return;
+        }
+
         if (session.isOffline()) {
           session.loadFromServer();
         } else {
           session.preloadConnection();
         }
 
-        const url = new URL(window.location.toString());
-        if (session.sessionId()) {
-          url.searchParams.set('session', session.sessionId()!);
-        } else {
-          url.searchParams.delete('session');
-        }
-        window.history.replaceState({}, '', url.toString());
-
         const summary = session.summary();
         const title = summary && summary.length > 25 ? `${summary.slice(0, 24)}…` : summary;
         this.context.renameTab?.(title || defaultTitle);
+      })
+    );
+
+    // 从 extension globalState 恢复当前会话的模式/模型，并在变化时保存
+    this.effectCleanups.push(
+      effect(() => {
+        const session = this.activeSession();
+        const id = session?.sessionId();
+        if (!session || !id || this.stateRestored().has(id)) {
+          return;
+        }
+
+        const currentMode = session.permissionMode();
+        const currentModel = session.modelSelection();
+        this.serverStateCache.set(id, {
+          permissionMode: currentMode,
+          modelSelection: currentModel
+        });
+        console.log('[SessionStore] will load state for', id, { currentMode, currentModel });
+
+        this.getConnection()
+          .then((connection) => connection.getSessionState(id))
+          .then((state) => {
+            console.log('[SessionStore] loaded state for', id, state);
+            if (state) {
+              // 只在本地没有值时应用服务端状态，避免覆盖用户当前选择
+              if (state.permissionMode && !session.permissionMode()) {
+                session.permissionMode(state.permissionMode);
+              }
+              if (state.modelSelection && !session.modelSelection()) {
+                session.modelSelection(state.modelSelection);
+              }
+            }
+          })
+          .catch((e) => console.error('[SessionStore] load session state failed', e))
+          .finally(() => {
+            // 状态恢复完成（无论成功失败）后再标记，避免 activeSession effect
+            // 在状态实际应用前就把 channel 启动成默认值
+            const restored = this.stateRestored();
+            restored.add(id);
+            this.stateRestored(new Set(restored));
+
+            const mode = session.permissionMode();
+            const model = session.modelSelection();
+            this.serverStateCache.set(id, { permissionMode: mode, modelSelection: model });
+            console.log('[SessionStore] will save state for', id, { mode, model });
+            this.getConnection()
+              .then((connection) => connection.saveSessionState(id, mode, model))
+              .then(() => console.log('[SessionStore] state saved for', id))
+              .catch((e) => console.error('[SessionStore] save session state failed', e));
+          });
+      })
+    );
+
+    // 保存每个打开会话的模式/模型到 extension globalState
+    this.effectCleanups.push(
+      effect(() => {
+        for (const session of this.sessions()) {
+          // 先读取 signal，确保 mode/model 变化能触发本 effect，即使当前 id 还未就绪
+          const mode = session.permissionMode();
+          const model = session.modelSelection();
+          const id = session.sessionId();
+          if (!id || !this.stateRestored().has(id)) continue;
+
+          const cached = this.serverStateCache.get(id);
+          if (cached?.permissionMode === mode && cached?.modelSelection === model) {
+            continue;
+          }
+
+          this.serverStateCache.set(id, { permissionMode: mode, modelSelection: model });
+          console.log('[SessionStore] saving state change for', id, { mode, model });
+          this.getConnection()
+            .then((connection) => connection.saveSessionState(id, mode, model))
+            .then(() => console.log('[SessionStore] state change saved for', id))
+            .catch((e) => console.error('[SessionStore] save session state failed', e));
+        }
       })
     );
 
@@ -314,17 +393,13 @@ export class SessionStore {
   }
 
   private persistTabs(): void {
-    try {
-      const data = {
-        activeSessionId: this.activeSession()?.sessionId() ?? null,
-        openSessionIds: this.sessions()
-          .map((s) => s.sessionId())
-          .filter((id): id is string => !!id),
-      };
-      localStorage.setItem('ywcoder.session-tabs', JSON.stringify(data));
-    } catch {
-      // ignore storage errors
-    }
+    const data = {
+      activeSessionId: this.activeSession()?.sessionId() ?? null,
+      openSessionIds: this.sessions()
+        .map((s) => s.sessionId())
+        .filter((id): id is string => !!id),
+    };
+    saveRootState({ sessionTabs: data });
   }
 
   private restoreTabs(): void {
@@ -333,15 +408,8 @@ export class SessionStore {
       return;
     }
 
-    let data: { activeSessionId?: string | null; openSessionIds?: string[] } = {};
-    try {
-      const raw = localStorage.getItem('ywcoder.session-tabs');
-      if (raw) {
-        data = JSON.parse(raw);
-      }
-    } catch {
-      // ignore
-    }
+    const root = loadRootState();
+    const data = root.sessionTabs ?? {};
 
     const all = this.allSessions();
     const byId = new Map(all.filter((s) => !!s.sessionId()).map((s) => [s.sessionId() as string, s]));
@@ -354,10 +422,10 @@ export class SessionStore {
       }
     }
 
-    this.sessions(restoredTabs);
-
     const activeId = data.activeSessionId;
     const activeSession = activeId ? byId.get(activeId) : undefined;
+
+    this.sessions(restoredTabs);
     this.activeSession(activeSession ?? restoredTabs[0] ?? all[0] ?? undefined);
 
     // 没有任何标签时自动创建一个空会话

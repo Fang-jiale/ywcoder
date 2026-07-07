@@ -237,6 +237,17 @@ export abstract class BaseTransport {
   deleteSession(sessionId: string): Promise<any> {
     return this.sendRequest({ type: "delete_session_request", sessionId });
   }
+  async getSessionState(sessionId: string): Promise<{ permissionMode?: PermissionMode; modelSelection?: string } | null> {
+    const response = await this.sendRequest({ type: "get_session_state", sessionId });
+    return (response as any).state ?? null;
+  }
+  async saveSessionState(
+    sessionId: string,
+    permissionMode?: PermissionMode,
+    modelSelection?: string
+  ): Promise<void> {
+    await this.sendRequest({ type: "save_session_state", sessionId, permissionMode, modelSelection });
+  }
   listFiles(pattern?: string, signal?: AbortSignal): Promise<any> {
     return this.sendRequest({ type: "list_files_request", pattern }, undefined, signal);
   }

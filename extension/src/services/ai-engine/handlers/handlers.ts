@@ -35,6 +35,10 @@ import type {
     GetSessionResponse,
     DeleteSessionRequest,
     DeleteSessionResponse,
+    GetSessionStateRequest,
+    GetSessionStateResponse,
+    SaveSessionStateRequest,
+    SaveSessionStateResponse,
     ExecRequest,
     ExecResponse,
     ListFilesRequest,
@@ -673,6 +677,39 @@ export async function handleDeleteSession(
             error: message
         };
     }
+}
+
+/**
+ * 获取会话 UI 状态（模式 / 模型）
+ */
+export async function handleGetSessionState(
+    request: GetSessionStateRequest,
+    context: HandlerContext
+): Promise<GetSessionStateResponse> {
+    const state = context.extensionContext.globalState.get<Record<string, { permissionMode?: PermissionMode; modelSelection?: string }>>('ywcoder.sessionUiState', {});
+    return {
+        type: "get_session_state_response",
+        state: state[request.sessionId] ?? null
+    };
+}
+
+/**
+ * 保存会话 UI 状态（模式 / 模型）
+ */
+export async function handleSaveSessionState(
+    request: SaveSessionStateRequest,
+    context: HandlerContext
+): Promise<SaveSessionStateResponse> {
+    const state = context.extensionContext.globalState.get<Record<string, { permissionMode?: PermissionMode; modelSelection?: string }>>('ywcoder.sessionUiState', {});
+    state[request.sessionId] = {
+        permissionMode: request.permissionMode,
+        modelSelection: request.modelSelection
+    };
+    await context.extensionContext.globalState.update('ywcoder.sessionUiState', state);
+    return {
+        type: "save_session_state_response",
+        success: true
+    };
 }
 
 /**

@@ -42,6 +42,9 @@ export function activate(context: vscode.ExtensionContext) {
 		const webViewService = accessor.get(IWebViewService);
 		const aiAgentService = accessor.get(IAIAgentService);
 
+		// 注入 ExtensionContext，供 globalState 等 VS Code API 使用
+		aiAgentService.setExtensionContext(context);
+
 		// Register WebView View Provider
 		const webviewProvider = vscode.window.registerWebviewViewProvider(
 			'ywcoder.chatView',

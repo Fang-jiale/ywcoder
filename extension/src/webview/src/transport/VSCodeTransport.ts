@@ -1,5 +1,6 @@
 import { BaseTransport } from './BaseTransport';
 import { EventEmitter } from '../utils/events';
+import { vscodeApi } from '../utils/webviewState';
 import type { FromExtensionWrapper, WebViewToExtensionMessage } from '../../../shared/messages';
 
 interface VsCodeApi {
@@ -26,7 +27,7 @@ export class VSCodeTransport extends BaseTransport {
     constructor(atMentionEvents: EventEmitter<string>, selectionChangedEvents: EventEmitter<any>) {
         super(atMentionEvents, selectionChangedEvents);
 
-        this.api = (window as any).acquireVsCodeApi();
+        this.api = vscodeApi ?? (window as any).acquireVsCodeApi();
 
         window.addEventListener('message', this.handleMessage);
 

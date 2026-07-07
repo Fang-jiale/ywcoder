@@ -288,6 +288,7 @@ export class AISdkService implements IAISdkService {
               'debug-to-stderr': null,
               // 'enable-auth-status': null,
               'settings': path.join(this.getConfigDir(), 'ywcoder.json'),
+              ...(permissionModeParam === 'bypassPermissions' ? { 'dangerously-skip-permissions': null } : {}),
             } as Record<string, string | null>,
 
             // 设置源 (控制 YWCODER.md 和 settings.json 的加载)

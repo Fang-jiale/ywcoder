@@ -15,12 +15,14 @@ import { ISessionService } from '../SessionService';
 import { IAISdkService } from '../AISdkService';
 import { IAIAgentService } from '../AIAgentService';
 import { IWebViewService } from '../../webViewService';
+import * as vscode from 'vscode';
 
 /**
  * Handler 上下文
  * 包含所有必要的服务接口，禁止直接使用 VS Code 原生 API
  */
 export interface HandlerContext {
+    extensionContext: vscode.ExtensionContext;
     logService: ILogService;
     configService: IConfigurationService;
     workspaceService: IWorkspaceService;

@@ -55,6 +55,19 @@
         :index="2"
         @click="(item) => handleModeSelect(item, close)"
       />
+      <DropdownItem
+        :item="{
+          id: 'bypassPermissions',
+          label: '绕过权限',
+          detail: '/bypass',
+          icon: 'codicon-run text-[14px]!',
+          checked: permissionMode === 'bypassPermissions',
+          type: 'bypass-mode'
+        }"
+        :is-selected="permissionMode === 'bypassPermissions'"
+        :index="3"
+        @click="(item) => handleModeSelect(item, close)"
+      />
     </template>
   </DropdownTrigger>
 </template>
@@ -85,6 +98,8 @@ const selectedModeLabel = computed(() => {
       return '代理'
     case 'plan':
       return '规划 (/plan)'
+    case 'bypassPermissions':
+      return '绕过权限'
     case 'default':
       return '默认'
     default:
@@ -99,6 +114,8 @@ const selectedModeIcon = computed(() => {
       return 'codicon-infinity'
     case 'plan':
       return 'codicon-todos'
+    case 'bypassPermissions':
+      return 'codicon-run'
     case 'default':
       return 'codicon-chat'
     default:

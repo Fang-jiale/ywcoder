@@ -15,6 +15,7 @@
  * - 其他基础服务
  */
 
+import * as vscode from 'vscode';
 import { createDecorator } from '../../di/instantiation';
 import { ILogService } from '../logService';
 import { IConfigurationService } from '../configurationService';
@@ -66,6 +67,8 @@ import {
     handleListSessions,
     handleGetSession,
     handleDeleteSession,
+    handleGetSessionState,
+    handleSaveSessionState,
     handleExec,
     handleListFiles,
     handleStatPath,
@@ -119,6 +122,11 @@ export interface IAIAgentService {
      * 设置 Transport
      */
     setTransport(transport: ITransport): void;
+
+    /**
+     * 注入 ExtensionContext
+     */
+    setExtensionContext(context: vscode.ExtensionContext): void;
 
     /**
      * 启动消息循环
@@ -213,8 +221,25 @@ export class AIAgentService implements IAIAgentService {
     // 取消控制器
     private abortControllers = new Map<string, AbortController>();
 
-    // Handler 上下文（缓存）
-    private handlerContext: HandlerContext;
+    // Handler 上下文延迟构建，因为 extensionContext 在 activate 之后通过 setExtensionContext 注入
+    private extensionContext?: vscode.ExtensionContext;
+
+    private get handlerContext(): HandlerContext {
+        return {
+            extensionContext: this.extensionContext!,
+            logService: this.logService,
+            configService: this.configService,
+            workspaceService: this.workspaceService,
+            fileSystemService: this.fileSystemService,
+            notificationService: this.notificationService,
+            terminalService: this.terminalService,
+            tabsAndEditorsService: this.tabsAndEditorsService,
+            sessionService: this.sessionService,
+            sdkService: this.sdkService,
+            agentService: this,
+            webViewService: this.webViewService,
+        };
+    }
 
     // Thinking Level 配置
     private thinkingLevel: string = 'default_on';
@@ -230,21 +255,13 @@ export class AIAgentService implements IAIAgentService {
         @IAISdkService private readonly sdkService: IAISdkService,
         @ISessionService private readonly sessionService: ISessionService,
         @IWebViewService private readonly webViewService: IWebViewService
-    ) {
-        // 构建 Handler 上下文
-        this.handlerContext = {
-            logService: this.logService,
-            configService: this.configService,
-            workspaceService: this.workspaceService,
-            fileSystemService: this.fileSystemService,
-            notificationService: this.notificationService,
-            terminalService: this.terminalService,
-            tabsAndEditorsService: this.tabsAndEditorsService,
-            sessionService: this.sessionService,
-            sdkService: this.sdkService,
-            agentService: this,  // 自身引用
-            webViewService: this.webViewService,
-        };
+    ) {}
+
+    /**
+     * 注入 ExtensionContext（用于 globalState 等 VS Code API）
+     */
+    setExtensionContext(context: vscode.ExtensionContext): void {
+        this.extensionContext = context;
     }
 
     /**
@@ -733,6 +750,12 @@ export class AIAgentService implements IAIAgentService {
 
             case "delete_session_request":
                 return handleDeleteSession(request, this.handlerContext);
+
+            case "get_session_state":
+                return handleGetSessionState(request, this.handlerContext);
+
+            case "save_session_state":
+                return handleSaveSessionState(request, this.handlerContext);
 
         // 文件操作
         case "list_files_request":

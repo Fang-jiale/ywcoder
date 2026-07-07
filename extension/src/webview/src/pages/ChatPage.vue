@@ -308,6 +308,7 @@
   onUnmounted(() => {
     try { unregisterToggle?.(); } catch {}
     try { unregisterModel?.(); } catch {}
+    try { unregisterBtw?.(); } catch {}
     unsubscribeExternalAction?.();
   });
 
@@ -343,12 +344,19 @@
   // ChatInput 事件处理
   async function handleSubmit(content: string) {
     const s = session.value;
-    const trimmed = (content || '').trim();
+    let trimmed = (content || '').trim();
     if (!s || (!trimmed && attachments.value.length === 0) || isBusy.value) return;
+
+    let allowWhileBusy = false;
+    if (trimmed.startsWith('/btw ')) {
+      trimmed = trimmed.slice(5).trim();
+      allowWhileBusy = true;
+    }
+    if (!trimmed && attachments.value.length === 0) return;
 
     try {
       // 传递附件给 send 方法
-      await s.send(trimmed, attachments.value);
+      await s.send(trimmed, attachments.value, false, allowWhileBusy);
 
       // 发送成功后清空附件
       attachments.value = [];
@@ -359,8 +367,13 @@
 
   async function handleQueueMessage(content: string) {
     const s = session.value;
-    const trimmed = (content || '').trim();
+    let trimmed = (content || '').trim();
     if (!s || !trimmed) return;
+
+    if (trimmed.startsWith('/btw ')) {
+      trimmed = trimmed.slice(5).trim();
+    }
+    if (!trimmed) return;
 
     try {
       // 在对话进行中追加的追问或 /btw，允许在 busy 状态下发送
@@ -384,6 +397,12 @@
     const s = session.value;
     if (!s) return;
 
+    if (mode === 'bypassPermissions') {
+      await s.setPermissionMode(mode, false);
+      await s.restartYwCoder();
+      return;
+    }
+
     await s.setPermissionMode(mode);
   }
 
@@ -391,7 +410,7 @@
   const togglePermissionMode = () => {
     const s = session.value;
     if (!s) return;
-    const order: PermissionMode[] = ['default', 'acceptEdits', 'plan'];
+    const order: PermissionMode[] = ['default', 'acceptEdits', 'plan', 'bypassPermissions'];
     const cur = (s.permissionMode.value as PermissionMode) ?? 'default';
     const idx = Math.max(0, order.indexOf(cur));
     const next = order[(idx + 1) % order.length];
@@ -434,6 +453,19 @@
       } else {
         console.warn('[ChatPage] No active session to execute /model');
       }
+    }
+  );
+
+  // 注册 /btw slash command（用于在对话中追加“by the way”消息）
+  const unregisterBtw = runtime.appContext.commandRegistry.registerAction(
+    {
+      id: 'slash-command-btw',
+      label: '/btw',
+      description: '追加一条 by the way 消息'
+    },
+    'Slash Commands',
+    () => {
+      // 选择 /btw 后输入框已自动插入 "/btw "，用户继续输入后按 Enter 即可触发 handleSubmit/handleQueueMessage
     }
   );
 

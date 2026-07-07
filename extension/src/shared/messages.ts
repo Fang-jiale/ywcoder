@@ -348,6 +348,37 @@ export interface DeleteSessionResponse {
 }
 
 /**
+ * 获取会话 UI 状态（模式 / 模型）
+ */
+export interface GetSessionStateRequest {
+    type: "get_session_state";
+    sessionId: string;
+}
+
+export interface GetSessionStateResponse {
+    type: "get_session_state_response";
+    state: {
+        permissionMode?: PermissionMode;
+        modelSelection?: string;
+    } | null;
+}
+
+/**
+ * 保存会话 UI 状态（模式 / 模型）
+ */
+export interface SaveSessionStateRequest {
+    type: "save_session_state";
+    sessionId: string;
+    permissionMode?: PermissionMode;
+    modelSelection?: string;
+}
+
+export interface SaveSessionStateResponse {
+    type: "save_session_state_response";
+    success: boolean;
+}
+
+/**
  * 执行命令
  */
 export interface ExecRequest {
@@ -827,6 +858,8 @@ export type WebViewRequest =
     | ListSessionsRequest
     | GetSessionRequest
     | DeleteSessionRequest
+    | GetSessionStateRequest
+    | SaveSessionStateRequest
     | ExecRequest
     | ListFilesRequest
     | OpenURLRequest
@@ -869,6 +902,8 @@ export type WebViewRequestResponse =
     | ListSessionsResponse
     | GetSessionResponse
     | DeleteSessionResponse
+    | GetSessionStateResponse
+    | SaveSessionStateResponse
     | ExecResponse
     | ListFilesResponse
     | OpenURLResponse

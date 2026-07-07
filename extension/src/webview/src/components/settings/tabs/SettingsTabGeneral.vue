@@ -434,6 +434,7 @@ const permissionModeOptions = [
   { label: '接受编辑', value: 'acceptEdits', description: '自动接受文件编辑' },
   { label: '规划模式', value: 'plan', description: '仅规划，不实际执行' },
   { label: '不再询问', value: 'dontAsk', description: '不提示，未预先批准则拒绝' },
+  { label: '绕过权限', value: 'bypassPermissions', description: '跳过所有权限提示' },
 ];
 
 const teammateModeOptions = [
