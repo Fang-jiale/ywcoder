@@ -1,5 +1,5 @@
 <template>
-  <div class="text-block">
+  <div class="text-block" @click="handleClick">
     <div :class="markdownClasses" v-html="renderedMarkdown"></div>
   </div>
 </template>
@@ -11,11 +11,58 @@ import type { TextBlock as TextBlockType } from '../../../models/ContentBlock';
 import type { ToolContext } from '../../../types/tool';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
+import hljs from 'highlight.js/lib/core';
+import javascript from 'highlight.js/lib/languages/javascript';
+import typescript from 'highlight.js/lib/languages/typescript';
+import python from 'highlight.js/lib/languages/python';
+import java from 'highlight.js/lib/languages/java';
+import bash from 'highlight.js/lib/languages/bash';
+import json from 'highlight.js/lib/languages/json';
+import xml from 'highlight.js/lib/languages/xml';
+import css from 'highlight.js/lib/languages/css';
+import sql from 'highlight.js/lib/languages/sql';
+import go from 'highlight.js/lib/languages/go';
+import rust from 'highlight.js/lib/languages/rust';
+import cpp from 'highlight.js/lib/languages/cpp';
+import yaml from 'highlight.js/lib/languages/yaml';
+import markdown from 'highlight.js/lib/languages/markdown';
 
-// 配置 marked（全局，只需一次）
+hljs.registerLanguage('javascript', javascript);
+hljs.registerLanguage('typescript', typescript);
+hljs.registerLanguage('python', python);
+hljs.registerLanguage('java', java);
+hljs.registerLanguage('bash', bash);
+hljs.registerLanguage('shell', bash);
+hljs.registerLanguage('json', json);
+hljs.registerLanguage('xml', xml);
+hljs.registerLanguage('html', xml);
+hljs.registerLanguage('css', css);
+hljs.registerLanguage('sql', sql);
+hljs.registerLanguage('go', go);
+hljs.registerLanguage('rust', rust);
+hljs.registerLanguage('cpp', cpp);
+hljs.registerLanguage('c', cpp);
+hljs.registerLanguage('yaml', yaml);
+hljs.registerLanguage('markdown', markdown);
+
+// 自定义 renderer：代码块加高亮、语言标签、copy 按钮
+const renderer = new marked.Renderer();
+renderer.code = ({ text, lang }: { text: string; lang?: string }) => {
+  const language = lang && hljs.getLanguage(lang) ? lang : 'plaintext';
+  const highlighted = hljs.highlight(text, { language }).value;
+  return `<div class="code-block-wrapper" data-lang="${language}">
+    <div class="code-header">
+      <span class="code-lang">${language}</span>
+      <button class="code-copy-btn" type="button">Copy</button>
+    </div>
+    <pre><code class="hljs language-${language}">${highlighted}</code></pre>
+  </div>`;
+};
+
 marked.setOptions({
   gfm: true,
   breaks: true,
+  renderer,
 });
 
 interface Props {
@@ -25,7 +72,6 @@ interface Props {
 
 const props = defineProps<Props>();
 
-// Markdown 类名
 const markdownClasses = computed(() => {
   const classes = ['markdown-content'];
   if (props.block.isSlashCommand) {
@@ -35,7 +81,11 @@ const markdownClasses = computed(() => {
 });
 
 function sanitizeHtml(html: string): string {
-  return DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
+  // 保留 code-block-wrapper 结构，允许 button 和 data-lang
+  return DOMPurify.sanitize(html, {
+    USE_PROFILES: { html: true },
+    ALLOWED_ATTR: ['class', 'data-lang', 'type'],
+  });
 }
 
 const renderedMarkdown = ref('');
@@ -49,11 +99,9 @@ function parseMarkdown(): void {
   lastParsedText.value = text;
 }
 
-// streaming 时节流解析，避免每个 token 都触发 full re-parse
 const throttledParse = useThrottleFn(parseMarkdown, 150, true, false);
 
 watch(() => props.block.text, () => {
-  // 小文本立即解析；长文本流式时节流
   const text = props.block.text ?? '';
   if (text.length < 200 || text.length - lastParsedText.value.length > 200) {
     parseMarkdown();
@@ -62,8 +110,34 @@ watch(() => props.block.text, () => {
   }
 });
 
-// 初始解析
 parseMarkdown();
+
+// 事件委托：处理代码块 copy 按钮点击
+function handleClick(e: MouseEvent) {
+  const btn = (e.target as HTMLElement).closest('.code-copy-btn') as HTMLButtonElement | null;
+  if (!btn) return;
+
+  const wrapper = btn.closest('.code-block-wrapper');
+  const codeEl = wrapper?.querySelector('code');
+  if (!codeEl) return;
+
+  const text = codeEl.textContent || '';
+  navigator.clipboard.writeText(text).then(() => {
+    const original = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => {
+      btn.textContent = original;
+    }, 2000);
+  }).catch(() => {
+    // 降级：手动复制
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  });
+}
 </script>
 
 <style scoped>
@@ -85,7 +159,7 @@ parseMarkdown();
   font-weight: 600;
 }
 
-/* Markdown 基础样式 - YwCoderx 风格 */
+/* Markdown 基础样式 */
 .markdown-content :deep(p) {
   margin: 8px 0;
   line-height: 1.6;
@@ -97,19 +171,61 @@ parseMarkdown();
   cursor: default;
 }
 
-.markdown-content :deep(pre) {
-  background-color: color-mix(in srgb, var(--vscode-editor-background) 50%, transparent);
-  border: 1px solid var(--vscode-panel-border);
-  border-radius: 4px;
-  padding: 12px;
+/* 代码块 wrapper */
+.markdown-content :deep(.code-block-wrapper) {
   margin: 8px 0;
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 6px;
+  overflow: hidden;
+  background-color: color-mix(in srgb, var(--vscode-editor-background) 60%, transparent);
+}
+
+.markdown-content :deep(.code-header) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background-color: color-mix(in srgb, var(--vscode-editor-background) 80%, transparent);
+  border-bottom: 1px solid var(--vscode-panel-border);
+  user-select: none;
+}
+
+.markdown-content :deep(.code-lang) {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--vscode-descriptionForeground);
+  text-transform: uppercase;
+}
+
+.markdown-content :deep(.code-copy-btn) {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  border: 1px solid var(--vscode-panel-border);
+  background: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.markdown-content :deep(.code-copy-btn:hover) {
+  background: var(--vscode-button-secondaryHoverBackground);
+}
+
+.markdown-content :deep(pre) {
+  margin: 0;
+  padding: 12px;
   overflow-x: auto;
+  background: none;
+  border: none;
 }
 
 .markdown-content :deep(pre code) {
   background: none;
   border: none;
   padding: 0;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .markdown-content :deep(:not(pre) > code) {
