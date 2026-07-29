@@ -58,6 +58,8 @@
                 :collapsed="session?.collapsedMessages.value.has(data.id) ?? false"
                 :busy="isBusy"
                 @toggle="session?.toggleMessageCollapse(data.id)"
+                @delete="handleDeleteMessage(data.id)"
+                @retry="handleRetryMessage(data.id)"
               />
             </div>
             <div v-if="isBusy" class="spinnerRow">
@@ -584,6 +586,35 @@
     } catch (e) {
       console.error('[ChatPage] permission resolve failed', e);
     }
+  }
+
+  // 删除消息
+  function handleDeleteMessage(messageId: string) {
+    const s = session.value;
+    if (!s) return;
+    s.deleteMessage(messageId);
+  }
+
+  // 重试消息：截断到该 assistant 消息对应的 user 消息之前，重新发送
+  async function handleRetryMessage(messageId: string) {
+    const s = session.value;
+    if (!s) return;
+
+    const result = s.retryMessage(messageId);
+    if (!result) return;
+
+    // 将附件还原到输入框
+    if (result.attachments.length > 0) {
+      attachments.value = result.attachments.map(a => ({
+        id: a.fileName + '_' + Date.now(),
+        fileName: a.fileName,
+        mediaType: a.mediaType,
+        data: a.data,
+      }));
+    }
+
+    // 发送消息
+    await handleSubmit(result.text);
   }
 </script>
 

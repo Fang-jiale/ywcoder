@@ -13,6 +13,23 @@
         <button class="collapse-btn" title="折叠消息" @click="toggle">
           <span class="codicon codicon-chevron-down" />
         </button>
+        <div class="message-actions">
+          <button
+            v-if="canRetry"
+            class="action-btn retry-btn"
+            title="重试"
+            @click.stop="$emit('retry')"
+          >
+            <span class="codicon codicon-debug-restart" />
+          </button>
+          <button
+            class="action-btn delete-btn"
+            title="删除"
+            @click.stop="$emit('delete')"
+          >
+            <span class="codicon codicon-trash" />
+          </button>
+        </div>
       </div>
       <slot />
     </template>
@@ -32,10 +49,13 @@ interface Props {
 const props = defineProps<Props>();
 const emit = defineEmits<{
   (e: 'toggle'): void;
+  (e: 'delete'): void;
+  (e: 'retry'): void;
 }>();
 
 const isCollapsed = computed(() => props.collapsed && !props.busy && canCollapse.value);
 const canCollapse = computed(() => props.message.type === 'user' || props.message.type === 'assistant');
+const canRetry = computed(() => props.message.type === 'assistant');
 const isStreaming = computed(() => props.busy && props.collapsed);
 
 const summaryText = computed(() => {
@@ -103,7 +123,8 @@ function toggle() {
 
 .message-header {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   padding: 0 16px;
   opacity: 0;
   transition: opacity 0.2s ease;
@@ -125,6 +146,34 @@ function toggle() {
 
 .collapse-btn:hover {
   background-color: var(--vscode-toolbar-hoverBackground);
+}
+
+.message-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 2px 4px;
+  color: var(--vscode-descriptionForeground);
+  font-size: 12px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.action-btn:hover {
+  background-color: var(--vscode-toolbar-hoverBackground);
+  color: var(--vscode-foreground);
+}
+
+.delete-btn:hover {
+  color: var(--vscode-errorForeground);
 }
 
 .collapsed-summary {

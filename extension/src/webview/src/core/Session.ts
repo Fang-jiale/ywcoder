@@ -450,6 +450,69 @@ export class Session {
     this.collapsedMessages(next);
   }
 
+  deleteMessage(messageId: string): void {
+    const current = this.messages();
+    const idx = current.findIndex((m) => m.id === messageId);
+    if (idx === -1) return;
+    current.splice(idx, 1);
+    this.messages([...current]);
+  }
+
+  retryMessage(messageId: string): { text: string; attachments: AttachmentPayload[] } | null {
+    const current = this.messages();
+    const idx = current.findIndex((m) => m.id === messageId);
+    if (idx === -1) return null;
+
+    // 往前找上一条 user 消息
+    let userIdx = idx - 1;
+    while (userIdx >= 0 && current[userIdx].type !== 'user') {
+      userIdx--;
+    }
+    if (userIdx < 0) return null;
+
+    // 截断：保留到 user 消息之前（send 会重新添加 user）
+    this.messages(current.slice(0, userIdx));
+
+    // 提取原始输入文本和附件
+    return this.extractUserContent(current[userIdx]);
+  }
+
+  private extractUserContent(msg: Message): { text: string; attachments: AttachmentPayload[] } {
+    const content = msg.message.content;
+    if (typeof content === 'string') {
+      return { text: content, attachments: [] };
+    }
+
+    const textParts: string[] = [];
+    const attachments: AttachmentPayload[] = [];
+
+    for (const block of content) {
+      const c = (block as any).content ?? block;
+      if (c.type === 'text') {
+        textParts.push(c.text ?? '');
+      } else if (c.type === 'image') {
+        attachments.push({
+          fileName: 'image',
+          mediaType: c.source?.media_type || 'image/png',
+          data: c.source?.data || '',
+        });
+      } else if (c.type === 'document') {
+        attachments.push({
+          fileName: c.title || 'document',
+          mediaType: c.source?.media_type || 'application/octet-stream',
+          data: c.source?.data || '',
+        });
+      }
+    }
+
+    // 过滤掉系统插入的 ide_selection 文本
+    const filteredText = textParts
+      .filter((t) => !t.includes('<ide_selection>'))
+      .join('\n')
+      .trim();
+    return { text: filteredText, attachments };
+  }
+
   dispose(): void {
     if (this.effectCleanup) {
       this.effectCleanup();

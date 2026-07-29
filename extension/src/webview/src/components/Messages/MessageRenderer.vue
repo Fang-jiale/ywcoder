@@ -5,6 +5,8 @@
       :collapsed="collapsed"
       :busy="busy"
       @toggle="$emit('toggle')"
+      @delete="$emit('delete')"
+      @retry="$emit('retry')"
     >
       <component
         :is="messageComponent"
@@ -36,6 +38,8 @@ interface Props {
 const props = defineProps<Props>();
 defineEmits<{
   (e: 'toggle'): void;
+  (e: 'delete'): void;
+  (e: 'retry'): void;
 }>();
 
 const messageComponent = computed(() => {

@@ -89,6 +89,9 @@ export interface UseSessionReturn {
   openConfigFile: (configType: string) => Promise<void>;
   onPermissionRequested: (callback: (request: PermissionRequest) => void) => () => void;
   dispose: () => void;
+  toggleMessageCollapse: (messageId: string) => void;
+  deleteMessage: (messageId: string) => void;
+  retryMessage: (messageId: string) => { text: string; attachments: Array<{ fileName: string; mediaType: string; data: string }> } | null;
 
   // 原始实例（用于高级场景）
   __session: Session;
@@ -147,6 +150,8 @@ export function useSession(session: Session): UseSessionReturn {
   const onPermissionRequested = session.onPermissionRequested.bind(session);
   const dispose = session.dispose.bind(session);
   const toggleMessageCollapse = session.toggleMessageCollapse.bind(session);
+  const deleteMessage = session.deleteMessage.bind(session);
+  const retryMessage = session.retryMessage.bind(session);
 
   return {
     // 状态
@@ -193,6 +198,8 @@ export function useSession(session: Session): UseSessionReturn {
     onPermissionRequested,
     dispose,
     toggleMessageCollapse,
+    deleteMessage,
+    retryMessage,
 
     // 原始实例
     __session: session,
