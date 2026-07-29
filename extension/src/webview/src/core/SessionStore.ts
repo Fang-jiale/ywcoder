@@ -88,12 +88,10 @@ export class SessionStore {
           permissionMode: currentMode,
           modelSelection: currentModel
         });
-        console.log('[SessionStore] will load state for', id, { currentMode, currentModel });
 
         this.getConnection()
           .then((connection) => connection.getSessionState(id))
           .then((state) => {
-            console.log('[SessionStore] loaded state for', id, state);
             if (state) {
               // 只在本地没有值时应用服务端状态，避免覆盖用户当前选择
               if (state.permissionMode && !session.permissionMode()) {
@@ -115,10 +113,8 @@ export class SessionStore {
             const mode = session.permissionMode();
             const model = session.modelSelection();
             this.serverStateCache.set(id, { permissionMode: mode, modelSelection: model });
-            console.log('[SessionStore] will save state for', id, { mode, model });
             this.getConnection()
               .then((connection) => connection.saveSessionState(id, mode, model))
-              .then(() => console.log('[SessionStore] state saved for', id))
               .catch((e) => console.error('[SessionStore] save session state failed', e));
           });
       })
@@ -140,10 +136,8 @@ export class SessionStore {
           }
 
           this.serverStateCache.set(id, { permissionMode: mode, modelSelection: model });
-          console.log('[SessionStore] saving state change for', id, { mode, model });
           this.getConnection()
             .then((connection) => connection.saveSessionState(id, mode, model))
-            .then(() => console.log('[SessionStore] state change saved for', id))
             .catch((e) => console.error('[SessionStore] save session state failed', e));
         }
       })

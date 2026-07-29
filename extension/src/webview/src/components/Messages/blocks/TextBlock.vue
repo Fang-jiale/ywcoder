@@ -10,14 +10,13 @@ import { useThrottleFn } from '@vueuse/core';
 import type { TextBlock as TextBlockType } from '../../../models/ContentBlock';
 import type { ToolContext } from '../../../types/tool';
 import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 
 // 配置 marked（全局，只需一次）
 marked.setOptions({
   gfm: true,
   breaks: true,
 });
-
-// import DOMPurify from 'dompurify'; // TODO: 安装后启用
 
 interface Props {
   block: TextBlockType;
@@ -35,14 +34,8 @@ const markdownClasses = computed(() => {
   return classes;
 });
 
-/**
- * 基础 HTML 安全清理（临时替代 DOMPurify）
- * 移除事件处理器和危险伪协议
- */
 function sanitizeHtml(html: string): string {
-  return html
-    .replace(/\s+on\w+\s*=\s*["'][^"']*["']/gi, '')
-    .replace(/javascript:/gi, '');
+  return DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
 }
 
 const renderedMarkdown = ref('');

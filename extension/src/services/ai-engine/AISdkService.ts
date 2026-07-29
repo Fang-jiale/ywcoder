@@ -472,14 +472,24 @@ export class AISdkService implements IAISdkService {
      */
     async fetchOpenAIModels(): Promise<Array<{ value: string; displayName: string; description: string }>> {
         try {
-            const baseUrl = (process.env.OPENAI_BASE_URL || 'http://76.13.61.16:8015/v1').replace(/\/$/, '');
-            const apiKey = process.env.OPENAI_API_KEY || 'glm';
+            const baseUrl = process.env.OPENAI_BASE_URL;
+            const apiKey = process.env.OPENAI_API_KEY;
 
-            const url = `${baseUrl}/models`;
+            if (!baseUrl) {
+                this.logService.info('[AISdkService] OPENAI_BASE_URL 未配置，跳过外部模型获取');
+                return [];
+            }
+
+            const url = `${baseUrl.replace(/\/$/, '')}/models`;
             this.logService.info(`[AISdkService] 获取外部模型列表: ${url}`);
 
+            const headers: Record<string, string> = {};
+            if (apiKey) {
+                headers['Authorization'] = `Bearer ${apiKey}`;
+            }
+
             const result = await new Promise<any>((resolve, reject) => {
-                const req = http.get(url, { headers: { 'Authorization': `Bearer ${apiKey}` } }, (res) => {
+                const req = http.get(url, { headers }, (res) => {
                     let data = '';
                     res.on('data', chunk => data += chunk);
                     res.on('end', () => {
