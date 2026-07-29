@@ -64,6 +64,10 @@ export interface UseSessionReturn {
   // 派生状态
   isOffline: ComputedRef<boolean>;
 
+  // 消息折叠
+  collapsedMessages: Ref<Set<string>>;
+  toggleMessageCollapse: (messageId: string) => void;
+
   // 方法
   getConnection: () => Promise<BaseTransport>;
   preloadConnection: () => Promise<void>;
@@ -116,6 +120,7 @@ export function useSession(session: Session): UseSessionReturn {
   const worktree = useSignal(session.worktree);
   const selection = useSignal(session.selection);
   const usageData = useSignal(session.usageData);
+  const collapsedMessages = useSignal(session.collapsedMessages);
 
   //  使用 useSignal 包装 alien computed（读-only 使用，不调用 setter）
   const ywcoderConfig = useSignal(session.ywcoderConfig as any);
@@ -141,6 +146,7 @@ export function useSession(session: Session): UseSessionReturn {
   const openConfigFile = session.openConfigFile.bind(session);
   const onPermissionRequested = session.onPermissionRequested.bind(session);
   const dispose = session.dispose.bind(session);
+  const toggleMessageCollapse = session.toggleMessageCollapse.bind(session);
 
   return {
     // 状态
@@ -162,6 +168,7 @@ export function useSession(session: Session): UseSessionReturn {
     worktree,
     selection,
     usageData,
+    collapsedMessages,
 
     // 计算属性
     ywcoderConfig,
@@ -185,6 +192,7 @@ export function useSession(session: Session): UseSessionReturn {
     openConfigFile,
     onPermissionRequested,
     dispose,
+    toggleMessageCollapse,
 
     // 原始实例
     __session: session,

@@ -108,8 +108,12 @@ const isExpanded = computed({
     if (userToggled.value) {
       return userToggledState.value;
     }
-    // 否则根据 defaultExpanded 或错误状态决定
-    return props.defaultExpanded || !!props.toolResult?.is_error;
+    // 有错误时强制展开
+    if (props.toolResult?.is_error) return true;
+    // 已完成（有 toolResult 且无错误）默认折叠
+    if (props.toolResult) return false;
+    // 进行中（无 toolResult）按调用方设定
+    return props.defaultExpanded;
   },
   set: (value) => {
     userToggled.value = true;

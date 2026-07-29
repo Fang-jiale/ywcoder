@@ -93,6 +93,9 @@ export class Session {
     contextWindow: 200000
   });
 
+  // 消息折叠状态：被用户手动折叠的消息 id 集合
+  readonly collapsedMessages = signal<Set<string>>(new Set());
+
   readonly ywcoderConfig = computed(() => {
     const conn = this.connection();
     return conn?.ywcoderConfig?.();
@@ -434,6 +437,17 @@ export class Session {
 
       callback(request);
     });
+  }
+
+  toggleMessageCollapse(messageId: string): void {
+    const current = this.collapsedMessages();
+    const next = new Set(current);
+    if (next.has(messageId)) {
+      next.delete(messageId);
+    } else {
+      next.add(messageId);
+    }
+    this.collapsedMessages(next);
   }
 
   dispose(): void {

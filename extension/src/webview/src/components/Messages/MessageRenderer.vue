@@ -1,17 +1,25 @@
 <template>
-  <component
-    class="message"
-    v-if="!message.isEmpty"
-    :is="messageComponent"
-    :message="message"
-    :context="context"
-  />
+  <div class="message" v-if="!message.isEmpty">
+    <MessageCollapsible
+      :message="message"
+      :collapsed="collapsed"
+      :busy="busy"
+      @toggle="$emit('toggle')"
+    >
+      <component
+        :is="messageComponent"
+        :message="message"
+        :context="context"
+      />
+    </MessageCollapsible>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { Message } from '../../models/Message';
 import type { ToolContext } from '../../types/tool';
+import MessageCollapsible from './MessageCollapsible.vue';
 import UserMessage from './UserMessage.vue';
 import AssistantMessage from './AssistantMessage.vue';
 import SystemMessage from './SystemMessage.vue';
@@ -21,11 +29,15 @@ import SlashCommandResultMessage from './SlashCommandResultMessage.vue';
 interface Props {
   message: Message;
   context: ToolContext;
+  collapsed?: boolean;
+  busy?: boolean;
 }
 
 const props = defineProps<Props>();
+defineEmits<{
+  (e: 'toggle'): void;
+}>();
 
-// 根据消息类型选择渲染组件
 const messageComponent = computed(() => {
   switch (props.message.type) {
     case 'user':

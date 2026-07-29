@@ -55,6 +55,9 @@
                 :message="data"
                 :context="toolContext"
                 :data-index="index"
+                :collapsed="session?.collapsedMessages.value.has(data.id) ?? false"
+                :busy="isBusy"
+                @toggle="session?.toggleMessageCollapse(data.id)"
               />
             </div>
             <div v-if="isBusy" class="spinnerRow">
