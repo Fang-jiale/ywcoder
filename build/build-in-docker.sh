@@ -13,7 +13,7 @@ npm run build
 echo "=== [3/8] 同步 Extension 到 vscode/extensions/ywcoder ==="
 cd /workspace
 cp extension/package.json vscode/extensions/ywcoder/package.json
-sed -i 's|"file:../dcywzc-ywcoder-1.1.1.tgz"|"file:../../../dcywzc-ywcoder-1.1.1.tgz"|g' vscode/extensions/ywcoder/package.json
+sed -i 's|"file:../deps/dcywzc-ywcoder-1.1.1.tgz"|"file:../../../../deps/dcywzc-ywcoder-1.1.1.tgz"|g' vscode/extensions/ywcoder/package.json
 sed -i '/"@dcywzc\/ywcoder"/d' vscode/extensions/ywcoder/package.json
 rm -rf vscode/extensions/ywcoder/resources
 if [ -d extension/resources ]; then

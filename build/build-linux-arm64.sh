@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-PROJECT_ROOT="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
 # 检查 Node.js 版本（VS Code 要求 v22.x）
@@ -23,7 +23,7 @@ npm run build
 echo "[3/5] 同步 Extension 产物..."
 cd "$PROJECT_ROOT"
 cp extension/package.json vscode/extensions/ywcoder/package.json
-sed -i.bak 's|"file:../dcywzc-ywcoder-1.1.1.tgz"|"file:../../../dcywzc-ywcoder-1.1.1.tgz"|g' vscode/extensions/ywcoder/package.json
+sed -i.bak 's|"file:../deps/dcywzc-ywcoder-1.1.1.tgz"|"file:../../../../deps/dcywzc-ywcoder-1.1.1.tgz"|g' vscode/extensions/ywcoder/package.json
 rm -f vscode/extensions/ywcoder/package.json.bak
 sed -i.bak '/"@dcywzc\/ywcoder"/d' vscode/extensions/ywcoder/package.json
 rm -f vscode/extensions/ywcoder/package.json.bak

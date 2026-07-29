@@ -1,8 +1,12 @@
 #!/bin/bash
 set -e
 
-PROJECT_ROOT="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$PROJECT_ROOT"
+
+# Use local Node.js v22 to match VS Code's .nvmrc requirement
+export PATH="$PROJECT_ROOT/node22/node-v22.22.0-win-x64:$PATH"
+echo "Using Node.js: $(node --version)"
 
 echo "[1/5] 安装 VS Code 依赖..."
 cd vscode && npm install
@@ -15,7 +19,7 @@ npm run build
 echo "[3/5] 同步 Extension 产物..."
 cd "$PROJECT_ROOT"
 cp extension/package.json vscode/extensions/ywcoder/package.json
-sed -i 's|"file:../dcywzc-ywcoder-1.1.1.tgz"|"file:../../../dcywzc-ywcoder-1.1.1.tgz"|g' vscode/extensions/ywcoder/package.json
+sed -i 's|"file:../deps/dcywzc-ywcoder-1.1.1.tgz"|"file:../../../../deps/dcywzc-ywcoder-1.1.1.tgz"|g' vscode/extensions/ywcoder/package.json
 sed -i '/"@dcywzc\/ywcoder"/d' vscode/extensions/ywcoder/package.json
 rm -rf vscode/extensions/ywcoder/resources
 if [ -d extension/resources ]; then
@@ -29,10 +33,9 @@ cd "$PROJECT_ROOT/vscode/extensions/ywcoder"
 rm -rf node_modules package-lock.json
 npm install
 
-echo "[5/5] 构建 Linux x64 并打包 .deb..."
+echo "[5/5] 构建 Windows x64..."
 cd "$PROJECT_ROOT/vscode"
-npx gulp vscode-linux-x64
-npx gulp vscode-linux-x64-build-deb
+npx gulp vscode-win32-x64
 
-echo "✅ 构建完成！.deb 文件位于："
-echo "   $PROJECT_ROOT/vscode/.build/linux/deb/amd64/deb/"
+echo "✅ 构建完成！输出目录："
+echo "   $PROJECT_ROOT/vscode/.build/win32-x64"

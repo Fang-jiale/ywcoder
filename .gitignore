@@ -2,6 +2,12 @@
 .DS_Store
 Thumbs.db
 
+# Organized local directories
+out/
+dev/
+build/node_modules/
+build/package-lock.json
+
 # Build output
 VSCode-darwin-arm64/
 VSCode-linux-x64/

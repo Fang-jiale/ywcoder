@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-PROJECT_ROOT="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
 # 切换到 Node 22
@@ -20,7 +20,7 @@ npm run build
 echo "[3/5] 同步 Extension 产物..."
 cd "$PROJECT_ROOT"
 cp extension/package.json vscode/extensions/ywcoder/package.json
-sed -i.bak 's|"file:../dcywzc-ywcoder-1.1.1.tgz"|"file:../../../dcywzc-ywcoder-1.1.1.tgz"|g' vscode/extensions/ywcoder/package.json
+sed -i.bak 's|"file:../deps/dcywzc-ywcoder-1.1.1.tgz"|"file:../../../../deps/dcywzc-ywcoder-1.1.1.tgz"|g' vscode/extensions/ywcoder/package.json
 rm -f vscode/extensions/ywcoder/package.json.bak
 sed -i.bak '/"@dcywzc\/ywcoder"/d' vscode/extensions/ywcoder/package.json
 rm -f vscode/extensions/ywcoder/package.json.bak
@@ -41,18 +41,23 @@ echo "[5/5] 构建 macOS arm64 并打包 .zip..."
 cd "$PROJECT_ROOT/vscode"
 
 # 清理可能不完整的构建产物
-rm -rf ../VSCode-darwin-arm64
+rm -rf ../out/VSCode-darwin-arm64
 rm -rf .build/darwin
 
 # 构建 macOS arm64 二进制
 npx gulp vscode-darwin-arm64
 
+# 将产物移动到 out/
+mv ../VSCode-darwin-arm64 ../out/VSCode-darwin-arm64
+
 # 打包为 zip
 APP_NAME="YwCoder"
-OUTPUT_ZIP="$PROJECT_ROOT/${APP_NAME}-darwin-arm64.zip"
-cd ..
+OUTPUT_ZIP="$PROJECT_ROOT/out/${APP_NAME}-darwin-arm64.zip"
+cd "$PROJECT_ROOT/out"
 rm -f "$OUTPUT_ZIP"
 zip -ry "$OUTPUT_ZIP" "VSCode-darwin-arm64/${APP_NAME}.app"
+
+cd "$PROJECT_ROOT"
 
 echo "✅ 构建完成！.zip 文件位于："
 echo "   $OUTPUT_ZIP"

@@ -241,7 +241,7 @@ export function hygiene(some: NodeJS.ReadWriteStream | string[] | undefined, run
 }
 
 function createGitIndexVinyls(paths: string[]): Promise<VinylFile[]> {
-	const repositoryPath = process.cwd();
+	const repositoryPath = cp.execSync('git rev-parse --show-toplevel').toString().trim();
 
 	const fns = paths.map((relativePath) => () =>
 		new Promise<VinylFile | null>((c, e) => {
