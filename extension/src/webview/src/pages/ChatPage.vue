@@ -44,6 +44,17 @@
                 <YwCoderWordmark class="emptyWordmarkSvg" />
               </div>
               <RandomTip :platform="platform" />
+              <div class="quick-prompts">
+                <button
+                  v-for="prompt in quickPrompts"
+                  :key="prompt.label"
+                  class="quick-prompt-btn"
+                  @click="handleSubmit(prompt.text)"
+                >
+                  <span class="codicon" :class="prompt.icon" />
+                  <span>{{ prompt.label }}</span>
+                </button>
+              </div>
             </div>
           </template>
           <template v-else>
@@ -252,6 +263,14 @@
 
   // 附件状态管理
   const attachments = ref<AttachmentItem[]>([]);
+
+  // 空状态快捷提问
+  const quickPrompts = [
+    { label: '解释代码', text: '请帮我解释当前项目的代码结构和主要功能', icon: 'codicon-book' },
+    { label: '审查代码', text: '请审查当前代码，找出潜在的问题和改进点', icon: 'codicon-search' },
+    { label: '生成测试', text: '请为当前代码生成单元测试', icon: 'codicon-beaker' },
+    { label: '重构建议', text: '请给出重构这段代码的建议', icon: 'codicon-wand' },
+  ];
 
   // 记录上次消息数量，用于判断是否需要滚动
   let prevCount = 0;
@@ -826,5 +845,36 @@
     align-items: center;
     justify-content: center;
     margin-bottom: 24px;
+  }
+
+  .quick-prompts {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 24px;
+    max-width: 480px;
+  }
+
+  .quick-prompt-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--vscode-panel-border);
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+
+  .quick-prompt-btn:hover {
+    background: var(--vscode-button-secondaryHoverBackground);
+  }
+
+  .quick-prompt-btn .codicon {
+    font-size: 14px;
   }
 </style>
