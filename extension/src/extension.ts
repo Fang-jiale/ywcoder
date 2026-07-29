@@ -3,9 +3,25 @@
  */
 
 import * as vscode from 'vscode';
+import * as os from 'os';
+import * as path from 'path';
+import * as fs from 'fs';
 import { InstantiationServiceBuilder } from './di/instantiationServiceBuilder';
 import { registerServices, ILogService, IAIAgentService, IWebViewService } from './services/serviceRegistry';
 import { VSCodeTransport } from './services/ai-engine/transport/VSCodeTransport';
+
+function ensureConfigDir(): string {
+	const configDir = process.env.YWCODER_CONFIG_DIR || path.join(os.homedir(), '.ywcoder');
+	if (!fs.existsSync(configDir)) {
+		fs.mkdirSync(configDir, { recursive: true });
+	}
+	return configDir;
+}
+
+// 在模块加载最早期就强制统一配置目录，确保 SDK 初始化前 CLAUDE_CONFIG_DIR/YWCODER_CONFIG_DIR 已指向 ~/.ywcoder
+const configDir = ensureConfigDir();
+process.env.YWCODER_CONFIG_DIR = configDir;
+process.env.CLAUDE_CONFIG_DIR = configDir;
 
 /**
  * Extension Activation

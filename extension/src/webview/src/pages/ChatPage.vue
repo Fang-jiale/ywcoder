@@ -29,8 +29,9 @@
     <div class="main">
       <!-- <div class="chatContainer"> -->
         <div
-          ref="containerEl"
+          v-bind="virtualContainerProps"
           class="messagesContainer custom-scroll-container"
+          @scroll="onContainerScroll"
         >
           <template v-if="messages.length === 0">
             <div v-if="isBusy" class="emptyState">
@@ -46,14 +47,16 @@
             </div>
           </template>
           <template v-else>
-            <!-- <div class="msg-list"> -->
+            <div v-bind="virtualWrapperProps.value" class="virtual-list-wrapper">
               <MessageRenderer
-                v-for="(m, i) in messages"
-                :key="m.id"
-                :message="m"
+                v-for="{ data, index } in virtualMessages"
+                :key="data.id"
+                :ref="(el) => setMessageRef(el as any, data)"
+                :message="data"
                 :context="toolContext"
+                :data-index="index"
               />
-            <!-- </div> -->
+            </div>
             <div v-if="isBusy" class="spinnerRow">
               <Spinner :size="16" :permission-mode="permissionMode" />
             </div>
@@ -105,6 +108,7 @@
   import { ref, computed, inject, onMounted, onUnmounted, nextTick, watch, shallowRef } from 'vue';
   import { RuntimeKey } from '../composables/runtimeContext';
   import { useSession } from '../composables/useSession';
+  import { useMeasuredVirtualList } from '../composables/useMeasuredVirtualList';
   import type { Session } from '../core/Session';
   import type { PermissionRequest } from '../core/PermissionRequest';
   import type { ToolContext } from '../types/tool';
@@ -218,41 +222,73 @@
   });
 
   // DOM refs
-  const containerEl = ref<HTMLDivElement | null>(null);
   const endEl = ref<HTMLDivElement | null>(null);
   const chatInputRef = ref<any>(null);
+
+  // 虚拟滚动
+  const {
+    list: virtualMessages,
+    containerProps: virtualContainerProps,
+    wrapperProps: virtualWrapperProps,
+    scrollTo: scrollToIndex,
+    setItemRef: setVirtualItemRef,
+  } = useMeasuredVirtualList({
+    items: messages,
+    getItemId: (m) => m.id,
+    estimatedHeight: 80,
+    overscan: 5,
+  });
+
+  function setMessageRef(el: any, item: any) {
+    if (el?.$el) {
+      setVirtualItemRef(el.$el, item);
+    }
+  }
 
   // 附件状态管理
   const attachments = ref<AttachmentItem[]>([]);
 
   // 记录上次消息数量，用于判断是否需要滚动
   let prevCount = 0;
+  let userScrolledUp = false;
+
+  function isNearBottom(): boolean {
+    const el = virtualContainerProps.ref.value;
+    if (!el) return true;
+    return el.scrollTop + el.clientHeight >= el.scrollHeight - 100;
+  }
 
   function scrollToBottom(): void {
-    const end = endEl.value;
-    if (!end) return;
-    requestAnimationFrame(() => {
-      try {
-        end.scrollIntoView({ block: 'end' });
-      } catch {}
+    const len = messages.value.length;
+    if (len === 0) return;
+    scrollToIndex(len - 1);
+    nextTick(() => {
+      const el = virtualContainerProps.ref.value;
+      if (el) {
+        el.scrollTop = el.scrollHeight;
+      }
     });
+  }
+
+  function onContainerScroll() {
+    userScrolledUp = !isNearBottom();
+    virtualContainerProps.onScroll();
   }
 
   watch(session, async () => {
     // 切换会话：复位并滚动底部
     prevCount = 0;
+    userScrolledUp = false;
     await nextTick();
     scrollToBottom();
   });
-
-  // moved above
 
   watch(
     () => messages.value.length,
     async len => {
       const increased = len > prevCount;
       prevCount = len;
-      if (increased) {
+      if (increased && !userScrolledUp) {
         await nextTick();
         scrollToBottom();
       }
@@ -260,9 +296,11 @@
   );
 
   watch(permissionRequestsLen, async () => {
-    // 有权限请求出现时也确保滚动到底部
-    await nextTick();
-    scrollToBottom();
+    // 有权限请求出现时也确保滚动到底部（用户未主动上滑时）
+    if (!userScrolledUp) {
+      await nextTick();
+      scrollToBottom();
+    }
   });
 
   // 处理来自 Extension 的 external action
@@ -654,6 +692,12 @@
     overflow-x: hidden;
     padding: 8px 0 12px;
     position: relative;
+  }
+
+  .virtual-list-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
   }
 
   .msg-list {

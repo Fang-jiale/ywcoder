@@ -284,8 +284,8 @@ export class AISdkService implements IAISdkService {
             // --settings 指向 ywcoder.json，Profile 切换通过 ConfigurationService 同步内容到此文件
             // CLI 会监听此文件变化，实现热更新
             extraArgs: {
-              'debug': null,
-              'debug-to-stderr': null,
+              // 'debug': null,
+              // 'debug-to-stderr': null,
               // 'enable-auth-status': null,
               'settings': path.join(this.getConfigDir(), 'ywcoder.json'),
               ...(permissionModeParam === 'bypassPermissions' ? { 'dangerously-skip-permissions': null } : {}),
@@ -548,6 +548,9 @@ export class AISdkService implements IAISdkService {
                 env[key] = value;
             }
         });
+
+        // 强制指定配置目录，防止 CLI 回退到 ~/.claude
+        env['YWCODER_CONFIG_DIR'] = env['YWCODER_CONFIG_DIR'] ?? this.getConfigDir();
 
         // 2. 应用自定义环境变量（最高优先级）
         for (const [key, value] of Object.entries(customVars)) {

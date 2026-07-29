@@ -5,10 +5,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { ref, watch, computed } from 'vue';
+import { useThrottleFn } from '@vueuse/core';
 import type { TextBlock as TextBlockType } from '../../../models/ContentBlock';
 import type { ToolContext } from '../../../types/tool';
 import { marked } from 'marked';
+
+// 配置 marked（全局，只需一次）
+marked.setOptions({
+  gfm: true,
+  breaks: true,
+});
+
 // import DOMPurify from 'dompurify'; // TODO: 安装后启用
 
 interface Props {
@@ -27,12 +35,6 @@ const markdownClasses = computed(() => {
   return classes;
 });
 
-// 配置 marked
-marked.setOptions({
-  gfm: true,
-  breaks: true,
-});
-
 /**
  * 基础 HTML 安全清理（临时替代 DOMPurify）
  * 移除事件处理器和危险伪协议
@@ -43,11 +45,32 @@ function sanitizeHtml(html: string): string {
     .replace(/javascript:/gi, '');
 }
 
-// 渲染 Markdown
-const renderedMarkdown = computed(() => {
-  const rawHtml = marked.parse(props.block.text) as string;
-  return sanitizeHtml(rawHtml);
+const renderedMarkdown = ref('');
+const lastParsedText = ref('');
+
+function parseMarkdown(): void {
+  const text = props.block.text ?? '';
+  if (text === lastParsedText.value) return;
+  const rawHtml = marked.parse(text) as string;
+  renderedMarkdown.value = sanitizeHtml(rawHtml);
+  lastParsedText.value = text;
+}
+
+// streaming 时节流解析，避免每个 token 都触发 full re-parse
+const throttledParse = useThrottleFn(parseMarkdown, 150, true, false);
+
+watch(() => props.block.text, () => {
+  // 小文本立即解析；长文本流式时节流
+  const text = props.block.text ?? '';
+  if (text.length < 200 || text.length - lastParsedText.value.length > 200) {
+    parseMarkdown();
+  } else {
+    throttledParse();
+  }
 });
+
+// 初始解析
+parseMarkdown();
 </script>
 
 <style scoped>

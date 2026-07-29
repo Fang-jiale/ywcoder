@@ -344,10 +344,11 @@ function getTranscript(message: SessionMessage, data: SessionData): SessionMessa
     let current: SessionMessage | undefined = message;
 
     while (current) {
-        result.unshift(current);
+        result.push(current);
         current = current.parentUuid ? data.messages.get(current.parentUuid) : undefined;
     }
 
+    result.reverse();
     return result;
 }
 
@@ -424,11 +425,16 @@ export class SessionService implements ISessionService {
                 return [];
             }
 
-            const sessionMessageList = Array.from(data.messages.values())
-                .filter(msg => messageUuids.has(msg.uuid))
-                .sort((a, b) =>
-                    new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-                );
+            const sessionMessageList: SessionMessage[] = [];
+            for (const uuid of messageUuids) {
+                const msg = data.messages.get(uuid);
+                if (msg) {
+                    sessionMessageList.push(msg);
+                }
+            }
+            sessionMessageList.sort((a, b) =>
+                new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+            );
 
             const latestMessage = sessionMessageList[0];
             if (!latestMessage) {

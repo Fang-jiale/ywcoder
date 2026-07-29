@@ -73,6 +73,11 @@ export interface LLMErrorBlock {
   message: string;
 }
 
+export interface CompactBoundaryBlock {
+  type: 'compact_boundary';
+  message: string;
+}
+
 export interface SlashCommandResultBlock {
   type: 'slash_command_result';
   result: string;
@@ -104,6 +109,7 @@ export type ContentBlockType =
   | DocumentBlock
   | InterruptBlock
   | LLMErrorBlock
+  | CompactBoundaryBlock
   | SelectionBlock
   | OpenedFileBlock
   | DiagnosticsBlock

@@ -7,6 +7,7 @@ import type { PermissionMode } from '@anthropic-ai/claude-agent-sdk';
 import { processAndAttachMessage /*, mergeConsecutiveReadMessages */ } from '../utils/messageUtils';
 import { Message as MessageModel } from '../models/Message';
 import type { Message } from '../models/Message';
+import { ContentBlockWrapper } from '../models/ContentBlockWrapper';
 
 export interface SelectionRange {
   filePath: string;
@@ -66,6 +67,7 @@ export class Session {
   private currentConnectionPromise?: Promise<BaseTransport>;
   private lastSentSelection?: SelectionRange;
   private effectCleanup?: () => void;
+  private readonly toolUseIndex = new Map<string, ContentBlockWrapper>();
 
   readonly connection = signal<BaseTransport | undefined>(undefined);
 
@@ -187,18 +189,19 @@ export class Session {
     if (!sessionId) return;
 
     this.isLoading(true);
+    this.toolUseIndex.clear();
     try {
       const connection = await this.getConnection();
       const response = await connection.getSession(sessionId);
       const accumulator: Message[] = [];
       for (const raw of response?.messages ?? []) {
         this.processMessage(raw);
-        // 使用 processAndAttachMessage 来绑定 tool_result
-        // 这样历史消息中的 tool_result 也会正确绑定到 tool_use
-        processAndAttachMessage(accumulator, raw);
+        processAndAttachMessage(accumulator, raw, this.toolUseIndex);
       }
-      // 移除 ReadCoalesced 合并逻辑
-      // this.messages(mergeConsecutiveReadMessages(accumulator));
+      // 为已加载的 assistant 消息建立 tool_use 索引
+      for (const msg of accumulator) {
+        this.indexToolUseBlocks(msg);
+      }
       this.messages(accumulator);
       const channelId = await this.launchYwCoder();
       if (!channelId) {
@@ -245,7 +248,8 @@ export class Session {
     const messageModel = MessageModel.fromRaw(userMessage);
 
     if (messageModel) {
-      this.messages([...this.messages(), messageModel]);
+      const current = this.messages();
+      this.messages([...current, messageModel]);
     }
 
     if (!this.summary()) {
@@ -436,6 +440,7 @@ export class Session {
     if (this.effectCleanup) {
       this.effectCleanup();
     }
+    this.toolUseIndex.clear();
   }
 
   private async readMessages(stream: AsyncIterable<any>): Promise<void> {
@@ -453,13 +458,8 @@ export class Session {
 
   private processIncomingMessage(event: any): void {
     // 处理 LLM 请求错误（来自 SDK stderr 致命错误）
-    // 双路分发：
-    //   - 用户触发的请求（busy=true）→ 以 tip 消息追加到消息流，由 LLMErrorBlock 渲染
-    //   - 非用户触发（busy=false，如 Profile 切换预热）→ VSCode Notification
     if (event?.type === '__llm_request_error__') {
       if (this.busy()) {
-        // 用户主动请求期间的 LLM 错误：构造标准 raw 事件，走统一的 fromRaw → contentParsers 路径
-        // 与 Interrupt 消息的分化方式一致：user 消息 → llm_error content block → tip 类型分化
         const syntheticEvent = {
           type: 'user',
           message: {
@@ -467,32 +467,56 @@ export class Session {
             content: [{ type: 'llm_error', message: event.error }],
           },
         };
-        const currentMessages = [...this.messages()];
-        processAndAttachMessage(currentMessages, syntheticEvent);
-        this.messages(currentMessages);
+        const currentMessages = this.messages();
+        processAndAttachMessage(currentMessages, syntheticEvent, this.toolUseIndex);
+        this.messages([...currentMessages]);
         this.busy(false);
       } else {
-        // 非用户触发（Profile 切换预热、channel 启动探测等）：VSCode Notification
         this.context.showNotification?.(event.error, 'error');
       }
       return;
     }
 
-    // 🔥 使用完整的消息处理流程
+    // 将 compact_boundary 渲染为提示消息
+    if (event?.type === 'system' && event?.subtype === 'compact_boundary') {
+      const syntheticEvent = {
+        type: 'user',
+        message: {
+          role: 'user',
+          content: [{
+            type: 'compact_boundary',
+            message: typeof event.message === 'string' ? event.message : '上下文已自动压缩，继续对话'
+          }],
+        },
+      };
+      const currentMessages = this.messages();
+      processAndAttachMessage(currentMessages, syntheticEvent, this.toolUseIndex);
+      this.messages([...currentMessages]);
 
-    // 1. 获取当前消息数组（转为可变数组）
-    const currentMessages = [...this.messages()];
+      // 仍需更新 session_id 等状态
+      if (event.session_id) {
+        this.sessionId(event.session_id);
+      }
+      return;
+    }
+
+    // 1. 获取当前消息数组（复用引用，只在 set 时浅拷贝一次）
+    const currentMessages = this.messages();
 
     // 2. 处理特殊消息（TodoWrite, usage 等）
     this.processMessage(event);
 
-    // 3. 使用工具函数处理消息：
-    //    - 关联 tool_result 到 tool_use（响应式更新）
-    //    - 将原始事件转换为 Message 并添加到数组
-    processAndAttachMessage(currentMessages, event);
+    // 3. 关联 tool_result 并添加新消息
+    processAndAttachMessage(currentMessages, event, this.toolUseIndex);
 
-    // 4. 更新 messages signal
-    this.messages(currentMessages);
+    // 4. 为新加入的 assistant 消息建立 tool_use 索引
+    const lastMessage = currentMessages[currentMessages.length - 1];
+    if (lastMessage) {
+      this.indexToolUseBlocks(lastMessage);
+    }
+
+    // 5. 更新 messages signal（仅一次浅拷贝）
+    this.messages([...currentMessages]);
 
     // 6. 更新其他状态
     if (event?.type === 'system') {
@@ -502,6 +526,26 @@ export class Session {
       }
     } else if (event?.type === 'result') {
       this.busy(false);
+    }
+  }
+
+  /**
+   * 为 assistant 消息中的 tool_use blocks 建立索引
+   */
+  private indexToolUseBlocks(message: Message): void {
+    if (message.type !== 'assistant') {
+      return;
+    }
+    const content = message.message.content;
+    if (typeof content === 'string' || !Array.isArray(content)) {
+      return;
+    }
+
+    for (const wrapper of content) {
+      const block = wrapper.content;
+      if (block.type === 'tool_use' && block.id) {
+        this.toolUseIndex.set(block.id, wrapper);
+      }
     }
   }
 

@@ -280,6 +280,7 @@ export class SessionStore {
             .map((session) => [session.sessionId() as string, session])
         );
 
+        const toAdd: Session[] = [];
         for (const summary of response.sessions ?? []) {
           if (!summary.isCurrentWorkspace) {
             continue;
@@ -301,7 +302,11 @@ export class SessionStore {
           );
 
           this.attachPermissionListener(session);
-          this.allSessions([...this.allSessions(), session]);
+          toAdd.push(session);
+        }
+
+        if (toAdd.length > 0) {
+          this.allSessions([...this.allSessions(), ...toAdd]);
         }
 
         this.allSessions(

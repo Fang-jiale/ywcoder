@@ -184,7 +184,7 @@ function getSpecialMessageType(contentBlocks: ContentBlockType[]): MessageRole |
   if (contentBlocks.length === 1) {
     const blockType = contentBlocks[0].type;
 
-    if (blockType === 'interrupt' || blockType === 'llm_error') {
+    if (blockType === 'interrupt' || blockType === 'llm_error' || blockType === 'compact_boundary') {
       return 'tip';
     }
 

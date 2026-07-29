@@ -31,9 +31,15 @@ import type { ToolResultBlock, ToolUseContentBlock, ContentBlockType } from '../
  */
 export function findToolUseBlock(
     messages: Message[],
-    toolUseId: string
+    toolUseId: string,
+    toolUseIndex?: Map<string, ContentBlockWrapper>
 ): ContentBlockWrapper | undefined {
-    // 从后往前遍历消息数组
+    // 优先使用索引 O(1) 查找
+    if (toolUseIndex) {
+        return toolUseIndex.get(toolUseId);
+    }
+
+    // 从后往前遍历消息数组（兼容性回退）
     for (let i = messages.length - 1; i >= 0; i--) {
         const message = messages[i];
 
@@ -88,7 +94,7 @@ export function findToolUseBlock(
  * @param messages 当前消息数组（会被修改）
  * @param newMessage 新收到的消息
  */
-export function attachToolResults(messages: Message[], newMessage: Message): void {
+export function attachToolResults(messages: Message[], newMessage: Message, toolUseIndex?: Map<string, ContentBlockWrapper>): void {
     // 只处理 user 消息中的 tool_result
     if (newMessage.type === 'user') {
         const content = newMessage.message.content;
@@ -101,7 +107,7 @@ export function attachToolResults(messages: Message[], newMessage: Message): voi
                     const toolUseId = toolResult.tool_use_id;
 
                     // 在消息历史中反向查找对应的 tool_use
-                    const toolUseWrapper = findToolUseBlock(messages, toolUseId);
+                    const toolUseWrapper = findToolUseBlock(messages, toolUseId, toolUseIndex);
 
                     if (toolUseWrapper) {
                         // 通过 Signal 关联 tool_result（触发响应式更新！）
@@ -121,13 +127,13 @@ export function attachToolResults(messages: Message[], newMessage: Message): voi
  * @param messages 当前消息数组
  * @param rawEvent 原始消息事件
  */
-export function processAndAttachMessage(messages: Message[], rawEvent: any): void {
+export function processAndAttachMessage(messages: Message[], rawEvent: any, toolUseIndex?: Map<string, ContentBlockWrapper>): void {
     // 1. 先关联 tool_result 和 toolUseResult（如果有）
     // 注意：这一步要在添加新消息之前，因为 tool_use 应该已经在消息数组中了
     if (rawEvent.type === 'user' && Array.isArray(rawEvent.message?.content)) {
         for (const block of rawEvent.message.content) {
             if (block.type === 'tool_result') {
-                const toolUseWrapper = findToolUseBlock(messages, block.tool_use_id);
+                const toolUseWrapper = findToolUseBlock(messages, block.tool_use_id, toolUseIndex);
                 if (toolUseWrapper) {
                     // 关联 tool_result（实时对话）
                     toolUseWrapper.setToolResult(block);

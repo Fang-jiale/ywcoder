@@ -6,6 +6,7 @@ import type {
   DocumentBlock,
   InterruptBlock,
   LLMErrorBlock,
+  CompactBoundaryBlock,
   SelectionBlock,
   OpenedFileBlock,
   DiagnosticsBlock,
@@ -58,6 +59,8 @@ function parseBlock(raw: any): ContentBlockType[] {
       return [createDocumentBlock(raw)];
     case 'llm_error':
       return [{ type: 'llm_error', message: String(raw.message ?? '') } satisfies LLMErrorBlock];
+    case 'compact_boundary':
+      return [{ type: 'compact_boundary', message: String(raw.message ?? '上下文已自动压缩，继续对话') } satisfies CompactBoundaryBlock];
     case 'tool_use':
       return [createToolUseBlock(raw)];
     case 'tool_result':
