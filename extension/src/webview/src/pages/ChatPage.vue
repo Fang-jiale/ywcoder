@@ -66,9 +66,9 @@
                 :message="data"
                 :context="toolContext"
                 :data-index="index"
-                :collapsed="isMessageCollapsed(data.id)"
+                :collapsed="session?.collapsedMessages.value.has(data.id) ?? false"
                 :busy="isBusy"
-                @toggle="handleToggleCollapse(data.id)"
+                @toggle="session?.toggleMessageCollapse(data.id)"
                 @delete="handleDeleteMessage(data.id)"
                 @retry="handleRetryMessage(data.id)"
               />
@@ -272,34 +272,6 @@
     { label: '重构建议', text: '请给出重构这段代码的建议', icon: 'codicon-wand' },
   ];
 
-  // 长对话自动折叠中间历史（Layer 2）
-  const AUTO_COLLAPSE_THRESHOLD = 10;
-  const AUTO_COLLAPSE_KEEP_RECENT = 3;
-  const userExpandedIds = ref<Set<string>>(new Set());
-
-  function isAutoCollapsed(messageId: string): boolean {
-    const msgs = messages.value;
-    if (msgs.length <= AUTO_COLLAPSE_THRESHOLD) return false;
-    if (userExpandedIds.value.has(messageId)) return false;
-
-    const index = msgs.findIndex((m) => m.id === messageId);
-    if (index < 0) return false;
-    return index < msgs.length - AUTO_COLLAPSE_KEEP_RECENT;
-  }
-
-  function isMessageCollapsed(messageId: string): boolean {
-    const manuallyCollapsed = session.value?.collapsedMessages.value.has(messageId) ?? false;
-    return manuallyCollapsed || isAutoCollapsed(messageId);
-  }
-
-  function handleToggleCollapse(messageId: string) {
-    if (isAutoCollapsed(messageId)) {
-      userExpandedIds.value = new Set([...userExpandedIds.value, messageId]);
-      return;
-    }
-    session.value?.toggleMessageCollapse(messageId);
-  }
-
   // 记录上次消息数量，用于判断是否需要滚动
   let prevCount = 0;
   let userScrolledUp = false;
@@ -331,7 +303,6 @@
     // 切换会话：复位并滚动底部
     prevCount = 0;
     userScrolledUp = false;
-    userExpandedIds.value = new Set();
     await nextTick();
     scrollToBottom();
   });
