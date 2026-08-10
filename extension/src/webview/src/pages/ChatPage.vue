@@ -77,9 +77,14 @@
               <Spinner :size="16" :permission-mode="permissionMode" />
             </div>
             <PermissionRequestInline
-              v-if="pendingPermission && toolContext"
+              v-if="pendingPermission && toolContext && !isAskUserQuestion(pendingPermission)"
               :request="pendingPermission"
               :context="toolContext"
+              :on-resolve="handleResolvePermission"
+            />
+            <AskUserQuestionInline
+              v-else-if="pendingPermission && isAskUserQuestion(pendingPermission)"
+              :request="pendingPermission"
               :on-resolve="handleResolvePermission"
             />
             <div ref="endEl" />
@@ -132,6 +137,7 @@
   import { convertFileToAttachment, IMAGE_MEDIA_TYPES } from '../types/attachment';
   import ChatInputBox from '../components/ChatInputBox.vue';
   import PermissionRequestInline from '../components/PermissionRequestInline.vue';
+  import AskUserQuestionInline from '../components/AskUserQuestionInline.vue';
   import Spinner from '../components/Messages/WaitingIndicator.vue';
   import YwCoderWordmark from '../components/YwCoderWordmark.vue';
   import RandomTip from '../components/RandomTip.vue';
@@ -595,6 +601,10 @@
   }
 
   // Permission modal handler
+  function isAskUserQuestion(request: PermissionRequest): boolean {
+    return request.toolName === 'AskUserQuestion';
+  }
+
   function handleResolvePermission(request: PermissionRequest, allow: boolean) {
     try {
       if (allow) {
