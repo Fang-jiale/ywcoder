@@ -9,29 +9,25 @@
 
     <!-- 展开态：正常渲染消息内容 -->
     <template v-else>
-      <div class="message-header" v-if="canCollapse">
-        <button class="collapse-btn" title="折叠消息" @click="toggle">
-          <span class="codicon codicon-chevron-down" />
-        </button>
-        <div class="message-actions">
-          <button
-            v-if="canRetry"
-            class="action-btn retry-btn"
-            title="重试"
-            @click.stop="$emit('retry')"
-          >
-            <span class="codicon codicon-debug-restart" />
-          </button>
-          <button
-            class="action-btn delete-btn"
-            title="删除"
-            @click.stop="$emit('delete')"
-          >
-            <span class="codicon codicon-trash" />
-          </button>
-        </div>
-      </div>
       <slot />
+      <!-- 悬浮操作按钮（hover 时显示在右上角） -->
+      <div v-if="canCollapse" class="floating-actions">
+        <button
+          v-if="canRetry"
+          class="action-btn retry-btn"
+          title="重试"
+          @click.stop="$emit('retry')"
+        >
+          <span class="codicon codicon-debug-restart" />
+        </button>
+        <button
+          class="action-btn delete-btn"
+          title="删除"
+          @click.stop="$emit('delete')"
+        >
+          <span class="codicon codicon-trash" />
+        </button>
+      </div>
     </template>
   </div>
 </template>
@@ -121,37 +117,23 @@ function toggle() {
   position: relative;
 }
 
-.message-header {
+.floating-actions {
+  position: absolute;
+  top: 4px;
+  right: 4px;
   display: flex;
-  justify-content: space-between;
+  gap: 2px;
   align-items: center;
-  padding: 0 16px;
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.15s ease;
+  background: var(--vscode-editor-background);
+  border-radius: 4px;
+  padding: 2px;
+  z-index: 2;
 }
 
-.message-collapsible:hover .message-header {
+.message-collapsible:hover .floating-actions {
   opacity: 1;
-}
-
-.collapse-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 2px 4px;
-  color: var(--vscode-descriptionForeground);
-  font-size: 12px;
-  border-radius: 3px;
-}
-
-.collapse-btn:hover {
-  background-color: var(--vscode-toolbar-hoverBackground);
-}
-
-.message-actions {
-  display: flex;
-  gap: 4px;
-  align-items: center;
 }
 
 .action-btn {
@@ -160,9 +142,9 @@ function toggle() {
   justify-content: center;
   background: none;
   border: none;
-  padding: 2px 4px;
+  padding: 4px;
   color: var(--vscode-descriptionForeground);
-  font-size: 12px;
+  font-size: 13px;
   border-radius: 3px;
   cursor: pointer;
 }
